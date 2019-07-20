@@ -14,4 +14,4 @@ For more information, and the original BlenderFDS code visit http://www.blenderf
 
 2. Download the BlenderFDS addon zipped source from this [GitHub repository](https://github.com/firetools/blenderfds280/archive/master.zip)
 
-3. In Blender 2.8x, open `Edit > Preferences` and install the addon
+3. In Blender 2.8x, open `Edit > Preferences` and install the downloaded addon
