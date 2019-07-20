@@ -51,7 +51,7 @@ def subscribe(cls):
 
 # GEOM, check geometry quality and intersections
 
-from .geometry.calc_trisurfaces import check_intersections, check_mesh_quality
+from ..geometry.calc_trisurfaces import check_intersections, check_mesh_quality
 
 
 @subscribe

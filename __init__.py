@@ -32,21 +32,21 @@ bl_info = {
 # Register
 
 from . import lang
-from . import bl
+from .bl import operators, panels, menus, ui
 
 
 def register():
     lang.register()
-    bl.operators.register()
-    bl.panels.register()
-    bl.menus.register()
-    bl.ui.register()
+    operators.register()
+    panels.register()
+    menus.register()
+    ui.register()
 
 
 def unregister():
-    #    bl.ui.unregister() # FIXME
-    bl.menus.unregister()
-    bl.panels.unregister()
-    bl.operators.unregister()
+    # ui.unregister() # FIXME
+    menus.unregister()
+    panels.unregister()
+    operators.unregister()
     lang.unregister()
 
