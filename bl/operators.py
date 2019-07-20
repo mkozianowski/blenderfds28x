@@ -36,7 +36,7 @@ from bpy.props import (
     CollectionProperty,
 )
 
-from .lib.exceptions import BFException
+from ..lib.exceptions import BFException
 
 # Collections
 

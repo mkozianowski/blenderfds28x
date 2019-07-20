@@ -1,4 +1,5 @@
 # BlenderFDS, an open tool for the NIST Fire Dynamics Simulator
+
 # Copyright (C) 2013  Emanuele Gissi, http://www.blenderfds.org
 #
 # This program is free software; you can redistribute it and/or modify
@@ -15,13 +16,14 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+
 import bpy
 from bpy.types import Operator
 from bpy.props import StringProperty, BoolProperty, FloatProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-from .lib.utils import is_writable, write_to_file
-from .lib.types import BFException
+from ..lib.utils import is_writable, write_to_file
+from ..lib.types import BFException
 
 # Collections
 
