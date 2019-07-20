@@ -64,17 +64,26 @@ class PROPERTIES_PT_navigation_bar(Panel):
 
     def draw(self, context):
         layout = self.layout
-
         view = context.space_data
-
         layout.scale_x = 1.4
         layout.scale_y = 1.4
         layout.prop_enum(view, "context", "TOOL", text="", icon="TOOL_SETTINGS")
+        layout.prop_enum(view, "context", "SCENE", text="", icon="SCENE_DATA")
         col = layout.column(align=True)
-        col.prop_enum(view, "context", "SCENE", text="", icon="SCENE_DATA")
-        col.prop_enum(view, "context", "OBJECT", text="", icon="OBJECT_DATA")
-        col.prop_enum(view, "context", "MODIFIER", text="", icon="MODIFIER_DATA")
-        col.prop_enum(view, "context", "MATERIAL", text="", icon="MATERIAL_DATA")
+        print(view.context)
+        print(context.object)
+        print(context.active_object)
+        ob = context.object
+        if ob:
+            col.prop_enum(view, "context", "OBJECT", text="", icon="OBJECT_DATA")
+            if ob.type == "MESH":
+                col.prop_enum(
+                    view, "context", "MODIFIER", text="", icon="MODIFIER_DATA"
+                )
+                col.prop_enum(
+                    view, "context", "MATERIAL", text="", icon="MATERIAL_DATA"
+                )
+        layout.prop_enum(view, "context", "TEXTURE", text="", icon="TEXTURE_DATA")
 
 
 @subscribe
