@@ -16,10 +16,10 @@ For more information, and the original BlenderFDS code visit http://www.blenderf
 
 3. Rename the downloaded zip file to `blenderfds`;
 
-3. Open Blender 2.8x and select the from `Edit > Preferences` menu. Then install and enable the downloaded addon as described in [Blender Manual](https://docs.blender.org/manual/en/dev/editors/preferences/addons.html?highlight=addon#).
+3. Open Blender 2.8x and open the `Edit > Preferences` menu. Then install and enable the downloaded addon as described in [Blender Manual](https://docs.blender.org/manual/en/dev/editors/preferences/addons.html?highlight=addon#).
 
 ## How to update it
 
-1. Open Blender 2.8x and select the from `Edit > Preferences` menu. Disable the installed version.
+1. Open Blender 2.8x and select the `Edit > Preferences` menu. Then disable the installed version.
 
 2. Install and enable the updated version as described above. 
