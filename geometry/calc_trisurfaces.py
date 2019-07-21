@@ -12,39 +12,39 @@ from . import utils
 
 
 def get_trisurface(context, ob, check=True) -> "mas, verts, faces":
-    """Get triangulated surface from Object ready for FDS GEOM format."""
-    print(f"BFDS: Get triangulated surface from Object <{ob.name}>")
-    assert ob.type == "MESH"
-    if not ob.data.vertices:
-        raise BFException(ob, "Empty object!")
+    assert ob
+    # Check object type
+    if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
+        raise Exception("Object can not be converted to mesh")
     # Check original mesh quality
     if check:
         check_mesh_quality(context, ob)
-    # Create new object global copy
-    ob_tmp = utils.get_object_copy(context, ob, suffix="_tri")
-    # Create triangulate modifier, apply and remove it
-    _add_triangulate_mod(context, ob_tmp)
-    utils.apply_object_modifiers(context, ob_tmp)
     # Get ob materials from slots
     mas = list()
     material_slots = ob.material_slots
     if len(material_slots) == 0:
-        utils.rm_object(ob_tmp)
         raise BFException(ob, "No referenced SURF, add at least one Material")
     for material_slot in material_slots:
         ma = material_slot.material
         if not ma:
-            utils.rm_object(ob_tmp)
             raise BFException(
                 ob, "No referenced SURF, fill empty slot with at least one Material"
             )
         if not ma.bf_export:
-            utils.rm_object(ob_tmp)
             raise BFException(ob, f"Referenced SURF <{ma.name}> is not exported")
         mas.append(ma.name)
-    # Get ob verts and faces
+    # Add triangulate modifier to original object
+    mo = ob.modifiers.new("triangulate_tmp", "TRIANGULATE")
+    mo.quad_method, mo.ngon_method = "BEAUTY", "BEAUTY"
+    # Get evaluated ob (eg. modifiers applied)
+    dg = bpy.context.evaluated_depsgraph_get()
+    ob_eval = ob.evaluated_get(dg)
+    me_eval = ob_eval.to_mesh()
+    # Rm triangulate modifier from original ob
+    ob.modifiers.remove(mo)
+    # Get ob verts and faces # FIXME bmesh not needed
     bm = bmesh.new()
-    bm.from_mesh(ob_tmp.data)
+    bm.from_mesh(me_eval)
     verts = [(v.co.x, v.co.y, v.co.z) for v in bm.verts]
     faces = [
         (
@@ -57,18 +57,11 @@ def get_trisurface(context, ob, check=True) -> "mas, verts, faces":
     ]
     # Clean up
     bm.free()
-    utils.rm_object(ob_tmp)
+    ob_eval.to_mesh_clear()
     return mas, verts, faces
 
 
-def _add_triangulate_mod(context, ob) -> "modifier":
-    """Add new triangulate modifier."""
-    mo = ob.modifiers.new("triangulate_tmp", "TRIANGULATE")
-    mo.quad_method, mo.ngon_method = "BEAUTY", "BEAUTY"
-    return mo
-
-
-# Check mesh quality FIXME
+# Check mesh quality FIXME modifies original ob!
 
 
 def check_mesh_quality(context, ob):

@@ -9,11 +9,8 @@ def get_object_copy(
     context, ob, transform=True, apply_modifiers=True, link=True, suffix="_tmp"
 ):
     """Copy object, transform and apply mod."""
-    me_tmp = ob.to_mesh(
-        depsgraph=context.depsgraph,
-        apply_modifiers=apply_modifiers,
-        calc_undeformed=False,
-    )
+    depsgraph = context.evaluated_depsgraph_get()
+    me_tmp = ob.to_mesh(depsgraph=depsgraph)  # FIXME modifiers?
     if transform:
         me_tmp.transform(ob.matrix_world)
     ob_tmp = bpy.data.objects.new(ob.name + suffix, me_tmp)
@@ -22,12 +19,21 @@ def get_object_copy(
     return ob_tmp
 
 
+def apply_object_modifiers(context, ob):
+    """Apply all modifiers."""
+    bpy.context.view_layer.update()  # ensure data is updated
+    ob.data = ob.to_mesh(depsgraph=context.depsgraph, apply_modifiers=True)
+    for mo in ob.modifiers:
+        ob.modifiers.remove(mo)
+
+
 def get_object_bmesh(context, ob, transform=True, apply_modifiers=True, tri=False):
     """Returns a transformed, triangulated bmesh from object."""
     bpy.context.view_layer.update()
     if apply_modifiers and ob.modifiers:
+        depsgraph = context.evaluated_depsgraph_get()
         me = ob.to_mesh(
-            depsgraph=context.depsgraph, apply_modifiers=True, calc_undeformed=False
+            depsgraph=depsgraph, apply_modifiers=True, calc_undeformed=False
         )
         bm = bmesh.new()
         bm.from_mesh(me)
@@ -63,14 +69,6 @@ def insert_verts_into_mesh(me, verts):
     bm.to_mesh(me)
     bm.free()
     bpy.context.view_layer.update()  # push update
-
-
-def apply_object_modifiers(context, ob):
-    """Apply all modifiers."""
-    bpy.context.view_layer.update()  # ensure data is updated
-    ob.data = ob.to_mesh(depsgraph=context.depsgraph, apply_modifiers=True)
-    for mo in ob.modifiers:
-        ob.modifiers.remove(mo)
 
 
 ### Working on Blender objects
