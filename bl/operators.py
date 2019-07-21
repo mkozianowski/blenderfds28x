@@ -110,6 +110,86 @@ class SCENE_OT_bf_check_quality(Operator):
         return {"FINISHED"}
 
 
+# Show FDS code
+
+
+class _COMMON_bf_show_fds_code:
+    def draw(self, context):
+        layout = self.layout
+        bf_fds_code = self.bf_fds_code or "No FDS code is exported"
+        for line in bf_fds_code.split("\n"):
+            row = layout.row()
+            row.label(text=line)
+
+    def execute(self, context):
+        self.report({"INFO"}, "FDS Code Shown")
+        return {"FINISHED"}
+
+    def _get_fds_code(self, context):
+        self.bf_fds_code = ""
+
+    def invoke(self, context, event):
+        # Init
+        w = context.window_manager.windows[0]
+        w.cursor_modal_set("WAIT")
+        # Get the FDS code
+        try:
+            self._get_fds_code(context)
+        except BFException as err:
+            w.cursor_modal_restore()
+            self.report({"ERROR"}, str(err))
+            return {"CANCELLED"}
+        # Call dialog
+        w.cursor_modal_restore()
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=600)
+
+
+@subscribe
+class OBJECT_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
+    bl_label = "Show FDS Code From Blender Object"
+    bl_idname = "object.bf_show_fds_code"
+    bl_description = "Show FDS code exported from Blender Object"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object
+
+    def _get_fds_code(self, context):
+        ob = context.active_object
+        self.bf_fds_code = ob.to_fds(context)
+
+
+@subscribe
+class MATERIAL_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
+    bl_label = "Show FDS Code From Blender Material"
+    bl_idname = "material.bf_show_fds_code"
+    bl_description = "Show FDS code exported from Blender Material"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object and context.active_object.active_material
+
+    def _get_fds_code(self, context):
+        ma = context.active_object.active_material
+        self.bf_fds_code = ma.to_fds(context)
+
+
+@subscribe
+class SCENE_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
+    bl_label = "Show FDS Code From Blender Scene"
+    bl_idname = "scene.bf_show_fds_code"
+    bl_description = "Show FDS code exported from Blender SCene"
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene
+
+    def _get_fds_code(self, context):
+        sc = context.scene
+        self.bf_fds_code = sc.to_fds(context)
+
+
 # Dialog box operator
 
 

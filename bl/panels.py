@@ -143,6 +143,13 @@ class OBJECT_PT_bf_namelist(Panel):
         flow.prop(ob, "bf_namelist_cls")
         # Get the namelist class, instanciate it, and draw its panel
         namelists[ob.bf_namelist_cls](ob).draw(context, flow)
+        row = flow.row()
+        # if ob.bf_has_tmp:  # FIXME
+        #     row.operator("object.bf_hide_fds_geometry")
+        # else:
+        #     row.operator("object.bf_show_fds_geometry")
+        row.operator("object.bf_show_fds_code", text="Show FDS Code")
+        # row.operator("object.bf_props_to_sel_obs", text="Copy To")  # FIXME
 
 
 @subscribe
