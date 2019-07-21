@@ -73,7 +73,7 @@ class PROPERTIES_PT_navigation_bar(Panel):
         print(view.context)
         print(context.object)
         print(context.active_object)
-        ob = context.object
+        ob = context.active_object
         if ob:
             col.prop_enum(view, "context", "OBJECT", text="", icon="OBJECT_DATA")
             if ob.type == "MESH":
