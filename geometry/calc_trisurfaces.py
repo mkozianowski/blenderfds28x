@@ -36,10 +36,11 @@ def get_trisurface(context, ob, check=True) -> "mas, verts, faces":
     # Add triangulate modifier to original object
     mo = ob.modifiers.new("triangulate_tmp", "TRIANGULATE")
     mo.quad_method, mo.ngon_method = "BEAUTY", "BEAUTY"
-    # Get evaluated ob (eg. modifiers applied)
+    # Get evaluated ob (eg. modifiers applied) in world coordinates
     dg = bpy.context.evaluated_depsgraph_get()
     ob_eval = ob.evaluated_get(dg)
     me_eval = ob_eval.to_mesh()
+    me_eval.transform(ob.matrix_world)
     # Rm triangulate modifier from original ob
     ob.modifiers.remove(mo)
     # Get ob verts and faces # FIXME bmesh not needed
