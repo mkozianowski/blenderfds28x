@@ -8,10 +8,18 @@ For more information, and the original BlenderFDS code visit http://www.blenderf
 
 ![BlenderFDS logo](https://github.com/firetools/blenderfds/raw/gh-pages/images/blenderfds_128.png)
 
-## Quick install
+## How to install this development version
 
-1. Download and install [Blender 2.8x](http://www.blender.org) on your computer
+1. Download and install [Blender 2.8x](http://www.blender.org) on your computer;
 
-2. Download the BlenderFDS addon zipped source from this [GitHub repository](https://github.com/firetools/blenderfds280/archive/master.zip)
+2. Download the BlenderFDS addon from this [GitHub repository](https://github.com/firetools/blenderfds280/archive/master.zip);
 
-3. In Blender 2.8x, open `Edit > Preferences` and install the downloaded addon
+3. Rename the downloaded zip file to `blenderfds`;
+
+3. Open Blender 2.8x and select the from `Edit > Preferences` menu. Then install and enable the downloaded addon as described in [Blender Manual](https://docs.blender.org/manual/en/dev/editors/preferences/addons.html?highlight=addon#).
+
+## How to update it
+
+1. Open Blender 2.8x and select the from `Edit > Preferences` menu. Disable the installed version.
+
+2. Install and enable the updated version as described above. 
