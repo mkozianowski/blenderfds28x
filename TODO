@@ -1,15 +1,19 @@
+show FDS code
+show geometry
+copy properties
+
 geometry cache
 tmp object
-show geometry
-show FDS code
+
 rm tmp when voxel resolution changes
 mesh alignment
 from_fds, import
-copy properties
 
-scale factor
+scale factor for units
         # Correct for scale_lenght
         scale_length = context.scene.unit_settings.scale_length
         pbs = [[pb[0], pb[1] * scale_length] for pb in pbs]
 
 file version
+
+geographic reference and coordinates, find coordinate
