@@ -62,7 +62,7 @@ def get_trisurface(context, ob, check=True) -> "mas, verts, faces":
     return mas, verts, faces
 
 
-# Check mesh quality FIXME modifies original ob!
+# Check mesh quality FIXME modifies original ob! Maybe triangulate modif?
 
 
 def check_mesh_quality(context, ob):

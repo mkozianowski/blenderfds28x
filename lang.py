@@ -1777,7 +1777,7 @@ class BFScene:
     def to_fds(self, context, full=False):
         # Header
         version = "{0[0]}.{0[1]}.{0[2]}".format(
-            sys.modules["zzz_blenderfds_280"].bl_info["version"]
+            sys.modules["blenderfds28x"].bl_info["version"]
         )
         now = time.strftime("%a, %d %b %Y, %H:%M:%S", time.localtime())
         filepath = bpy.data.filepath or "not saved"
