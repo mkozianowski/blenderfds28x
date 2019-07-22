@@ -1169,7 +1169,7 @@ class OP_PB(Parameter):
     bpy_other = {"update": update_bf_pb, "items": update_bf_pb_items}
     bpy_export = "bf_pb_export"
 
-    _format_pb = ("PBX={0[1]:.6f}", "PBY={0[1]:.6f}", "PBZ={0[1]:.6f}")
+    _format_pb = ("PBX={0:.6f}", "PBY={0:.6f}", "PBZ={0:.6f}")
     _format_pbs = {
         "IDI": (
             "ID='{1}_{2}'{3}PBX={0:.6f}",
@@ -1194,6 +1194,7 @@ class OP_PB(Parameter):
             return None, msg
         elif len(pbs) == 1:
             pb = pbs[0]
+            print(pb)
             return self._format_pb[pb[0]].format(pb[1]), msg
         else:
             name = ob.name
