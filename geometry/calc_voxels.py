@@ -4,6 +4,8 @@ import bpy, bmesh
 from time import time
 from math import floor, ceil
 
+from mathutils import Matrix
+
 from ..lib.exceptions import BFException
 from . import utils
 
@@ -16,22 +18,35 @@ DEBUG = True
 
 def get_voxels(context, ob):
     """Get voxels from object in xbs format."""
-    DEBUG and print("BFDS: calc_voxels.get_voxels")
-    t0 = time()
-    assert ob.type == "MESH"
+    assert ob
+    print("BFDS: calc_voxels.get_voxels", ob.name)
+    # Check object and init
+    if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
+        raise BFException(ob, "Object can not be converted to mesh")
     if not ob.data.vertices:
         raise BFException(ob, "Empty object!")
     voxel_size = _get_voxel_size(context, ob)
-    # Get new transformed object
-    ob_tmp = utils.get_object_copy(context, ob)
-    # Align voxels to global origin
+    # Work on a full ob copy in world coordinates
+    ob_copy = ob.copy()
+    ob_copy.data = ob.data.copy()
+    ob_copy.data.transform(ob.matrix_world)
+    ob_copy.matrix_world = Matrix()
+    context.collection.objects.link(ob_copy)
+    # Align voxels to global origin and add remesh modifier
     if not ob.bf_xb_center_voxels:
-        _align_remesh_to_global_origin(context, ob_tmp, voxel_size)
-    # Add remesh modifier and extract modified bmesh
-    _add_remesh_mod(context, ob_tmp, voxel_size)
-    bm = utils.get_object_bmesh(context, ob_tmp, transform=False)
-    # Remove ob_tmp and its data, to prevent memory leaks
-    utils.rm_object(ob_tmp)
+        _align_remesh_to_global_origin(context, ob_copy, voxel_size)
+    _add_remesh_mod(context, ob_copy, voxel_size)
+    # Get evaluated ob_copy (eg. modifiers applied),
+    # already in world coordinates
+    dg = context.evaluated_depsgraph_get()
+    ob_eval = ob_copy.evaluated_get(dg)
+    me_eval = ob_eval.to_mesh()
+    # Get bmesh
+    bm = bmesh.new()
+    bm.from_mesh(me_eval)
+    # Clean up
+    ob_eval.to_mesh_clear()
+    bpy.data.meshes.remove(ob_copy.data)
     # Check
     if len(bm.faces) == 0:  # no faces
         return (), voxel_size, (0.0, 0.0, 0.0, 0.0)
@@ -409,12 +424,53 @@ def _get_box_xbs(boxes, origin, voxel_size) -> "xbs":
     )
 
 
-# Pixelization FIXME what happens with non flat surface?
+# Pixelization
 
 
 def get_pixels(context, ob):
     """Get pixels from flat object in xbs format."""
-    DEBUG and print("BFDS: calc_voxels.get_voxels")
+    assert ob
+    print("BFDS: calc_voxels.get_voxels", ob.name)
+    # Check object and init
+    if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
+        raise BFException(ob, "Object can not be converted to mesh")
+    if not ob.data.vertices:
+        raise BFException(ob, "Empty object!")
+    voxel_size = _get_voxel_size(context, ob)
+    flat_axis = _get_flat_axis(ob, voxel_size)
+    # Work on a full ob copy in world coordinates
+    ob_copy = ob.copy()
+    ob_copy.data = ob.data.copy()
+    ob_copy.data.transform(ob.matrix_world)
+    ob_copy.matrix_world = Matrix()
+    context.collection.objects.link(ob_copy)
+    # Check how flat it is
+    if ob_copy.dimensions[flat_axis] > voxel_size / 3.0:
+        bpy.data.meshes.remove(ob_copy.data)
+        raise BFException(ob, "Object is not flat enough.")
+    # Get origin for flat xbs
+    bbox = utils.get_bbox(ob_copy)
+    flat_origin = (
+        (bbox[1] + bbox[0]) / 2.0,
+        (bbox[3] + bbox[2]) / 2.0,
+        (bbox[5] + bbox[4]) / 2.0,
+    )
+    # Add solidify modifier
+    _add_solidify_mod(context, ob_copy, voxel_size)
+    # Voxelize
+    xbs, voxel_size, ts = get_voxels(context, ob_copy)
+    # Clean up
+    bpy.data.meshes.remove(ob_copy.data)
+    # Flatten the solidified object
+    choice = (_x_flatten_xbs, _y_flatten_xbs, _z_flatten_xbs)[flat_axis]
+    xbs = choice(xbs, flat_origin)
+    return xbs, voxel_size, ts
+
+
+def get_pixels_old(context, ob):  # FIXME
+    """Get pixels from flat object in xbs format."""
+    assert ob
+    print("BFDS: calc_voxels.get_voxels", ob.name)
     voxel_size = _get_voxel_size(context, ob)
     flat_axis = _get_flat_axis(ob, voxel_size)
     # Create new object, and link it. Then prepare it for voxelization
