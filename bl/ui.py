@@ -70,9 +70,6 @@ class PROPERTIES_PT_navigation_bar(Panel):
         layout.prop_enum(view, "context", "TOOL", text="", icon="TOOL_SETTINGS")
         layout.prop_enum(view, "context", "SCENE", text="", icon="SCENE_DATA")
         col = layout.column(align=True)
-        print(view.context)
-        print(context.object)
-        print(context.active_object)
         ob = context.active_object
         if ob:
             col.prop_enum(view, "context", "OBJECT", text="", icon="OBJECT_DATA")
@@ -83,7 +80,10 @@ class PROPERTIES_PT_navigation_bar(Panel):
                 col.prop_enum(
                     view, "context", "MATERIAL", text="", icon="MATERIAL_DATA"
                 )
-        layout.prop_enum(view, "context", "TEXTURE", text="", icon="TEXTURE_DATA")
+            if ob.mode == "OBJECT":
+                layout.prop_enum(
+                    view, "context", "TEXTURE", text="", icon="TEXTURE_DATA"
+                )
 
 
 @subscribe

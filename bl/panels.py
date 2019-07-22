@@ -64,7 +64,6 @@ class SCENE_PT_bf_namelist:
         if bf_namelist.bpy_export:
             flow.active = getattr(sc, bf_namelist.bpy_export, True)
         bf_namelist(sc).draw(context, flow)
-        return layout  # FIXME extend to all draw
 
 
 @subscribe
@@ -72,8 +71,8 @@ class SCENE_PT_bf_namelist_HEAD(Panel, SCENE_PT_bf_namelist):
     bf_namelist_cls = "SN_HEAD"
 
     def draw(self, context):
-        layout = super().draw(context)
-        row = layout.row()
+        super().draw(context)
+        row = self.layout.row()
         row.operator("scene.bf_show_fds_code", text="Show FDS Code")
         # row.operator("scene.bf_props_to_sel_obs", text="Copy To")  # FIXME
 

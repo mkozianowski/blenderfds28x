@@ -1245,6 +1245,7 @@ class OP_ID_suffix(Parameter):
             or ob.bf_pb_export
         ):
             layout.prop(ob, "bf_id_suffix")
+        return layout
 
     def to_fds(self, context):
         return
