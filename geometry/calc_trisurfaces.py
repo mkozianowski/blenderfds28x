@@ -13,9 +13,12 @@ from . import utils
 
 def get_trisurface(context, ob, check=True) -> "mas, verts, faces":
     assert ob
-    # Check object type
+    print("BFDS: calc_voxels.get_trisurface", ob.name)
+    # Check object
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
-        raise Exception("Object can not be converted to mesh")
+        raise BFException(ob, "Object can not be converted to mesh")
+    if not ob.data.vertices:
+        raise BFException(ob, "Empty object!")
     # Check original mesh quality
     if check:
         check_mesh_quality(context, ob)
@@ -37,7 +40,7 @@ def get_trisurface(context, ob, check=True) -> "mas, verts, faces":
     mo = ob.modifiers.new("triangulate_tmp", "TRIANGULATE")
     mo.quad_method, mo.ngon_method = "BEAUTY", "BEAUTY"
     # Get evaluated ob (eg. modifiers applied) in world coordinates
-    dg = bpy.context.evaluated_depsgraph_get()
+    dg = context.evaluated_depsgraph_get()
     ob_eval = ob.evaluated_get(dg)
     me_eval = ob_eval.to_mesh()
     me_eval.transform(ob.matrix_world)
