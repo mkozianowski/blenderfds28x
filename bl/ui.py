@@ -44,7 +44,6 @@ classes_rm = (
     "OBJECT_PT_motion_paths_display",
     "OBJECT_PT_custom_props",
     "MATERIAL_PT_preview",
-    "EEVEE_MATERIAL_PT_context_material",
     "EEVEE_MATERIAL_PT_surface",
     "EEVEE_MATERIAL_PT_volume",
     "EEVEE_MATERIAL_PT_settings",
