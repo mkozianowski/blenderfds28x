@@ -116,17 +116,19 @@ class SCENE_OT_bf_check_quality(Operator):
 class _COMMON_bf_show_fds_code:
     def draw(self, context):
         layout = self.layout
-        bf_fds_code = self.bf_fds_code or "No FDS code is exported"
-        for line in bf_fds_code.split("\n"):
-            row = layout.row()
-            row.label(text=line)
+        lines = self.lines.split("\n") or ("No FDS code is exported",)
+        if len(lines) > 20:
+            lines = lines[:20]
+            lines.append("...")
+        for line in lines:
+            layout.label(text=line)
 
     def execute(self, context):
         self.report({"INFO"}, "FDS Code Shown")
         return {"FINISHED"}
 
-    def _get_fds_code(self, context):
-        self.bf_fds_code = ""
+    def _get_lines(self, context):
+        self.lines = ""
 
     def invoke(self, context, event):
         # Init
@@ -134,7 +136,7 @@ class _COMMON_bf_show_fds_code:
         w.cursor_modal_set("WAIT")
         # Get the FDS code
         try:
-            self._get_fds_code(context)
+            self._get_lines(context)
         except BFException as err:
             w.cursor_modal_restore()
             self.report({"ERROR"}, str(err))
@@ -155,9 +157,9 @@ class OBJECT_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
     def poll(cls, context):
         return context.active_object
 
-    def _get_fds_code(self, context):
+    def _get_lines(self, context):
         ob = context.active_object
-        self.bf_fds_code = ob.to_fds(context)
+        self.lines = ob.to_fds(context)
 
 
 @subscribe
@@ -170,9 +172,9 @@ class MATERIAL_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
     def poll(cls, context):
         return context.active_object and context.active_object.active_material
 
-    def _get_fds_code(self, context):
+    def _get_lines(self, context):
         ma = context.active_object.active_material
-        self.bf_fds_code = ma.to_fds(context)
+        self.lines = ma.to_fds(context)
 
 
 @subscribe
@@ -185,9 +187,9 @@ class SCENE_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
     def poll(cls, context):
         return context.scene
 
-    def _get_fds_code(self, context):
+    def _get_lines(self, context):
         sc = context.scene
-        self.bf_fds_code = sc.to_fds(context)
+        self.lines = sc.to_fds(context)
 
 
 # Dialog box operator
