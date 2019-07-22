@@ -4,9 +4,19 @@ import bpy, bmesh
 
 # NEW
 
+# def get_object_copy(context, ob, data=True, world=False, link=True)
+#     ob_copy = ob.copy()
+#     ob_copy.data = ob.data.copy()
+#     if world:
+#         ob_copy.data.transform(ob.matrix_world)
+#         ob_copy.matrix_world = Matrix()
+#     if link:
+#         context.collection.objects.link(ob_copy)  # FIXME
+#     return ob_copy
+
 
 def get_object_copy(
-    context, ob, transform=True, apply_modifiers=True, link=True, suffix="_tmp"
+    context, ob, world=True, apply_modifiers=True, link=True, suffix="_tmp"
 ):
     """Copy object, transform and apply mod."""
     depsgraph = context.evaluated_depsgraph_get()
