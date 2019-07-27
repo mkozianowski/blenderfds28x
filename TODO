@@ -1,19 +1,24 @@
-show FDS code
-show geometry
-copy properties
+voxelization fix for API change DONE
+show FDS code DONE
+show geometry DONE
+hide geometry DONE
+geometry cache DONE
+tmp object DONE
 
-geometry cache
-tmp object
+GEOM geometry cache
+GEOM geometry mod original object
+
+copy properties
 
 rm tmp when voxel resolution changes
 mesh alignment
 from_fds, import
 
-scale factor for units
+scale factor for units (length, time)
         # Correct for scale_lenght
         scale_length = context.scene.unit_settings.scale_length
         pbs = [[pb[0], pb[1] * scale_length] for pb in pbs]
 
 file version
 
-geographic reference and coordinates, find coordinate
+geographic reference and coordinates, find coordinate, put cursor at coordinate
