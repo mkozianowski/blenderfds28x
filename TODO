@@ -6,9 +6,11 @@ geometry cache DONE
 tmp object DONE
 
 GEOM geometry cache
-GEOM geometry mod original object
+GEOM geometry mod original object fix
 
-copy properties
+op copy properties
+op mesh
+op find MATL, 
 
 rm tmp when voxel resolution changes
 mesh alignment

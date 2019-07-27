@@ -7,7 +7,8 @@ from . import calc_voxels
 from . import calc_trisurfaces
 from ..lib.exceptions import BFException
 
-# to GEOM
+
+# to GEOM in Blender units
 
 # FIXME caching is deleted when created
 def ob_to_geom(context, ob, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
@@ -24,7 +25,7 @@ def ob_to_geom(context, ob, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
     return ob["ob_to_geom_cache"]
 
 
-# to XB
+# to XB in Blender units
 
 
 def _ob_to_xbs_voxels(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
@@ -106,7 +107,7 @@ _choice_to_xbs = {
 }
 
 
-def ob_to_xbs(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+def ob_to_xbs(context, ob, unit) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     """Transform Blender object geometry according to ob.bf_xb to FDS notation."""
     if not ob.get("ob_to_xbs_cache"):  # check cache
         print("BFDS: ob_to_xbs")  # recalc
@@ -114,7 +115,7 @@ def ob_to_xbs(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     return ob["ob_to_xbs_cache"]  # send cached
 
 
-# to XYZ
+# to XYZ in Blender units
 
 
 def _ob_to_xyzs_vertices(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
@@ -152,7 +153,7 @@ def ob_to_xyzs(context, ob):
     return ob["ob_to_xyzs_cache"]  # send cached
 
 
-# to PB
+# to PB in Blender units
 
 
 def _ob_to_pbs_planes(
