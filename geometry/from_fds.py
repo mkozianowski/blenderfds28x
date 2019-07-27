@@ -178,7 +178,7 @@ def pbs_planes_to_mesh(pbs, me=None) -> "Mesh":
     """Translate PB* planes ((0,x3,), (0,x7,), (1,y9,), ...) to Blender mesh."""
     # Prepare xbs
     xbs = list()
-    for i, pb in enumerate(pbs):
+    for pb in pbs:
         if pb[0] == 0:
             xbs.append((pb[1], pb[1], -1.0, +1.0, -1.0, +1.0))  # PBX is 0
         elif pb[0] == 1:

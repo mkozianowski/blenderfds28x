@@ -11,7 +11,7 @@ def get_object_copy(
     """Copy object, transform and apply mod."""
     depsgraph = context.evaluated_depsgraph_get()
     me_tmp = ob.to_mesh(depsgraph=depsgraph)  # FIXME modifiers?
-    if transform:
+    if world:
         me_tmp.transform(ob.matrix_world)
     ob_tmp = bpy.data.objects.new(ob.name + suffix, me_tmp)
     if link:
@@ -198,14 +198,14 @@ def get_global_dimensions(context, ob) -> "dx, dy, dz":
 
 
 # NO
-def get_global_area(context, ob) -> "Float":
-    """Get area of object in global coordinates."""
-    area = 0.0
-    me_tmp = get_global_mesh(context, ob)  # Apply modifiers and scales
-    for polygon in me_tmp.polygons:
-        area += polygon.area
-    bpy.data.meshes.remove(me_tmp, do_unlink=True)
-    return area
+# def get_global_area(context, ob) -> "Float":
+#     """Get area of object in global coordinates."""
+#     area = 0.0
+#     me_tmp = get_global_mesh(context, ob)  # Apply modifiers and scales
+#     for polygon in me_tmp.polygons:
+#         area += polygon.area
+#     bpy.data.meshes.remove(me_tmp, do_unlink=True)
+#     return area
 
 
 # 2.80
