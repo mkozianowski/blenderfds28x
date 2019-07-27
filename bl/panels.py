@@ -73,7 +73,7 @@ class SCENE_PT_bf_namelist_HEAD(Panel, SCENE_PT_bf_namelist):
     def draw(self, context):
         super().draw(context)
         row = self.layout.row()
-        row.operator("scene.bf_show_fds_code", text="Show FDS Code")
+        row.operator("scene.bf_show_fds_code", text="Show FDS Code", icon="HIDE_OFF")
         # row.operator("scene.bf_props_to_sel_obs", text="Copy To")  # FIXME
 
 
@@ -129,7 +129,7 @@ class OBJECT_PT_bf_namelist(Panel):
     @classmethod
     def poll(cls, context):
         ob = context.object
-        return ob and ob.type == "MESH"
+        return ob and ob.type == "MESH" and not ob.bf_is_tmp
 
     def draw_header(self, context):
         ob = context.object
@@ -140,7 +140,7 @@ class OBJECT_PT_bf_namelist(Panel):
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
+        layout.use_property_decorate = False  # no animation
         flow = layout.grid_flow(
             row_major=True, columns=0, even_columns=True, even_rows=False, align=False
         )
@@ -149,12 +149,12 @@ class OBJECT_PT_bf_namelist(Panel):
         flow.prop(ob, "bf_namelist_cls")
         # Get the namelist class, instanciate it, and draw its panel
         namelists[ob.bf_namelist_cls](ob).draw(context, flow)
-        row = flow.row()
-        # if ob.bf_has_tmp:  # FIXME
-        #     row.operator("object.bf_hide_fds_geometry")
-        # else:
-        #     row.operator("object.bf_show_fds_geometry")
-        row.operator("object.bf_show_fds_code", text="Show FDS Code")
+        row = flow.split(factor=0.5, align=True)
+        if ob.bf_has_tmp:
+            row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
+        else:
+            row.operator("object.bf_show_fds_geometry", icon="HIDE_OFF")
+        row.operator("object.bf_show_fds_code", text="Show FDS Code", icon="HIDE_OFF")
         # row.operator("object.bf_props_to_sel_obs", text="Copy To")  # FIXME
 
 

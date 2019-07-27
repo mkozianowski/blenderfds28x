@@ -2,17 +2,7 @@
 
 import bpy, bmesh
 
-# NEW
-
-# def get_object_copy(context, ob, data=True, world=False, link=True)
-#     ob_copy = ob.copy()
-#     ob_copy.data = ob.data.copy()
-#     if world:
-#         ob_copy.data.transform(ob.matrix_world)
-#         ob_copy.matrix_world = Matrix()
-#     if link:
-#         context.collection.objects.link(ob_copy)  # FIXME
-#     return ob_copy
+from ..lib.exceptions import BFException
 
 
 def get_object_copy(
@@ -63,13 +53,6 @@ def get_object_bmesh(context, ob, transform=True, apply_modifiers=True, tri=Fals
     return bm
 
 
-def rm_object(ob):
-    """Remove object and its data, to prevent memory leaks."""
-    me = ob.data
-    bpy.data.objects.remove(ob)
-    bpy.data.meshes.remove(me)
-
-
 def insert_verts_into_mesh(me, verts):
     """Insert vertices into mesh."""
     bm = bmesh.new()
@@ -108,34 +91,50 @@ def get_global_bmesh(context, ob) -> "Mesh":
     return bm
 
 
+# 2.80 # FIXME this me leaks!
 def set_global_mesh(context, ob, me) -> "None":
     """Set object mesh from mesh in global coordinates."""
     try:
-        me.transform(
-            ob.matrix_world.inverted()
-        )  # transform global mesh to local coordinates, apply scale, rotation, and location
+        me.transform(ob.matrix_world.inverted())
     except ValueError:
         pass
     ob.data = me
 
 
+# 2.80
 def get_new_object(context, scene, name, me=None, linked=True) -> "Object":
-    """Create new object, named name, set mesh me if any, link to scene."""
-    if not me:
-        me = bpy.data.meshes.new("mesh")  # dummy mesh
-    ob = bpy.data.objects.new(name, me)
+    """Create new object, named name, set mesh me if any, link to scene collection."""
+    ob = bpy.data.objects.new(name, me or bpy.data.meshes.new(name))
     if linked:
-        scene.objects.link(ob)
+        scene.collection.objects.link(ob)
     return ob
 
 
+# 2.80
 def get_object_by_name(context, name) -> "Object or None":
     """Get an object by name and return it"""
     if name and name in bpy.data.objects:
         return bpy.data.objects[name]
 
 
-### Working on Blender materials
+# 2.80
+def set_tmp_object(context, ob, ob_ref):
+    ob.bf_is_tmp = True
+    ob_ref.bf_has_tmp = True
+    ob_ref.hide_set(True)
+
+
+# 2.80
+def rm_tmp_objects(context):
+    for ob in context.scene.objects:
+        if ob.bf_is_tmp:
+            bpy.ops.object.delete({"selected_objects": (ob,)})
+        elif ob.bf_has_tmp:
+            ob.bf_has_tmp = False
+            ob.hide_set(False)
+
+
+# Working on Blender materials
 
 
 def get_new_material(context, name) -> "Material":
@@ -166,6 +165,8 @@ def get_global_bbox(context, ob) -> "x0, x1, y0, y1, z0, z1":
     """Get object’s bounding box in global coordinates and in xbs format."""
     bm = get_global_bmesh(context, ob)
     bm.verts.ensure_lookup_table()
+    if not bm.verts:
+        raise BFException(ob, "No exported geometry!")
     xs, ys, zs = tuple(zip(*(v.co for v in bm.verts)))
     bm.free()
     return min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)
@@ -189,12 +190,14 @@ def calc_movement_from_bbox1_to_bbox0(bbox0, bbox1) -> "mx, my, mz":  # TODO not
     )
 
 
+# NO
 def get_global_dimensions(context, ob) -> "dx, dy, dz":
     """Get object dimensions in global coordinates."""
     x0, x1, y0, y1, z0, z1 = get_global_bbox(context, ob)
     return abs(x1 - x0), abs(y1 - y0), abs(z1 - z0)
 
 
+# NO
 def get_global_area(context, ob) -> "Float":
     """Get area of object in global coordinates."""
     area = 0.0
@@ -205,31 +208,11 @@ def get_global_area(context, ob) -> "Float":
     return area
 
 
-### Working on position
-
-
+# 2.80
 def set_balanced_center_position(context, ob) -> "None":
     """Set object center position"""
-    if context.mode != "OBJECT":
+    if ob.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
-    # origin_set works on currently selected objects
-    # unselect all, select ob, set origin, and try to revert selections to original
-    active_ob = context.active_object
-    bpy.ops.object.select_all(action="DESELECT")
-    ob.select = True
-    bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY")
-    if active_ob:
-        active_ob.select = True
-
-
-def move_xbs(xbs, movement) -> "None":  # TODO not used
-    """Move xbs of movement vector."""
-    for xb in xbs:
-        xb[:] = (
-            xb[0] + movement[0],
-            xb[1] + movement[0],
-            xb[2] + movement[1],
-            xb[3] + movement[1],
-            xb[4] + movement[2],
-            xb[5] + movement[2],
-        )
+    override = bpy.context.copy()
+    override["selected_objects"] = (ob,)
+    bpy.ops.object.origin_set(override, type="ORIGIN_GEOMETRY")

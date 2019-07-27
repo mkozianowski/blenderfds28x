@@ -15,7 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bl_info = {
-    "name": "BlenderFDS 280",
+    "name": "BlenderFDS",
     "author": "Emanuele Gissi",
     "description": "BlenderFDS, an open graphical editor for the NIST Fire Dynamics Simulator",
     "blender": (2, 80, 0),
@@ -32,7 +32,7 @@ bl_info = {
 # Register
 
 from . import lang
-from .bl import operators, panels, menus, ui
+from .bl import operators, panels, menus, ui, handlers
 
 
 def register():
@@ -40,7 +40,10 @@ def register():
     operators.register()
     panels.register()
     menus.register()
-    ui.register()
+    handlers.register()
+
+
+#    ui.register() # FIXME
 
 
 def unregister():
@@ -49,4 +52,5 @@ def unregister():
     panels.unregister()
     operators.unregister()
     lang.unregister()
+    handlers.unregister()
 

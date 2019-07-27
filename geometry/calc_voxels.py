@@ -1,7 +1,6 @@
 """BlenderFDS, voxelization algorithms."""
 
 import bpy, bmesh
-from time import time
 from math import floor, ceil
 
 from mathutils import Matrix
@@ -18,11 +17,10 @@ DEBUG = True
 
 def get_voxels(context, ob):
     """Get voxels from object in xbs format."""
-    assert ob
-    print("BFDS: calc_voxels.get_voxels", ob.name)
+    print("BFDS: calc_voxels.get_voxels:", ob.name)
     # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
-        raise BFException(ob, "Object can not be converted to mesh")
+        raise BFException(ob, "Object can not be converted to mesh.")
     if not ob.data.vertices:
         raise BFException(ob, "Empty object!")
     voxel_size = _get_voxel_size(context, ob)
@@ -49,12 +47,10 @@ def get_voxels(context, ob):
     bpy.data.meshes.remove(ob_copy.data)
     # Check
     if len(bm.faces) == 0:  # no faces
-        return (), voxel_size, (0.0, 0.0, 0.0, 0.0)
+        raise BFException(ob, "No voxel/pixel created!")
     # Get faces and sort them according to normals
-    t1 = time()
     x_faces, y_faces, z_faces = _sort_faces_by_normal(bm)
     # Choose shorter list of faces, relative functions, and parameters
-    t2 = time()
     choices = [
         (len(x_faces), _get_boxes_along_x, x_faces, _grow_boxes_along_x, 0),
         (len(y_faces), _get_boxes_along_y, y_faces, _grow_boxes_along_y, 2),
@@ -68,19 +64,17 @@ def get_voxels(context, ob):
     grow_boxes_along_second_axis = choices[2][3]  # 2nd axis growing direction
     second_sort_by = choices[1][4]
     # For each face find other sides and build boxes data structure
-    t3 = time()
     boxes, origin = get_boxes(faces, voxel_size)
     # Join boxes along other axis and return their global coordinates
-    t4 = time()
     boxes = grow_boxes_along_first_axis(boxes, first_sort_by)
-    t5 = time()
     boxes = grow_boxes_along_second_axis(boxes, second_sort_by)
-    t6 = time()
+    # Transform boxes to xbs in world coordinates
+    xbs = list(_get_box_xbs(boxes, origin, voxel_size))
     # Clean up
     bm.free()
-    # Return with timing: sort, 1b, 2g, 3g
-    xbs = list(_get_box_xbs(boxes, origin, voxel_size))
-    return xbs, voxel_size, (t2 - t1, t4 - t3, t5 - t4, t6 - t5)
+    if not xbs:
+        raise BFException(ob, "No voxel/pixel created!")
+    return xbs, voxel_size
 
 
 def _sort_faces_by_normal(bm):
@@ -409,7 +403,7 @@ def _grow_boxes_along_z(boxes, sort_by):
 
 
 def _get_box_xbs(boxes, origin, voxel_size) -> "xbs":
-    """Transform boxes to xbs in global coordinates."""
+    """Transform boxes to xbs in world coordinates."""
     epsilon = 1e-5
     return (
         (
@@ -429,11 +423,10 @@ def _get_box_xbs(boxes, origin, voxel_size) -> "xbs":
 
 def get_pixels(context, ob):
     """Get pixels from flat object in xbs format."""
-    assert ob
-    print("BFDS: calc_voxels.get_voxels", ob.name)
+    print("BFDS: calc_voxels.get_voxels:", ob.name)
     # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
-        raise BFException(ob, "Object can not be converted to mesh")
+        raise BFException(ob, "Object can not be converted to mesh.")
     if not ob.data.vertices:
         raise BFException(ob, "Empty object!")
     voxel_size = _get_voxel_size(context, ob)
@@ -458,48 +451,13 @@ def get_pixels(context, ob):
     # Add solidify modifier
     _add_solidify_mod(context, ob_copy, voxel_size)
     # Voxelize
-    xbs, voxel_size, ts = get_voxels(context, ob_copy)
+    xbs, voxel_size = get_voxels(context, ob_copy)
     # Clean up
     bpy.data.meshes.remove(ob_copy.data)
     # Flatten the solidified object
     choice = (_x_flatten_xbs, _y_flatten_xbs, _z_flatten_xbs)[flat_axis]
     xbs = choice(xbs, flat_origin)
-    return xbs, voxel_size, ts
-
-
-def get_pixels_old(context, ob):  # FIXME
-    """Get pixels from flat object in xbs format."""
-    assert ob
-    print("BFDS: calc_voxels.get_voxels", ob.name)
-    voxel_size = _get_voxel_size(context, ob)
-    flat_axis = _get_flat_axis(ob, voxel_size)
-    # Create new object, and link it. Then prepare it for voxelization
-    ob_tmp = utils.get_object_copy(context, ob, suffix="_pix_tmp")
-    ob_tmp.bf_xb_voxel_size = voxel_size
-    ob_tmp.bf_xb_custom_voxel = True
-    ob_tmp.bf_xb_center_voxels = ob.bf_xb_center_voxels
-    # Check how flat it is
-    if ob_tmp.dimensions[flat_axis] > voxel_size / 3.0:
-        utils.rm_object(ob_tmp)
-        raise BFException(ob, "Object is not flat enough.")
-    # Get origin for flat xbs
-    bbox = utils.get_bbox(ob_tmp)
-    flat_origin = (
-        (bbox[1] + bbox[0]) / 2.0,
-        (bbox[3] + bbox[2]) / 2.0,
-        (bbox[5] + bbox[4]) / 2.0,
-    )
-    # Add solidify modifier, apply and remove it
-    _add_solidify_mod(context, ob_tmp, voxel_size)
-    utils.apply_object_modifiers(context, ob_tmp)
-    # Voxelize
-    xbs, voxel_size, ts = get_voxels(context, ob_tmp)
-    # Flatten the solidified object
-    choice = (_x_flatten_xbs, _y_flatten_xbs, _z_flatten_xbs)[flat_axis]
-    xbs = choice(xbs, flat_origin)
-    # Clean and return
-    utils.rm_object(ob_tmp)
-    return xbs, voxel_size, ts
+    return xbs, voxel_size
 
 
 def _add_solidify_mod(context, ob, voxel_size) -> "modifier":

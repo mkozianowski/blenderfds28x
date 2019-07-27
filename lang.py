@@ -64,7 +64,6 @@ def subscribe(cls):
         bf_classes.append(cls)
     return cls
 
-
 # HEAD
 
 
@@ -628,7 +627,8 @@ class SN_DUMP(Namelist):
 
 # CATF
 
-
+# FIXME title in panel UI
+# FIXME to_fds
 @subscribe
 class SP_CATF_check_files(Parameter):
     label = "Check File Existance While Exporting"
@@ -914,7 +914,6 @@ class OP_namelist_cls(Parameter):
         "update": update_OP_namelist_cls,
     }
 
-
 # OBST
 
 
@@ -1023,6 +1022,25 @@ class OP_XB(Parameter):
     def draw(self, context, layout):
         super().draw(context, layout)
         ob = self.element
+
+        # row = layout.row(align=True)  # FIXME experiment
+        # row.prop(ob, "bf_xb", text=self.label)
+        # row.operator("object.bf_show_fds_code", text="", icon="HIDE_OFF")
+        # row.prop(ob, "bf_xb_export", text="")
+
+        # ob = context.object  # FIXME experiment with more operators
+        # row = layout.row(align=True)
+        # row.active = ob.bf_xb_export
+        # row.prop(ob, "bf_xb")
+        # if ob.bf_has_tmp:
+        #     row.operator("object.bf_show_fds_code", text='', icon="HIDE_ON")  # FIXME
+        # else:
+        #     row.operator("object.bf_show_fds_code", text='', icon="HIDE_OFF")  # FIXME
+        # row.prop(ob, "bf_xb_export", text="")
+        # if ob.bf_xb_export and ob.bf_xb in ("VOXELS", "PIXELS"):
+        #     OP_XB_center_voxels(ob).draw(context, layout)
+        #     OP_XB_voxel_size(ob).draw(context, layout)
+
         if ob.bf_xb_export and ob.bf_xb in ("VOXELS", "PIXELS"):
             OP_XB_center_voxels(ob).draw(context, layout)
             OP_XB_voxel_size(ob).draw(context, layout)
@@ -1780,7 +1798,7 @@ class BFScene:
         # Header
         version = "{0[0]}.{0[1]}.{0[2]}".format(
             sys.modules["blenderfds28x"].bl_info["version"]
-        )
+        )  # FIXME module name?
         now = time.strftime("%a, %d %b %Y, %H:%M:%S", time.localtime())
         filepath = bpy.data.filepath or "not saved"
         if len(filepath) > 60:
@@ -1851,10 +1869,16 @@ class BFCollection:
 
 
 def register():
+    # System parameters for tmp obs and file version
+    Object.bf_is_tmp = BoolProperty(name='Is Tmp', description='Set if this Object is tmp', default=False)
+    Object.bf_has_tmp = BoolProperty(name='Has Tmp', description='Set if this Object has tmp companions', default=False)
+    Scene.bf_file_version = IntVectorProperty(name='BlenderFDS File Version', size=3, default=(5,0,0))
+    # params and namelists
     for _, cls in params.items():
         cls.register()
     for _, cls in namelists.items():
         cls.register()
+    # Blender Object, Material, and Scene
     BFObject.register()
     BFMaterial.register()
     BFScene.register()
@@ -1862,10 +1886,16 @@ def register():
 
 
 def unregister():
+    # System parameters for tmp obs and file version
+    del Object.bf_is_tmp
+    del Object.bf_has_tmp
+    del Scene.bf_file_version
+    # params and namelists
     for _, cls in params.items():
         cls.unregister()
     for _, cls in namelists.items():
         cls.unregister()
+    # Blender Object, Material, and Scene
     BFObject.unregister()
     BFMaterial.unregister()
     BFScene.unregister()

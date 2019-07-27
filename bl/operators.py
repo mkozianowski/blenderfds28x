@@ -37,6 +37,8 @@ from bpy.props import (
 )
 
 from ..lib.exceptions import BFException
+from .. import geometry
+from ..lang import OP_XB, OP_XYZ, OP_PB
 
 # Collections
 
@@ -51,11 +53,9 @@ def subscribe(cls):
 
 # GEOM, check geometry quality and intersections
 
-from ..geometry.calc_trisurfaces import check_intersections, check_mesh_quality
-
 
 @subscribe
-class SCENE_OT_bf_check_intersections(Operator):
+class OBJECT_OT_bf_check_intersections(Operator):
     bl_label = "Check Intersections"
     bl_idname = "object.bf_geom_check_intersections"
     bl_description = (
@@ -74,14 +74,15 @@ class SCENE_OT_bf_check_intersections(Operator):
         if obs:
             obs.remove(ob)
         try:
-            check_intersections(context, ob, obs)
+            geometry.calc_trisurfaces.check_intersections(context, ob, obs)
         except BFException as err:
-            w.cursor_modal_restore()
             self.report({"ERROR"}, str(err))
             return {"CANCELLED"}
-        w.cursor_modal_restore()
-        self.report({"INFO"}, "No intersection")
-        return {"FINISHED"}
+        else:
+            self.report({"INFO"}, "No intersection")
+            return {"FINISHED"}
+        finally:
+            w.cursor_modal_restore()
 
 
 @subscribe
@@ -99,27 +100,27 @@ class SCENE_OT_bf_check_quality(Operator):
         w.cursor_modal_set("WAIT")
         ob = context.active_object
         try:
-            check_mesh_quality(context, ob)
+            geometry.calc_trisurfaces.check_mesh_quality(context, ob)
         except BFException as err:
-            w.cursor_modal_restore()
             self.report({"ERROR"}, str(err))
             return {"CANCELLED"}
-        w.cursor_modal_restore()
-
-        self.report({"INFO"}, "Geometry quality ok")
-        return {"FINISHED"}
+        else:
+            self.report({"INFO"}, "Geometry quality ok")
+            return {"FINISHED"}
+        finally:
+            w.cursor_modal_restore()
 
 
 # Show FDS code
 
 
-class _COMMON_bf_show_fds_code:
+class _show_fds_code:
     def draw(self, context):
-        layout = self.layout
         lines = self.lines.split("\n") or ("No FDS code is exported",)
         if len(lines) > 20:
             lines = lines[:20]
             lines.append("...")
+        layout = self.layout
         for line in lines:
             layout.label(text=line)
 
@@ -128,45 +129,42 @@ class _COMMON_bf_show_fds_code:
         return {"FINISHED"}
 
     def _get_lines(self, context):
-        self.lines = ""
+        return str()
 
     def invoke(self, context, event):
-        # Init
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
-        # Get the FDS code
         try:
-            self._get_lines(context)
+            self.lines = self._get_lines(context)  # get FDS code
         except BFException as err:
-            w.cursor_modal_restore()
             self.report({"ERROR"}, str(err))
             return {"CANCELLED"}
-        # Call dialog
-        w.cursor_modal_restore()
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=600)
+        else:
+            wm = context.window_manager
+            return wm.invoke_props_dialog(self, width=600)
+        finally:
+            w.cursor_modal_restore()
 
 
 @subscribe
-class OBJECT_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
-    bl_label = "Show FDS Code From Blender Object"
+class OBJECT_OT_bf_show_fds_code(_show_fds_code, Operator):
+    bl_label = "Show FDS Code From Current Object"
     bl_idname = "object.bf_show_fds_code"
-    bl_description = "Show FDS code exported from Blender Object"
+    bl_description = "Show FDS code exported from current Object"
 
     @classmethod
     def poll(cls, context):
-        return context.active_object
+        return context.object
 
     def _get_lines(self, context):
-        ob = context.active_object
-        self.lines = ob.to_fds(context)
+        return context.object.to_fds(context)
 
 
 @subscribe
-class MATERIAL_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
-    bl_label = "Show FDS Code From Blender Material"
+class MATERIAL_OT_bf_show_fds_code(_show_fds_code, Operator):
+    bl_label = "Show FDS Code From Current Material"
     bl_idname = "material.bf_show_fds_code"
-    bl_description = "Show FDS code exported from Blender Material"
+    bl_description = "Show FDS code exported from current Material"
 
     @classmethod
     def poll(cls, context):
@@ -178,18 +176,116 @@ class MATERIAL_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
 
 
 @subscribe
-class SCENE_OT_bf_show_fds_code(_COMMON_bf_show_fds_code, Operator):
-    bl_label = "Show FDS Code From Blender Scene"
+class SCENE_OT_bf_show_fds_code(_show_fds_code, Operator):
+    bl_label = "Show FDS Code From Current Scene"
     bl_idname = "scene.bf_show_fds_code"
-    bl_description = "Show FDS code exported from Blender SCene"
+    bl_description = "Show FDS code exported from Scene"
 
     @classmethod
     def poll(cls, context):
         return context.scene
 
     def _get_lines(self, context):
-        sc = context.scene
-        self.lines = sc.to_fds(context)
+        return context.scene.to_fds(context)
+
+
+# Show exported geometry
+
+
+@subscribe
+class OBJECT_OT_bf_show_fds_geometry(Operator):
+    bl_label = "Show FDS Geometry"
+    bl_idname = "object.bf_show_fds_geometry"
+    bl_description = "Show geometry as exported to FDS"
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+
+    def execute(self, context):
+        w = context.window_manager.windows[0]
+        w.cursor_modal_set("WAIT")
+        ob = context.object
+        # GEOM
+        if ob.bf_namelist_cls == "ON_GEOM" and ob.bf_export:
+            try:
+                fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
+                    context, ob, check=ob.bf_geom_check_quality
+                )
+            except BFException as err:
+                self.report({"ERROR"}, str(err))
+                return {"CANCELLED"}
+            else:
+                ob_tmp = geometry.from_fds.geom_to_ob(
+                    fds_surfids,
+                    fds_verts,
+                    fds_faces,
+                    context,
+                    name=f"Tmp Object {ob.name} GEOM",
+                )
+                geometry.utils.set_tmp_object(context, ob_tmp, ob)
+                self.report({"INFO"}, msg)
+                return {"FINISHED"}
+            finally:
+                w.cursor_modal_restore()
+        # XB, XYZ, PB*
+        msgs = list()
+        if ob.bf_xb_export and OP_XB in ob.bf_namelist.param_cls:
+            try:
+                xbs, msg = geometry.to_fds.ob_to_xbs(context, ob)
+            except BFException as err:
+                w.cursor_modal_restore()
+                self.report({"ERROR"}, str(err))
+                return {"CANCELLED"}
+            else:
+                msgs.append(msg)
+                ob_tmp = geometry.from_fds.xbs_to_ob(
+                    xbs, context, bf_xb=ob.bf_xb, name=f"Tmp Object {ob.name} XBs"
+                )
+                geometry.utils.set_tmp_object(context, ob_tmp, ob)
+        if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.param_cls:
+            try:
+                xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob)
+            except BFException as err:
+                w.cursor_modal_restore()
+                self.report({"ERROR"}, str(err))
+                return {"CANCELLED"}
+            else:
+                msgs.append(msg)
+                ob_tmp = geometry.from_fds.xyzs_to_ob(
+                    xyzs, context, bf_xyz=ob.bf_xyz, name=f"Tmp Object {ob.name} XYZs"
+                )
+                geometry.utils.set_tmp_object(context, ob_tmp, ob)
+        if ob.bf_pb_export and OP_PB in ob.bf_namelist.param_cls:
+            try:
+                pbs, msg = geometry.to_fds.ob_to_pbs(context, ob)
+            except BFException as err:
+                w.cursor_modal_restore()
+                self.report({"ERROR"}, str(err))
+                return {"CANCELLED"}
+            else:
+                msgs.append(msg)
+                ob_tmp = geometry.from_fds.pbs_to_ob(
+                    pbs, context, bf_pb=ob.bf_pb, name=f"Tmp Object {ob.name} PBs"
+                )
+                geometry.utils.set_tmp_object(context, ob_tmp, ob)
+        w.cursor_modal_restore()
+        self.report(
+            {"INFO"}, "; ".join(msg for msg in msgs if msg) or "Geometry exported."
+        )
+        return {"FINISHED"}
+
+
+@subscribe
+class OBJECT_OT_bf_hide_fds_geometry(Operator):
+    bl_label = "Hide FDS Geometry"
+    bl_idname = "object.bf_hide_fds_geometry"
+    bl_description = "Hide geometry as exported to FDS"
+
+    def execute(self, context):
+        geometry.utils.rm_tmp_objects(context)
+        self.report({"INFO"}, "FDS geometry hidden")
+        return {"FINISHED"}
 
 
 # Dialog box operator

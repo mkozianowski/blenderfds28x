@@ -10,11 +10,11 @@ from . import utils
 
 # Get triangulated surface
 
-
+# FIXME updates object after calculation
 def get_trisurface(context, ob, check=True) -> "mas, verts, faces":
-    assert ob
-    print("BFDS: calc_voxels.get_trisurface", ob.name)
-    # Check object
+    """Get triangulated surface from object in xbs format."""
+    print("BFDS: calc_voxels.get_trisurface:", ob.name)
+    # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
         raise BFException(ob, "Object can not be converted to mesh")
     if not ob.data.vertices:
@@ -62,10 +62,12 @@ def get_trisurface(context, ob, check=True) -> "mas, verts, faces":
     # Clean up
     bm.free()
     ob_eval.to_mesh_clear()
+    if not faces:
+        raise BFException(ob, "No face created!")
     return mas, verts, faces
 
 
-# Check mesh quality FIXME modifies original ob! Maybe triangulate modif?
+# FIXME modifies original ob! Maybe triangulate modif?
 
 
 def check_mesh_quality(context, ob):

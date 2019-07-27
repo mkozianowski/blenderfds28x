@@ -3,88 +3,66 @@
 import bpy
 from time import time
 from . import utils
-from .calc_voxels import get_voxels, get_pixels
-from .calc_trisurfaces import get_trisurface
+from . import calc_voxels
+from . import calc_trisurfaces
 from ..lib.exceptions import BFException
 
-DEBUG = False
+# to GEOM
 
-# ++ to None
-
-# OK
-def ob_to_none(context, ob):
-    return None, None
-
-
-# ++ to GEOM
-
-
-def ob_to_geom(context, ob, check=True) -> "mas, fds_verts, fds_faces, msg":
-    """Transform Blender object geometry to GEOM FDS notation. Never send a None."""
-    mas, verts, faces = get_trisurface(context, ob, check)
-    if faces:
-        msg = "{} vertices, {} faces".format(len(verts), len(faces))
-    else:
-        msg = "No available geometry"
-    fds_verts = [coo for vert in verts for coo in vert]
-    fds_faces = [i for face in faces for i in face]
-    return mas, fds_verts, fds_faces, msg  # TODO add caching of results
+# FIXME caching is deleted when created
+def ob_to_geom(context, ob, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
+    """Transform Blender object geometry to GEOM FDS notation."""
+    if not ob.get("ob_to_geom_cache"):
+        t0 = time()
+        print("BFDS: ob_to_geom recalc:", ob.name)
+        mas, verts, faces = calc_trisurfaces.get_trisurface(context, ob, check)
+        fds_verts = [coo for vert in verts for coo in vert]
+        fds_faces = [i for face in faces for i in face]
+        dt = time() - t0
+        msg = f"GEOM: {len(fds_verts)} vertices, {len(fds_faces)} faces, in {dt:.3f} s"
+        ob["ob_to_geom_cache"] = mas, fds_verts, fds_faces, msg
+    return ob["ob_to_geom_cache"]
 
 
-# ++ to XB
+# to XB
 
 
-def ob_to_xbs_voxels(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform ob solid geometry in XBs notation (voxelization). Never send None."""
+def _ob_to_xbs_voxels(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+    """Transform ob solid geometry in XBs notation (voxelization)."""
     t0 = time()
-    xbs, voxel_size, timing = get_voxels(context, ob)
-    if not xbs:
-        return None, "No voxel created"
-    scale_length = context.scene.unit_settings.scale_length
-    msg = "{0} voxels, resolution {1:.3f} m, in {2:.3f} s".format(
-        len(xbs), voxel_size * scale_length, time() - t0
-    )
-    if DEBUG:
-        msg += " (s:{0[0]:.3f} 1f:{0[1]:.3f}, 2g:{0[2]:.3f}, 3g:{0[3]:.3f})".format(
-            timing
-        )
+    xbs, voxel_size = calc_voxels.get_voxels(context, ob)
+    res = voxel_size * context.scene.unit_settings.scale_length
+    dt = time() - t0
+    msg = f"XB: {len(xbs)} voxels, resolution {res:.3f} m, in {dt:.3f} s"
     return xbs, msg
 
 
-def ob_to_xbs_pixels(context, ob) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
-    """Transform ob flat geometry in XBs notation (flat voxelization). Never send None."""
+def _ob_to_xbs_pixels(context, ob) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
+    """Transform ob flat geometry in XBs notation (flat voxelization)."""
     t0 = time()
-    xbs, voxel_size, timing = get_pixels(context, ob)
-    if not xbs:
-        return (), "No pixel created"
-    scale_length = context.scene.unit_settings.scale_length
-    msg = "{0} pixels, resolution {1:.3f} m, in {2:.0f} s".format(
-        len(xbs), voxel_size * scale_length, time() - t0
-    )
-    if DEBUG:
-        msg += " (s:{0[0]:.0f} 1f:{0[1]:.0f}, 2g:{0[2]:.0f}, 3g:{0[3]:.0f})".format(
-            timing
-        )
+    xbs, voxel_size = calc_voxels.get_pixels(context, ob)
+    res = voxel_size * context.scene.unit_settings.scale_length
+    dt = time() - t0
+    msg = f"XB: {len(xbs)} pixels, resolution {res:.3f} m, in {dt:.3f} s"
     return xbs, msg
 
 
-# OK
-def ob_to_xbs_bbox(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform ob solid geometry in XBs notation (bounding box). Never send None."""
-    return [utils.get_global_bbox(context, ob)], None
+def _ob_to_xbs_bbox(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+    """Transform ob solid geometry in XBs notation (bounding box)."""
+    xbs = (utils.get_global_bbox(context, ob),)
+    msg = str()
+    return xbs, msg
 
 
-# OK
-def ob_to_xbs_faces(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform ob faces in XBs notation (faces). Never send None."""
-    result = list()
+def _ob_to_xbs_faces(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+    """Transform ob faces in XBs notation (faces)."""
+    xbs = list()
     bm = utils.get_global_bmesh(context, ob)
-    # For each face...
     bm.faces.ensure_lookup_table()
     for face in bm.faces:
         verts = face.verts
         xs, ys, zs = tuple(zip(*(v.co for v in verts)))
-        x0, x1, y0, y1, z0, z1 = min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)
+        x0, x1, y0, y1, z0, z1 = (min(xs), max(xs), min(ys), max(ys), min(zs), max(zs))
         deltas = [(x1 - x0, 2), (y1 - y0, 1), (z1 - z0, 0)]
         deltas.sort()
         if deltas[0][1] == 2:
@@ -93,137 +71,119 @@ def ob_to_xbs_faces(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
             y1 = y0 = (y0 + y1) / 2.0
         if deltas[0][1] == 0:
             z1 = z0 = (z0 + z1) / 2.0
-        result.append((x0, x1, y0, y1, z0, z1))
-    result.sort()
+        xbs.append((x0, x1, y0, y1, z0, z1))
     bm.free()
-    # Return
-    msg = len(result) > 1 and "{0} faces".format(len(result)) or None
-    return result, msg
+    xbs.sort()
+    if not xbs:
+        raise BFException(ob, "XB: No exported faces!")
+    msg = f"XB: {len(xbs)} faces"
+    return xbs, msg
 
 
-# OK
-def ob_to_xbs_edges(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform ob faces in XBs notation (faces). Never send None."""
-    result = list()
+def _ob_to_xbs_edges(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+    """Transform ob faces in XBs notation (faces)."""
+    xbs = list()
     bm = utils.get_global_bmesh(context, ob)
-    # For each edge...
     bm.edges.ensure_lookup_table()
     for edge in bm.edges:
         pt0x, pt0y, pt0z = edge.verts[0].co
         pt1x, pt1y, pt1z = edge.verts[1].co
-        result.append((pt0x, pt1x, pt0y, pt1y, pt0z, pt1z))
-    result.sort()
+        xbs.append((pt0x, pt1x, pt0y, pt1y, pt0z, pt1z))
     bm.free()
-    # Return
-    msg = len(result) > 1 and "{0} edges".format(len(result)) or None
-    return result, msg
+    xbs.sort()
+    if not xbs:
+        raise BFException(ob, "XB: No exported edges!")
+    msg = f"XB: {len(xbs)} edges"
+    return xbs, msg
 
 
-# Caller function (ob.bf_xb)
-
-choice_to_xbs = {
-    "NONE": ob_to_none,
-    "BBOX": ob_to_xbs_bbox,
-    "VOXELS": ob_to_xbs_voxels,
-    "FACES": ob_to_xbs_faces,
-    "PIXELS": ob_to_xbs_pixels,
-    "EDGES": ob_to_xbs_edges,
+_choice_to_xbs = {
+    "BBOX": _ob_to_xbs_bbox,
+    "VOXELS": _ob_to_xbs_voxels,
+    "FACES": _ob_to_xbs_faces,
+    "PIXELS": _ob_to_xbs_pixels,
+    "EDGES": _ob_to_xbs_edges,
 }
 
-# OK
+
 def ob_to_xbs(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform Blender object geometry according to ob.bf_xb to FDS notation. Never send None."""
-    # not ob.get("ob_to_xbs_cache") -> precalc not available or modified input conditions
-    # if not ob.get("ob_to_xbs_cache"): # ob.is_updated does not work here, checked in the handler
-    #     ob["ob_to_xbs_cache"] = choice_to_xbs[ob.bf_xb](context, ob) # Calculate
-    # return ob["ob_to_xbs_cache"]  # FIXME cache
-    return choice_to_xbs[ob.bf_xb](context, ob)  # Calculate
+    """Transform Blender object geometry according to ob.bf_xb to FDS notation."""
+    if not ob.get("ob_to_xbs_cache"):  # check cache
+        print("BFDS: ob_to_xbs")  # recalc
+        ob["ob_to_xbs_cache"] = _choice_to_xbs[ob.bf_xb](context, ob)
+    return ob["ob_to_xbs_cache"]  # send cached
 
 
-# ++ to XYZ
+# to XYZ
 
-# OK
-def ob_to_xyzs_vertices(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
-    """Transform ob vertices in XYZs notation. Never send None."""
-    result = list()
+
+def _ob_to_xyzs_vertices(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
+    """Transform ob vertices in XYZs notation."""
+    xyzs = list()
     bm = utils.get_global_bmesh(context, ob)
     # For each vertex...
     bm.verts.ensure_lookup_table()
     for v in bm.verts:
         pt0x, pt0y, pt0z = v.co
-        result.append((pt0x, pt0y, pt0z))
-    result.sort()
+        xyzs.append((pt0x, pt0y, pt0z))
     bm.free()
-    # Return
-    msg = len(result) > 1 and "{0} vertices".format(len(result)) or None
-    return result, msg
+    xyzs.sort()
+    if not xyzs:
+        raise BFException(ob, "XYZ: No exported vertices!")
+    msg = f"XYZ: {len(xyzs)} vertices"
+    return xyzs, msg
 
 
-# OK
-def ob_to_xyzs_center(context, ob) -> "((x0,y0,z0,), ...), 'Message'":
-    """Transform ob center in XYZs notation. Never send None."""
-    return [(ob.location[0], ob.location[1], ob.location[2])], None
+def _ob_to_xyzs_center(context, ob) -> "((x0,y0,z0,), ...), 'Message'":
+    """Transform ob center in XYZs notation."""
+    xyzs = [(ob.location[0], ob.location[1], ob.location[2])]
+    msg = str()
+    return xyzs, msg
 
 
-# Caller function (ob.bf_xyz)
+_choice_to_xyzs = {"CENTER": _ob_to_xyzs_center, "VERTICES": _ob_to_xyzs_vertices}
 
-choice_to_xyzs = {
-    "NONE": ob_to_none,
-    "CENTER": ob_to_xyzs_center,
-    "VERTICES": ob_to_xyzs_vertices,
-}
 
-# OK
 def ob_to_xyzs(context, ob):
-    """Transform Blender object geometry according to ob.bf_xyz to FDS notation. Never send None."""
-    # # not ob.get("ob_to_xyzs_cache") -> precalc not available or modified input conditions
-    # if not ob.get(
-    #     "ob_to_xyzs_cache"
-    # ):  # ob.is_updated does not work here, checked in the handler
-    #     ob["ob_to_xyzs_cache"] = choice_to_xyzs[ob.bf_xyz](context, ob)  # Calculate
-    # return ob["ob_to_xyzs_cache"]  # FIXME cache
-    return choice_to_xyzs[ob.bf_xyz](context, ob)
+    """Transform Blender object geometry according to ob.bf_xyz to FDS notation."""
+    if not ob.get("ob_to_xyzs_cache"):  # check cache
+        print("BFDS: ob_to_xyzs recalc:", ob.name)  # recalc
+        ob["ob_to_xyzs_cache"] = _choice_to_xyzs[ob.bf_xyz](context, ob)
+    return ob["ob_to_xyzs_cache"]  # send cached
 
 
-# ++ to PB
+# to PB
 
-# OK
-def ob_to_pbs_planes(
+
+def _ob_to_pbs_planes(
     context, ob
 ) -> "(('X',x3,), ('X',x7,), ('Y',y9,), ...), 'Message'":
-    """Transform ob faces in PBs notation. Never send None."""
-    result = list()
-    xbs, msg = ob_to_xbs_faces(context, ob)
+    """Transform ob faces in PBs notation."""
+    pbs = list()
+    xbs, msg = _ob_to_xbs_faces(context, ob)
     epsilon = 1e-5
     # For each face build a plane...
     for xb in xbs:
         if abs(xb[1] - xb[0]) < epsilon:
-            result.append((0, xb[0]))  # PBX is 0
+            pbs.append((0, xb[0]))  # PBX is 0
         elif abs(xb[3] - xb[2]) < epsilon:
-            result.append((1, xb[2]))  # PBY is 1
+            pbs.append((1, xb[2]))  # PBY is 1
         elif abs(xb[5] - xb[4]) < epsilon:
-            result.append((2, xb[4]))  # PBZ is 2
+            pbs.append((2, xb[4]))  # PBZ is 2
         else:
             raise ValueError(
                 "BFDS: Building planes impossible, problem in ob_to_xbs_faces."
             )
-    result.sort()
-    msg = len(result) > 1 and "{0} planes".format(len(result)) or None
-    return result, msg
+    pbs.sort()
+    if not pbs:
+        raise BFException(ob, "PB*: No exported planes!")
+    msg = f"PB*: {len(pbs)} planes"
+    return pbs, msg
 
 
-# Caller function (ob.bf_pb)
-
-choice_to_pbs = {"NONE": ob_to_none, "PLANES": ob_to_pbs_planes}
-
-# OK
 def ob_to_pbs(context, ob):
-    """Transform Blender object geometry according to ob.bf_pb to FDS notation. Never send None."""
-    # # not ob.get("ob_to_pbs_cache") -> precalc not available or modified input conditions
-    # if not ob.get(
-    #     "ob_to_pbs_cache"
-    # ):  # ob.is_updated does not work here, checked in the handler
-    #     ob["ob_to_pbs_cache"] = choice_to_pbs[ob.bf_pb](context, ob)  # Calculate
-    # return ob["ob_to_pbs_cache"] # FIXME cache
-    return choice_to_pbs[ob.bf_pb](context, ob)
-
+    """Transform Blender object geometry according to ob.bf_pb to FDS notation."""
+    if not ob.get("ob_to_pbs_cache"):  # check cache
+        print("BFDS: ob_to_pbs recalc:", ob.name)  # recalc
+        ob["ob_to_pbs_cache"] = _ob_to_pbs_planes(context, ob)
+    return ob["ob_to_pbs_cache"]  # send cached
