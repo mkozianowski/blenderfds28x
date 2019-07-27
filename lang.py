@@ -1022,25 +1022,6 @@ class OP_XB(Parameter):
     def draw(self, context, layout):
         super().draw(context, layout)
         ob = self.element
-
-        # row = layout.row(align=True)  # FIXME experiment
-        # row.prop(ob, "bf_xb", text=self.label)
-        # row.operator("object.bf_show_fds_code", text="", icon="HIDE_OFF")
-        # row.prop(ob, "bf_xb_export", text="")
-
-        # ob = context.object  # FIXME experiment with more operators
-        # row = layout.row(align=True)
-        # row.active = ob.bf_xb_export
-        # row.prop(ob, "bf_xb")
-        # if ob.bf_has_tmp:
-        #     row.operator("object.bf_show_fds_code", text='', icon="HIDE_ON")  # FIXME
-        # else:
-        #     row.operator("object.bf_show_fds_code", text='', icon="HIDE_OFF")  # FIXME
-        # row.prop(ob, "bf_xb_export", text="")
-        # if ob.bf_xb_export and ob.bf_xb in ("VOXELS", "PIXELS"):
-        #     OP_XB_center_voxels(ob).draw(context, layout)
-        #     OP_XB_voxel_size(ob).draw(context, layout)
-
         if ob.bf_xb_export and ob.bf_xb in ("VOXELS", "PIXELS"):
             OP_XB_center_voxels(ob).draw(context, layout)
             OP_XB_voxel_size(ob).draw(context, layout)
@@ -1392,9 +1373,6 @@ class OP_GEOM(Parameter):
         )
         if not fds_faces:
             return None, msg
-        # Correct for scale_lenght  # FIXME
-        scale_length = context.scene.unit_settings.scale_length
-        fds_verts = [coo * scale_length for coo in fds_verts]
         # Group by 3 and 4
         verts = [t for t in zip(*[iter(fds_verts)] * 3)]
         faces = [t for t in zip(*[iter(fds_faces)] * 4)]
