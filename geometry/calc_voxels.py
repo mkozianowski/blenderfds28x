@@ -43,8 +43,7 @@ def get_voxels(context, ob):
     bm = bmesh.new()
     bm.from_mesh(me_eval)
     # Clean up
-    ob_eval.to_mesh_clear()
-    bpy.data.meshes.remove(ob_copy.data)
+    bpy.data.meshes.remove(ob_copy.data, do_unlink=True)  # no mem leaks
     # Check
     if len(bm.faces) == 0:  # no faces
         raise BFException(ob, "No voxel/pixel created!")
@@ -453,7 +452,7 @@ def get_pixels(context, ob):
     # Voxelize
     xbs, voxel_size = get_voxels(context, ob_copy)
     # Clean up
-    bpy.data.meshes.remove(ob_copy.data)
+    bpy.data.meshes.remove(ob_copy.data, do_unlink=True)
     # Flatten the solidified object
     choice = (_x_flatten_xbs, _y_flatten_xbs, _z_flatten_xbs)[flat_axis]
     xbs = choice(xbs, flat_origin)

@@ -208,29 +208,28 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
         ob = context.object
         # GEOM
         if ob.bf_namelist_cls == "ON_GEOM" and ob.bf_export:
+            check = ob.bf_geom_check_quality
             try:
                 fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
-                    context, ob, check=ob.bf_geom_check_quality
+                    context, ob, check
                 )
             except BFException as err:
                 self.report({"ERROR"}, str(err))
                 return {"CANCELLED"}
             else:
-                ob_tmp = geometry.from_fds.geom_to_ob(
-                    fds_surfids,
-                    fds_verts,
-                    fds_faces,
-                    context,
-                    name=f"Tmp Object {ob.name} GEOM",
+                ob_tmp = geometry.utils.get_tmp_object(
+                    context, ob, f"{ob.name}_GEOM_tmp"
                 )
-                geometry.utils.set_tmp_object(context, ob_tmp, ob)
+                geometry.from_fds.geom_to_ob(
+                    fds_surfids, fds_verts, fds_faces, context, ob_tmp
+                )
                 self.report({"INFO"}, msg)
                 return {"FINISHED"}
             finally:
                 w.cursor_modal_restore()
         # XB, XYZ, PB*
         msgs = list()
-        if ob.bf_xb_export and OP_XB in ob.bf_namelist.param_cls:
+        if ob.bf_xb_export and OP_XB in ob.bf_namelist.param_cls:  # XB
             try:
                 xbs, msg = geometry.to_fds.ob_to_xbs(context, ob)
             except BFException as err:
@@ -239,11 +238,9 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 return {"CANCELLED"}
             else:
                 msgs.append(msg)
-                ob_tmp = geometry.from_fds.xbs_to_ob(
-                    xbs, context, bf_xb=ob.bf_xb, name=f"Tmp Object {ob.name} XBs"
-                )
-                geometry.utils.set_tmp_object(context, ob_tmp, ob)
-        if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.param_cls:
+                ob_tmp = geometry.utils.get_tmp_object(context, ob, f"{ob.name}_XB_tmp")
+                geometry.from_fds.xbs_to_ob(xbs, context, ob_tmp, ob.bf_xb)
+        if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.param_cls:  # XYZ
             try:
                 xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob)
             except BFException as err:
@@ -252,11 +249,11 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 return {"CANCELLED"}
             else:
                 msgs.append(msg)
-                ob_tmp = geometry.from_fds.xyzs_to_ob(
-                    xyzs, context, bf_xyz=ob.bf_xyz, name=f"Tmp Object {ob.name} XYZs"
+                ob_tmp = geometry.utils.get_tmp_object(
+                    context, ob, f"{ob.name}_XYZ_tmp"
                 )
-                geometry.utils.set_tmp_object(context, ob_tmp, ob)
-        if ob.bf_pb_export and OP_PB in ob.bf_namelist.param_cls:
+                geometry.from_fds.xyzs_to_ob(xyzs, context, ob_tmp)
+        if ob.bf_pb_export and OP_PB in ob.bf_namelist.param_cls:  # PB
             try:
                 pbs, msg = geometry.to_fds.ob_to_pbs(context, ob)
             except BFException as err:
@@ -265,10 +262,10 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 return {"CANCELLED"}
             else:
                 msgs.append(msg)
-                ob_tmp = geometry.from_fds.pbs_to_ob(
-                    pbs, context, bf_pb=ob.bf_pb, name=f"Tmp Object {ob.name} PBs"
+                ob_tmp = geometry.utils.get_tmp_object(
+                    context, ob, f"{ob.name}_PB*_tmp"
                 )
-                geometry.utils.set_tmp_object(context, ob_tmp, ob)
+                geometry.from_fds.pbs_to_ob(pbs, context, ob_tmp)
         w.cursor_modal_restore()
         self.report(
             {"INFO"}, "; ".join(msg for msg in msgs if msg) or "Geometry exported."

@@ -118,17 +118,29 @@ def get_object_by_name(context, name) -> "Object or None":
 
 
 # 2.80
-def set_tmp_object(context, ob, ob_ref):
-    ob.bf_is_tmp = True
-    ob_ref.bf_has_tmp = True
-    ob_ref.hide_set(True)
+def get_tmp_object(context, ob, name="tmp"):
+    """Get a new tmp Object from ob."""
+    # Create new tmp Object
+    co_tmp = context.collection
+    me_tmp = bpy.data.meshes.new(name)
+    ob_tmp = bpy.data.objects.new(name, me_tmp)
+    co_tmp.objects.link(ob_tmp)
+    ob_tmp.bf_is_tmp = True
+    ob_tmp.bf_namelist_cls = ob.bf_namelist_cls  # so XB, XYZ, PB menus are the same
+    # Set original
+    ob.bf_has_tmp = True
+    ob.hide_set(True)
+    return ob_tmp
 
 
 # 2.80
 def rm_tmp_objects(context):
+    mes = bpy.data.meshes
     for ob in context.scene.objects:
         if ob.bf_is_tmp:
-            bpy.ops.object.delete({"selected_objects": (ob,)})
+            mes.remove(
+                ob.data, do_unlink=True
+            )  # best way to remove an Object wo mem leaks
         elif ob.bf_has_tmp:
             ob.bf_has_tmp = False
             ob.hide_set(False)

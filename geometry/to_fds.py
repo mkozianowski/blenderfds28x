@@ -12,7 +12,7 @@ from ..lib.exceptions import BFException
 
 # FIXME caching is deleted when created
 def ob_to_geom(context, ob, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
-    """Transform Blender object geometry to GEOM FDS notation."""
+    """Transform Object geometry to FDS mas, verts, faces notation."""
     if not ob.get("ob_to_geom_cache"):
         t0 = time()
         print("BFDS: ob_to_geom recalc:", ob.name)
@@ -29,7 +29,7 @@ def ob_to_geom(context, ob, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
 
 
 def _ob_to_xbs_voxels(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform ob solid geometry in XBs notation (voxelization)."""
+    """Transform Object solid geometry to xbs notation (voxelization)."""
     t0 = time()
     xbs, voxel_size = calc_voxels.get_voxels(context, ob)
     res = voxel_size * context.scene.unit_settings.scale_length
@@ -39,7 +39,7 @@ def _ob_to_xbs_voxels(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
 
 
 def _ob_to_xbs_pixels(context, ob) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
-    """Transform ob flat geometry in XBs notation (flat voxelization)."""
+    """Transform Object flat geometry to xbs notation (flat voxelization)."""
     t0 = time()
     xbs, voxel_size = calc_voxels.get_pixels(context, ob)
     res = voxel_size * context.scene.unit_settings.scale_length
@@ -49,14 +49,14 @@ def _ob_to_xbs_pixels(context, ob) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
 
 
 def _ob_to_xbs_bbox(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform ob solid geometry in XBs notation (bounding box)."""
-    xbs = (utils.get_global_bbox(context, ob),)
+    """Transform Object solid geometry to xbs notation (bounding box)."""
+    xbs = list((utils.get_global_bbox(context, ob),))
     msg = str()
     return xbs, msg
 
 
 def _ob_to_xbs_faces(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform ob faces in XBs notation (faces)."""
+    """Transform Object flat faces to xbs notation (faces)."""
     xbs = list()
     bm = utils.get_global_bmesh(context, ob)
     bm.faces.ensure_lookup_table()
@@ -82,7 +82,7 @@ def _ob_to_xbs_faces(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
 
 
 def _ob_to_xbs_edges(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform ob faces in XBs notation (faces)."""
+    """Transform Object edges in XBs notation (edges)."""
     xbs = list()
     bm = utils.get_global_bmesh(context, ob)
     bm.edges.ensure_lookup_table()
@@ -107,11 +107,11 @@ _choice_to_xbs = {
 }
 
 
-def ob_to_xbs(context, ob, unit) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform Blender object geometry according to ob.bf_xb to FDS notation."""
+def ob_to_xbs(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+    """Transform Object geometry according to ob.bf_xb to FDS notation."""
     if not ob.get("ob_to_xbs_cache"):  # check cache
-        print("BFDS: ob_to_xbs")  # recalc
-        ob["ob_to_xbs_cache"] = _choice_to_xbs[ob.bf_xb](context, ob)
+        print("BFDS: ob_to_xbs")
+        ob["ob_to_xbs_cache"] = _choice_to_xbs[ob.bf_xb](context, ob)  # recalc
     return ob["ob_to_xbs_cache"]  # send cached
 
 
@@ -119,7 +119,7 @@ def ob_to_xbs(context, ob, unit) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
 
 
 def _ob_to_xyzs_vertices(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
-    """Transform ob vertices in XYZs notation."""
+    """Transform Object vertices to xyzs notation."""
     xyzs = list()
     bm = utils.get_global_bmesh(context, ob)
     # For each vertex...
@@ -135,8 +135,8 @@ def _ob_to_xyzs_vertices(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
     return xyzs, msg
 
 
-def _ob_to_xyzs_center(context, ob) -> "((x0,y0,z0,), ...), 'Message'":
-    """Transform ob center in XYZs notation."""
+def _ob_to_xyzs_center(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
+    """Transform Object center to xyzs notation."""
     xyzs = [(ob.location[0], ob.location[1], ob.location[2])]
     msg = str()
     return xyzs, msg
@@ -145,21 +145,19 @@ def _ob_to_xyzs_center(context, ob) -> "((x0,y0,z0,), ...), 'Message'":
 _choice_to_xyzs = {"CENTER": _ob_to_xyzs_center, "VERTICES": _ob_to_xyzs_vertices}
 
 
-def ob_to_xyzs(context, ob):
-    """Transform Blender object geometry according to ob.bf_xyz to FDS notation."""
+def ob_to_xyzs(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
+    """Transform Object geometry according to ob.bf_xyz to xyzs notation."""
     if not ob.get("ob_to_xyzs_cache"):  # check cache
-        print("BFDS: ob_to_xyzs recalc:", ob.name)  # recalc
-        ob["ob_to_xyzs_cache"] = _choice_to_xyzs[ob.bf_xyz](context, ob)
+        print("BFDS: ob_to_xyzs recalc:", ob.name)
+        ob["ob_to_xyzs_cache"] = _choice_to_xyzs[ob.bf_xyz](context, ob)  # recalc
     return ob["ob_to_xyzs_cache"]  # send cached
 
 
 # to PB in Blender units
 
 
-def _ob_to_pbs_planes(
-    context, ob
-) -> "(('X',x3,), ('X',x7,), ('Y',y9,), ...), 'Message'":
-    """Transform ob faces in PBs notation."""
+def _ob_to_pbs_planes(context, ob) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
+    """Transform Object faces to pbs notation."""
     pbs = list()
     xbs, msg = _ob_to_xbs_faces(context, ob)
     epsilon = 1e-5
@@ -182,9 +180,9 @@ def _ob_to_pbs_planes(
     return pbs, msg
 
 
-def ob_to_pbs(context, ob):
-    """Transform Blender object geometry according to ob.bf_pb to FDS notation."""
+def ob_to_pbs(context, ob) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
+    """Transform Object geometry according to ob.bf_pb to pbs notation."""
     if not ob.get("ob_to_pbs_cache"):  # check cache
-        print("BFDS: ob_to_pbs recalc:", ob.name)  # recalc
-        ob["ob_to_pbs_cache"] = _ob_to_pbs_planes(context, ob)
+        print("BFDS: ob_to_pbs recalc:", ob.name)
+        ob["ob_to_pbs_cache"] = _ob_to_pbs_planes(context, ob)  # recalc
     return ob["ob_to_pbs_cache"]  # send cached
