@@ -61,8 +61,7 @@ def insert_verts_into_mesh(me, verts):
         bm.verts.new(v)
     bm.to_mesh(me)
     bm.free()
-    #    bpy.context.view_layer.update()  # push update
-    bpy.ops.object.mode_set(mode="OBJECT")  # FIXME
+    bpy.context.view_layer.update()  # push update
 
 
 ### Working on Blender objects

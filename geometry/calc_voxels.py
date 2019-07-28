@@ -33,7 +33,6 @@ def get_voxels(context, ob):
     bpy.context.view_layer.update()  # push update
     # Align voxels to global origin and add remesh modifier
     if not ob.bf_xb_center_voxels:
-        print("align", ob_copy.matrix_world)  # FIXME
         _align_remesh_to_global_origin(context, ob_copy, voxel_size)
     _add_remesh_mod(context, ob_copy, voxel_size)
     # Get evaluated ob_copy (eg. modifiers applied),
