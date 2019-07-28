@@ -30,8 +30,10 @@ def get_voxels(context, ob):
     ob_copy.data.transform(ob.matrix_world)
     ob_copy.matrix_world = Matrix()
     context.collection.objects.link(ob_copy)
+    bpy.context.view_layer.update()  # push update
     # Align voxels to global origin and add remesh modifier
     if not ob.bf_xb_center_voxels:
+        print("align", ob_copy.matrix_world)  # FIXME
         _align_remesh_to_global_origin(context, ob_copy, voxel_size)
     _add_remesh_mod(context, ob_copy, voxel_size)
     # Get evaluated ob_copy (eg. modifiers applied),
@@ -43,7 +45,7 @@ def get_voxels(context, ob):
     bm = bmesh.new()
     bm.from_mesh(me_eval)
     # Clean up
-    bpy.data.meshes.remove(ob_copy.data, do_unlink=True)  # no mem leaks
+    bpy.data.meshes.remove(ob_copy.data, do_unlink=True)  # no mem leaks # FIXME
     # Check
     if len(bm.faces) == 0:  # no faces
         raise BFException(ob, "No voxel/pixel created!")
@@ -143,7 +145,8 @@ def _get_voxel_size(context, ob) -> "voxel_size":
 
 def _align_remesh_to_global_origin(context, ob, voxel_size):
     """Modify object mesh for remesh voxel alignment to global origin."""
-    bb = utils.get_bbox(ob)  # the object is already global
+    bb = utils.get_bbox(ob)  # the object is already global # FIXME should not be global
+    print(bb)
     # Calc new bbox (in Blender units)
     #      +---+ pv1
     #      |   |

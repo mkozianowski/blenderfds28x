@@ -171,8 +171,7 @@ class MATERIAL_OT_bf_show_fds_code(_show_fds_code, Operator):
         return context.active_object and context.active_object.active_material
 
     def _get_lines(self, context):
-        ma = context.active_object.active_material
-        self.lines = ma.to_fds(context)
+        return context.active_object.active_material.to_fds(context)
 
 
 @subscribe

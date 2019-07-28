@@ -5,6 +5,8 @@ hide geometry DONE
 geometry cache DONE
 tmp object DONE
 
+fix center voxel/pixels
+
 "global" to "world"
 
 GEOM geometry cache

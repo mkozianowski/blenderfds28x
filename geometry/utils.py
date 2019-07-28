@@ -61,7 +61,8 @@ def insert_verts_into_mesh(me, verts):
         bm.verts.new(v)
     bm.to_mesh(me)
     bm.free()
-    bpy.context.view_layer.update()  # push update
+    #    bpy.context.view_layer.update()  # push update
+    bpy.ops.object.mode_set(mode="OBJECT")  # FIXME
 
 
 ### Working on Blender objects
@@ -220,7 +221,7 @@ def get_global_dimensions(context, ob) -> "dx, dy, dz":
 #     return area
 
 
-# 2.80
+# 2.80 # FIXME override
 def set_balanced_center_position(context, ob) -> "None":
     """Set object center position"""
     if ob.mode != "OBJECT":
