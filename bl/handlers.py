@@ -2,6 +2,8 @@ import bpy
 from bpy.app.handlers import persistent, load_post, save_pre, depsgraph_update_post
 from bpy.types import Object
 
+from .. import geometry
+
 # Handlers
 
 
@@ -18,7 +20,7 @@ def _load_post(self):  # Beware: self is None
 
 @persistent
 def _save_pre(self):  # Beware: self is None
-    pass
+    geometry.utils.rm_tmp_objects(bpy.context)
     # Set file format version
     # set_file_version(bpy.context) FIXME
 
