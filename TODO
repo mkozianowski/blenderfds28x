@@ -5,6 +5,8 @@ hide geometry DONE
 geometry cache DONE
 tmp object DONE
 
+"global" to "world"
+
 GEOM geometry cache
 GEOM geometry mod original object fix
 
