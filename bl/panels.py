@@ -18,7 +18,7 @@ import bpy
 from bpy.types import Panel, UIList, Operator, bpy_struct
 
 from ..lang import namelists
-from ..lib import custom_uilist
+from ..lib import custom_uilist, config
 
 bl_classes = list()
 bf_classes = list()
@@ -167,16 +167,19 @@ class MATERIAL_PT_bf_namelist(Panel):
 
     @classmethod
     def poll(cls, context):
-        ma = context.object.active_material
-        return ma and ma.name not in {"INERT", "HVAC", "MIRROR", "OPEN", "PERIODIC"}
+        ob = context.object
+        return ob and ob.active_material
 
-    def draw_header(self, context):  # FIXME
+    def draw_header(self, context):
         ma = context.object.active_material
+        if ma.name in config.default_mas:  # Default material
+            self.bl_label = f"FDS SURF (Predefined Boundary Condition)"
+            return
         bf_namelist = namelists[ma.bf_namelist_cls]
         self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
         self.layout.prop(ma, "bf_export", icon_only=True)
 
-    def draw(self, context):  # FIXME
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
@@ -184,6 +187,8 @@ class MATERIAL_PT_bf_namelist(Panel):
             row_major=True, columns=0, even_columns=True, even_rows=False, align=False
         )
         ma = context.object.active_material
+        if ma.name in config.default_mas:  # Default material
+            return
         layout.active = ma.bf_export
         flow.prop(ma, "bf_namelist_cls")
         # Get the namelist class, instanciate it, and draw its panel

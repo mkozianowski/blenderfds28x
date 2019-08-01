@@ -3,6 +3,7 @@ from bpy.app.handlers import persistent, load_post, save_pre, depsgraph_update_p
 from bpy.types import Object
 
 from .. import geometry
+from ..lib import config
 
 # Handlers
 
@@ -12,15 +13,8 @@ def _load_post(self):  # Beware: self is None
     # Check file format version FIXME
     # check_file_version(context)
     # Init FDS default materials
-    default_mas = {
-        "INERT": ((0.8, 0.8, 0.2, 1.0),),
-        "HVAC": ((0.2, 0.2, 0.8, 1.0),),
-        "MIRROR": ((0.2, 0.2, 0.8, 0.2),),
-        "OPEN": ((0.2, 0.8, 0.8, 0.2),),
-        "PERIODIC": ((0.8, 0.8, 0.8, 0.2),),
-    }
-    for k, v in default_mas.items():
-        if not bpy.data.materials.get(k):
+    for k, v in config.default_mas.items():
+        if not bpy.data.materials.get(k):  # check existance
             ma = bpy.data.materials.new(k)
             ma.bf_export = True
             ma.diffuse_color = v[0]
