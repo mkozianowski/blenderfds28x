@@ -188,6 +188,7 @@ class MATERIAL_PT_bf_namelist(Panel):
         )
         ma = context.object.active_material
         if ma.name in config.default_mas:  # Default material
+            layout.label(text="No FDS parameter.")
             return
         layout.active = ma.bf_export
         flow.prop(ma, "bf_namelist_cls")

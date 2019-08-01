@@ -736,7 +736,7 @@ class MP_THICKNESS(Parameter):
     bpy_default = 0.01
     bpy_other = {"step": 1.0, "precision": 6, "min": 0.000001}
     bpy_export = "bf_thickness_export"
-    bpy_export_default = True
+    bpy_export_default = False
 
 
 @subscribe

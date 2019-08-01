@@ -31,26 +31,29 @@ bl_info = {
 
 # Register
 
+import bpy
+
 from . import lang
-from .bl import operators, panels, menus, ui, handlers
+from .bl import operators, panels, menus, ui, handlers, preferences
 
 
 def register():
+    preferences.register()
     lang.register()
     operators.register()
     panels.register()
     menus.register()
     handlers.register()
-
-
-#    ui.register() # FIXME
+    if bpy.context.preferences.addons["blenderfds28x"].preferences.bf_pref_simplify_ui:
+        ui.register()
 
 
 def unregister():
-    # ui.unregister() # FIXME
+    # ui.unregister() # FIXME for now, restart needed
     menus.unregister()
     panels.unregister()
     operators.unregister()
     lang.unregister()
     handlers.unregister()
+    preferences.unregister()
 
