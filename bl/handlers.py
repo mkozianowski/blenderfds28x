@@ -9,10 +9,22 @@ from .. import geometry
 
 @persistent
 def _load_post(self):  # Beware: self is None
-    context = bpy.context
     # Check file format version FIXME
     # check_file_version(context)
     # Init FDS default materials
+    default_mas = {
+        "INERT": ((0.8, 0.8, 0.2, 1.0),),
+        "HVAC": ((0.2, 0.2, 0.8, 1.0),),
+        "MIRROR": ((0.2, 0.2, 0.8, 0.2),),
+        "OPEN": ((0.2, 0.8, 0.8, 0.2),),
+        "PERIODIC": ((0.8, 0.8, 0.8, 0.2),),
+    }
+    for k, v in default_mas.items():
+        if not bpy.data.materials.get(k):
+            ma = bpy.data.materials.new(k)
+            ma.bf_export = True
+            ma.diffuse_color = v[0]
+            ma.use_fake_user = True
     # if not fds.surf.has_predefined(): bpy.ops.material.bf_set_predefined()
     # Set default scene appearance
     # for scene in bpy.data.scenes: scene.set_default_appearance(context=None)

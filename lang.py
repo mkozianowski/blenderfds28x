@@ -686,6 +686,10 @@ class MP_namelist_cls(Parameter):
     }
     bpy_default = "MN_SURF"
 
+    def to_fds(self, context):
+        if self.element.name in {"INERT", "HVAC", "MIRROR", "OPEN", "PERIODIC"}:
+            return
+        super().to_fds(context)
 
 @subscribe
 class MP_ID(PString):
@@ -720,7 +724,7 @@ class MP_RGB(Parameter):
 
 
 @subscribe
-class MP_TRANSPARENCY(Parameter):
+class MP_TRANSPARENCY(Parameter):  # FIXME it is in diffuse_color!
     label = "TRANSPARENCY"
     description = "Transparency"
     fds_label = "TRANSPARENCY"

@@ -167,7 +167,8 @@ class MATERIAL_PT_bf_namelist(Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object.type == "MESH" and context.object.active_material
+        ma = context.object.active_material
+        return ma and ma.name not in {"INERT", "HVAC", "MIRROR", "OPEN", "PERIODIC"}
 
     def draw_header(self, context):  # FIXME
         ma = context.object.active_material

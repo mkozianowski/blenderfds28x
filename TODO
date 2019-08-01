@@ -7,7 +7,7 @@ tmp objects
 fix center voxel/pixels
 scale factor for units (length, time)
 "global" to "world"
-
+default SURFs
 
 *TODO:*
 
@@ -17,6 +17,7 @@ GEOM geometry mod original object fix
 op copy properties
 op mesh
 op find MATL, 
+default appearance
 
 mesh alignment
 from_fds, import
