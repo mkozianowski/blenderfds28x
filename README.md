@@ -18,8 +18,6 @@ For more information, and the original BlenderFDS code visit http://www.blenderf
 
 3. Open Blender 2.8x and open the `Edit > Preferences` menu. Then install and enable the downloaded addon as described in [Blender Manual](https://docs.blender.org/manual/en/dev/editors/preferences/addons.html?highlight=addon#).
 
-## How to update it
+## How to stay on the edge of development
 
-1. Open Blender 2.8x and select the `Edit > Preferences` menu. Then disable the installed version.
-
-2. Install and enable the updated version as described above. 
+Use `git update` to update your local BlenderFDS repo in the `blender/2.80/scripts/addons/blenderfds280x` directory.
