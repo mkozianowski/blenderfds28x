@@ -8,57 +8,62 @@ from . import calc_trisurfaces
 from ..lib.exceptions import BFException
 
 
-# to GEOM in Blender units
+# to GEOM
 
-# FIXME caching is deleted when created
-def ob_to_geom(context, ob, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
+
+def ob_to_geom(
+    context, ob, scale_length, check=True
+) -> "mas, fds_verts, fds_faces, 'Msg'":
     """Transform Object geometry to FDS mas, verts, faces notation."""
-    if not ob.get("ob_to_geom_cache"):
-        t0 = time()
-        print("BFDS: ob_to_geom recalc:", ob.name)
-        mas, verts, faces = calc_trisurfaces.get_trisurface(context, ob, check)
-        fds_verts = [coo for vert in verts for coo in vert]
-        fds_faces = [i for face in faces for i in face]
-        dt = time() - t0
-        msg = f"GEOM: {len(fds_verts)} vertices, {len(fds_faces)} faces, in {dt:.3f} s"
-        ob["ob_to_geom_cache"] = mas, fds_verts, fds_faces, msg
-    return ob["ob_to_geom_cache"]
+    t0 = time()
+    print("BFDS: ob_to_geom:", ob.name)
+    mas, verts, faces = calc_trisurfaces.get_trisurface(
+        context, ob, scale_length, check
+    )
+    fds_verts = [coo for vert in verts for coo in vert]
+    fds_faces = [i for face in faces for i in face]
+    dt = time() - t0
+    msg = f"GEOM: {len(fds_verts)} vertices, {len(fds_faces)} faces, in {dt:.3f} s"
+    return mas, fds_verts, fds_faces, msg
 
 
-# to XB in Blender units
+# to XB
 
 
-def _ob_to_xbs_voxels(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+def _ob_to_xbs_voxels(
+    context, ob, scale_length
+) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     """Transform Object solid geometry to xbs notation (voxelization)."""
     t0 = time()
-    xbs, voxel_size = calc_voxels.get_voxels(context, ob)
-    res = voxel_size * context.scene.unit_settings.scale_length
+    xbs, voxel_size = calc_voxels.get_voxels(context, ob, scale_length)
     dt = time() - t0
-    msg = f"XB: {len(xbs)} voxels, resolution {res:.3f} m, in {dt:.3f} s"
+    msg = f"XB: {len(xbs)} voxels, resolution {voxel_size:.3f} m, in {dt:.3f} s"
     return xbs, msg
 
 
-def _ob_to_xbs_pixels(context, ob) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
+def _ob_to_xbs_pixels(
+    context, ob, scale_length
+) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
     """Transform Object flat geometry to xbs notation (flat voxelization)."""
     t0 = time()
-    xbs, voxel_size = calc_voxels.get_pixels(context, ob)
-    res = voxel_size * context.scene.unit_settings.scale_length
+    xbs, voxel_size = calc_voxels.get_pixels(context, ob, scale_length)
+    res = voxel_size * scale_length
     dt = time() - t0
     msg = f"XB: {len(xbs)} pixels, resolution {res:.3f} m, in {dt:.3f} s"
     return xbs, msg
 
 
-def _ob_to_xbs_bbox(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+def _ob_to_xbs_bbox(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     """Transform Object solid geometry to xbs notation (bounding box)."""
-    xbs = list((utils.get_global_bbox(context, ob),))
+    xbs = list((utils.get_bbox_xbs(context, ob, scale_length, world=True),))
     msg = str()
     return xbs, msg
 
 
-def _ob_to_xbs_faces(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+def _ob_to_xbs_faces(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     """Transform Object flat faces to xbs notation (faces)."""
     xbs = list()
-    bm = utils.get_global_bmesh(context, ob)
+    bm = utils.get_object_bmesh(context, ob, world=True)
     bm.faces.ensure_lookup_table()
     for face in bm.faces:
         verts = face.verts
@@ -72,7 +77,16 @@ def _ob_to_xbs_faces(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
             y1 = y0 = (y0 + y1) / 2.0
         if deltas[0][1] == 0:
             z1 = z0 = (z0 + z1) / 2.0
-        xbs.append((x0, x1, y0, y1, z0, z1))
+        xbs.append(
+            (
+                x0 * scale_length,
+                x1 * scale_length,
+                y0 * scale_length,
+                y1 * scale_length,
+                z0 * scale_length,
+                z1 * scale_length,
+            )
+        )
     bm.free()
     xbs.sort()
     if not xbs:
@@ -81,15 +95,24 @@ def _ob_to_xbs_faces(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     return xbs, msg
 
 
-def _ob_to_xbs_edges(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+def _ob_to_xbs_edges(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     """Transform Object edges in XBs notation (edges)."""
     xbs = list()
-    bm = utils.get_global_bmesh(context, ob)
+    bm = utils.get_object_bmesh(context, ob, world=True)
     bm.edges.ensure_lookup_table()
     for edge in bm.edges:
         pt0x, pt0y, pt0z = edge.verts[0].co
         pt1x, pt1y, pt1z = edge.verts[1].co
-        xbs.append((pt0x, pt1x, pt0y, pt1y, pt0z, pt1z))
+        xbs.append(
+            (
+                pt0x * scale_length,
+                pt1x * scale_length,
+                pt0y * scale_length,
+                pt1y * scale_length,
+                pt0z * scale_length,
+                pt1z * scale_length,
+            )
+        )
     bm.free()
     xbs.sort()
     if not xbs:
@@ -107,26 +130,24 @@ _choice_to_xbs = {
 }
 
 
-def ob_to_xbs(context, ob) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+def ob_to_xbs(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     """Transform Object geometry according to ob.bf_xb to FDS notation."""
-    if not ob.get("ob_to_xbs_cache"):  # check cache
-        print("BFDS: ob_to_xbs")
-        ob["ob_to_xbs_cache"] = _choice_to_xbs[ob.bf_xb](context, ob)  # recalc
-    return ob["ob_to_xbs_cache"]  # send cached
+    print("BFDS: ob_to_xbs:", ob.name)
+    return _choice_to_xbs[ob.bf_xb](context, ob, scale_length)  # recalc
 
 
 # to XYZ in Blender units
 
 
-def _ob_to_xyzs_vertices(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
+def _ob_to_xyzs_vertices(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
     """Transform Object vertices to xyzs notation."""
     xyzs = list()
-    bm = utils.get_global_bmesh(context, ob)
+    bm = utils.get_object_bmesh(context, ob, world=True)
     # For each vertex...
     bm.verts.ensure_lookup_table()
     for v in bm.verts:
         pt0x, pt0y, pt0z = v.co
-        xyzs.append((pt0x, pt0y, pt0z))
+        xyzs.append((pt0x * scale_length, pt0y * scale_length, pt0z * scale_length))
     bm.free()
     xyzs.sort()
     if not xyzs:
@@ -135,9 +156,15 @@ def _ob_to_xyzs_vertices(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
     return xyzs, msg
 
 
-def _ob_to_xyzs_center(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
+def _ob_to_xyzs_center(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
     """Transform Object center to xyzs notation."""
-    xyzs = [(ob.location[0], ob.location[1], ob.location[2])]
+    xyzs = [
+        (
+            ob.location[0] * scale_length,
+            ob.location[1] * scale_length,
+            ob.location[2] * scale_length,
+        )
+    ]
     msg = str()
     return xyzs, msg
 
@@ -145,21 +172,21 @@ def _ob_to_xyzs_center(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
 _choice_to_xyzs = {"CENTER": _ob_to_xyzs_center, "VERTICES": _ob_to_xyzs_vertices}
 
 
-def ob_to_xyzs(context, ob) -> "((x0,y0,z0,), ...), 'Msg'":
+def ob_to_xyzs(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
     """Transform Object geometry according to ob.bf_xyz to xyzs notation."""
-    if not ob.get("ob_to_xyzs_cache"):  # check cache
-        print("BFDS: ob_to_xyzs recalc:", ob.name)
-        ob["ob_to_xyzs_cache"] = _choice_to_xyzs[ob.bf_xyz](context, ob)  # recalc
-    return ob["ob_to_xyzs_cache"]  # send cached
+    print("BFDS: ob_to_xyzs:", ob.name)
+    return _choice_to_xyzs[ob.bf_xyz](context, ob, scale_length)  # recalc
 
 
 # to PB in Blender units
 
 
-def _ob_to_pbs_planes(context, ob) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
+def _ob_to_pbs_planes(
+    context, ob, scale_length
+) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
     """Transform Object faces to pbs notation."""
     pbs = list()
-    xbs, msg = _ob_to_xbs_faces(context, ob)
+    xbs, msg = _ob_to_xbs_faces(context, ob, scale_length)
     epsilon = 1e-5
     # For each face build a plane...
     for xb in xbs:
@@ -180,9 +207,7 @@ def _ob_to_pbs_planes(context, ob) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
     return pbs, msg
 
 
-def ob_to_pbs(context, ob) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
+def ob_to_pbs(context, ob, scale_length) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
     """Transform Object geometry according to ob.bf_pb to pbs notation."""
-    if not ob.get("ob_to_pbs_cache"):  # check cache
-        print("BFDS: ob_to_pbs recalc:", ob.name)
-        ob["ob_to_pbs_cache"] = _ob_to_pbs_planes(context, ob)  # recalc
-    return ob["ob_to_pbs_cache"]  # send cached
+    print("BFDS: ob_to_pbs:", ob.name)
+    return _ob_to_pbs_planes(context, ob, scale_length)  # recalc

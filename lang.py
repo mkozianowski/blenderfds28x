@@ -1042,7 +1042,8 @@ class OP_XB(Parameter):
         ob = self.element
         if not ob.bf_xb_export:
             return
-        xbs, msg = geometry.to_fds.ob_to_xbs(context, ob)
+        scale_length = context.scene.unit_settings.scale_length
+        xbs, msg = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
         if not xbs:
             return None, msg
         elif len(xbs) == 1:
@@ -1115,7 +1116,8 @@ class OP_XYZ(Parameter):
         ob = self.element
         if not ob.bf_xyz_export:
             return
-        xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob)
+        scale_length = context.scene.unit_settings.scale_length
+        xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob, scale_length)
         if not xyzs:
             return None, msg
         elif len(xyzs) == 1:
@@ -1186,7 +1188,8 @@ class OP_PB(Parameter):
         ob = self.element
         if not ob.bf_pb_export:
             return
-        pbs, msg = geometry.to_fds.ob_to_pbs(context, ob)
+        scale_length = context.scene.unit_settings.scale_length
+        pbs, msg = geometry.to_fds.ob_to_pbs(context, ob, scale_length)
         # pbs is: (0, 3.5), (0, 4.), (2, .5) ...
         # with 0, 1, 2 perpendicular axis
         if not pbs:

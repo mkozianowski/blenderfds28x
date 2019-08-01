@@ -1,29 +1,25 @@
-voxelization fix for API change DONE
-show FDS code DONE
-show geometry DONE
-hide geometry DONE
-geometry cache DONE
-tmp object DONE
+*DONE:*
 
+voxelization fix for API change
+show FDS code
+show/hide geometry
+tmp objects
 fix center voxel/pixels
-
+scale factor for units (length, time)
 "global" to "world"
 
-GEOM geometry cache
+
+*TODO:*
+
+geometry cache not working, handler crashing
 GEOM geometry mod original object fix
 
 op copy properties
 op mesh
 op find MATL, 
 
-rm tmp when voxel resolution changes
 mesh alignment
 from_fds, import
-
-scale factor for units (length, time)
-        # Correct for scale_lenght
-        scale_length = context.scene.unit_settings.scale_length
-        pbs = [[pb[0], pb[1] * scale_length] for pb in pbs]
 
 file version
 

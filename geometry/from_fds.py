@@ -3,16 +3,12 @@
 import bpy
 from time import time
 
-from . import utils
-
-
 epsilon = 1e-5  # FIXME
 
+# From GEOM
 
-# From GEOM in Blender units
 
-
-def geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, me):
+def geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, me, scale_length):
     """Import GEOM vertices ((x0,y0,z0,), ...) and faces ((1,2,3,), ...) into existing Blender Mesh."""
     # Append material slots
     for i, surfid in enumerate(fds_surfids):
@@ -31,7 +27,11 @@ def geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, me):
     if nfaces * 4 != len(fds_faces):
         raise Exception("Wrong FACES length")
     verts = [
-        (fds_verts[i * 3], fds_verts[i * 3 + 1], fds_verts[i * 3 + 2])
+        (
+            fds_verts[i * 3] / scale_length,
+            fds_verts[i * 3 + 1] / scale_length,
+            fds_verts[i * 3 + 2] / scale_length,
+        )
         for i in range(nverts)
     ]
     edges = list()
@@ -50,31 +50,32 @@ def geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, me):
         face.material_index = imats[iface]
 
 
-def geom_to_ob(fds_surfids, fds_verts, fds_faces, context, ob):
+def geom_to_ob(fds_surfids, fds_verts, fds_faces, context, ob, scale_length):
     """Import GEOM vertices ((x0,y0,z0,), ...) and faces ((1,2,3,), ...) into existing Blender Object."""
-    geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, ob.data)
-    utils.set_balanced_center_position(context, ob)
+    print("BFDS: geom_to_ob:", ob.name)
+    geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, ob.data, scale_length)
+    _set_balanced_center_position(context, ob)
 
 
 # from XB in Blender units
 
 
-def xbs_edges_to_mesh(xbs, context, me):
+def xbs_edges_to_mesh(xbs, context, me, scale_length):
     """Import xbs edges ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Mesh."""
     verts, edges, faces = list(), list(), list()
     for i, xb in enumerate(xbs):
-        x0, x1, y0, y1, z0, z1 = xb
+        x0, x1, y0, y1, z0, z1 = (coo / scale_length for coo in xb)
         j = i * 2
         verts.extend(((x0, y0, z0), (x1, y1, z1)))
         edges.append((0 + j, 1 + j))
     me.from_pydata(verts, edges, faces)
 
 
-def xbs_faces_to_mesh(xbs, context, me):
+def xbs_faces_to_mesh(xbs, context, me, scale_length):
     """Import xbs faces ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Mesh."""
     verts, edges, faces = list(), list(), list()
     for i, xb in enumerate(xbs):
-        x0, x1, y0, y1, z0, z1 = xb
+        x0, x1, y0, y1, z0, z1 = (coo / scale_length for coo in xb)
         j = i * 4
         if abs(x1 - x0) <= epsilon:
             verts.extend(((x0, y0, z0), (x0, y1, z0), (x0, y1, z1), (x0, y0, z1)))
@@ -90,11 +91,11 @@ def xbs_faces_to_mesh(xbs, context, me):
     me.from_pydata(verts, edges, faces)
 
 
-def xbs_bbox_to_mesh(xbs, context, me):
+def xbs_bbox_to_mesh(xbs, context, me, scale_length):
     """Import xbs bboxes ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Mesh."""
     verts, edges, faces = list(), list(), list()
     for i, xb in enumerate(xbs):
-        x0, x1, y0, y1, z0, z1 = xb
+        x0, x1, y0, y1, z0, z1 = (coo / scale_length for coo in xb)
         j = i * 8
         verts.extend(
             (
@@ -130,50 +131,64 @@ xbs_to_mesh = {
 }
 
 
-def xbs_to_ob(xbs, context, ob, bf_xb="BBOX"):
+def xbs_to_ob(xbs, context, ob, scale_length, bf_xb="BBOX"):
     """Import xbs geometry ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Object."""
-    xbs_to_mesh[bf_xb](xbs, context, ob.data)
-    utils.set_balanced_center_position(context, ob)
+    print("BFDS: geom_to_ob:", ob.name)
+    xbs_to_mesh[bf_xb](xbs, context, ob.data, scale_length)
+    _set_balanced_center_position(context, ob)
     ob.bf_xb_export, ob.bf_xb = True, bf_xb
 
 
 # From XYZ in Blender units
 
 
-def xyzs_to_mesh(xyzs, context, me):
+def xyzs_to_mesh(xyzs, context, me, scale_length):
     """Import xyzs vertices ((x0,y0,z0,), ...) into existing Blender Mesh."""
+    for i, xyz in enumerate(xyzs):
+        xyzs[i] = tuple(coo / scale_length for coo in xyz)  # FIXME test
     me.from_pydata(xyzs, tuple(), tuple())  # verts, edges, faces
 
 
-def xyzs_to_ob(xyzs, context, ob):
+def xyzs_to_ob(xyzs, context, ob, scale_length):
     """Import xyzs vertices ((x0,y0,z0,), ...) into existing Blender Object."""
-    xyzs_to_mesh(xyzs, context, ob.data)
-    utils.set_balanced_center_position(context, ob)
+    xyzs_to_mesh(xyzs, context, ob.data, scale_length)
+    _set_balanced_center_position(context, ob)
     ob.bf_xyz_export, ob.bf_xyz = True, "VERTICES"
 
 
-# From PB in Blender units
+# From PB
 
 
-def pbs_to_mesh(pbs, context, me):
+def pbs_to_mesh(pbs, context, me, scale_length):
     """Import pbs planes ((0,x3,), (0,x7,), (1,y9,), ...) into existing Blender Mesh."""
     xbs = list()
     for pb in pbs:
+        sl = scale_length
         if pb[0] == 0:
-            xbs.append((pb[1], pb[1], -1.0, +1.0, -1.0, +1.0))  # PBX is 0
+            xbs.append((pb[1], pb[1], -sl, +sl, -sl, +sl))  # PBX is 0
         elif pb[0] == 1:
-            xbs.append((-1.0, +1.0, pb[1], pb[1], -1.0, +1.0))  # PBY is 1
+            xbs.append((-sl, +sl, pb[1], pb[1], -sl, +sl))  # PBY is 1
         elif pb[0] == 2:
-            xbs.append((-1.0, +1.0, -1.0, +1.0, pb[1], pb[1]))  # PBZ is 2
+            xbs.append((-sl, +sl, -sl, +sl, pb[1], pb[1]))  # PBZ is 2
         else:
             print("BFDS: from_fds.pbs_planes_to_ob: unrecognized PB*:", pb)
             continue
-    return xbs_faces_to_mesh(xbs, context, me)
+    return xbs_faces_to_mesh(xbs, context, me, scale_length)
 
 
-def pbs_to_ob(pbs, context, ob):
+def pbs_to_ob(pbs, context, ob, scale_length):
     """Import pbs planes ((0,x3,), (0,x7,), (1,y9,), ...) into existing Blender Object."""
-    pbs_to_mesh(pbs, context, ob.data)
-    utils.set_balanced_center_position(context, ob)
+    pbs_to_mesh(pbs, context, ob.data, scale_length)
+    _set_balanced_center_position(context, ob)
     ob.bf_pb_export, ob.bf_pb = True, "PLANES"
 
+
+# Utils
+
+
+def _set_balanced_center_position(context, ob) -> "None":
+    """Set object center position"""
+    bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
+    bpy.ops.object.origin_set(
+        {"selected_objects": (ob,)}, type="ORIGIN_GEOMETRY"
+    )  # override context

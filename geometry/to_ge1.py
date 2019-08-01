@@ -65,7 +65,7 @@ def scene_to_ge1(context, scene):  # TODO use BMesh
     # Get GE1 faces from selected objects
     gefaces = list()
     for ob in obs:
-        # Get the new bmesh from the Object, apply modifiers, set in global coordinates, and triangulate
+        # Get the new bmesh from the Object, apply modifiers, set in world coordinates, and triangulate
         bm = bmesh.new()
         bm.from_object(
             ob, context.scene, deform=True, render=False, cage=False, face_normals=True

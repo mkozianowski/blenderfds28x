@@ -205,12 +205,13 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
         ob = context.object
+        scale_length = context.scene.unit_settings.scale_length
         # GEOM
         if ob.bf_namelist_cls == "ON_GEOM" and ob.bf_export:
             check = ob.bf_geom_check_quality
             try:
                 fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
-                    context, ob, check
+                    context, ob, scale_length, check
                 )
             except BFException as err:
                 self.report({"ERROR"}, str(err))
@@ -220,7 +221,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                     context, ob, f"{ob.name}_GEOM_tmp"
                 )
                 geometry.from_fds.geom_to_ob(
-                    fds_surfids, fds_verts, fds_faces, context, ob_tmp
+                    fds_surfids, fds_verts, fds_faces, context, ob_tmp, scale_length
                 )
                 self.report({"INFO"}, msg)
                 return {"FINISHED"}
@@ -230,7 +231,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
         msgs = list()
         if ob.bf_xb_export and OP_XB in ob.bf_namelist.param_cls:  # XB
             try:
-                xbs, msg = geometry.to_fds.ob_to_xbs(context, ob)
+                xbs, msg = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
             except BFException as err:
                 w.cursor_modal_restore()
                 self.report({"ERROR"}, str(err))
@@ -238,10 +239,12 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
             else:
                 msgs.append(msg)
                 ob_tmp = geometry.utils.get_tmp_object(context, ob, f"{ob.name}_XB_tmp")
-                geometry.from_fds.xbs_to_ob(xbs, context, ob_tmp, ob.bf_xb)
+                geometry.from_fds.xbs_to_ob(
+                    xbs, context, ob_tmp, scale_length, ob.bf_xb
+                )
         if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.param_cls:  # XYZ
             try:
-                xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob)
+                xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob, scale_length)
             except BFException as err:
                 w.cursor_modal_restore()
                 self.report({"ERROR"}, str(err))
@@ -251,10 +254,10 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 ob_tmp = geometry.utils.get_tmp_object(
                     context, ob, f"{ob.name}_XYZ_tmp"
                 )
-                geometry.from_fds.xyzs_to_ob(xyzs, context, ob_tmp)
+                geometry.from_fds.xyzs_to_ob(xyzs, context, ob_tmp, scale_length)
         if ob.bf_pb_export and OP_PB in ob.bf_namelist.param_cls:  # PB
             try:
-                pbs, msg = geometry.to_fds.ob_to_pbs(context, ob)
+                pbs, msg = geometry.to_fds.ob_to_pbs(context, ob, scale_length)
             except BFException as err:
                 w.cursor_modal_restore()
                 self.report({"ERROR"}, str(err))
@@ -264,7 +267,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 ob_tmp = geometry.utils.get_tmp_object(
                     context, ob, f"{ob.name}_PB*_tmp"
                 )
-                geometry.from_fds.pbs_to_ob(pbs, context, ob_tmp)
+                geometry.from_fds.pbs_to_ob(pbs, context, ob_tmp, scale_length)
         w.cursor_modal_restore()
         self.report(
             {"INFO"}, "; ".join(msg for msg in msgs if msg) or "Geometry exported."

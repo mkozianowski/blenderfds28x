@@ -8,14 +8,14 @@ from mathutils import Matrix
 from ..lib.exceptions import BFException
 from . import utils
 
-DEBUG = True
+DEBUG = False
 
-# "global" coordinates are absolute coordinate referring to Blender main origin of axes,
+# "world" coordinates are absolute coordinate referring to Blender main origin of axes,
 # that are directly transformed to FDS coordinates (that refers its coordinates to the
 # one and only origin of axes)
 
 
-def get_voxels(context, ob):
+def get_voxels(context, ob, scale_length):
     """Get voxels from object in xbs format."""
     print("BFDS: calc_voxels.get_voxels:", ob.name)
     # Check object and init
@@ -24,27 +24,23 @@ def get_voxels(context, ob):
     if not ob.data.vertices:
         raise BFException(ob, "Empty object!")
     voxel_size = _get_voxel_size(context, ob)
-    # Work on a full ob copy in world coordinates
-    ob_copy = ob.copy()
-    ob_copy.data = ob.data.copy()
-    ob_copy.data.transform(ob.matrix_world)
-    ob_copy.matrix_world = Matrix()
-    context.collection.objects.link(ob_copy)
-    bpy.context.view_layer.update()  # push update
-    # Align voxels to global origin and add remesh modifier
-    if not ob.bf_xb_center_voxels:
-        _align_remesh_to_global_origin(context, ob_copy, voxel_size)
-    _add_remesh_mod(context, ob_copy, voxel_size)
-    # Get evaluated ob_copy (eg. modifiers applied),
-    # already in world coordinates
+    # Get evaluated ob (eg. modifiers applied) and its Mesh
     dg = context.evaluated_depsgraph_get()
-    ob_eval = ob_copy.evaluated_get(dg)
-    me_eval = ob_eval.to_mesh()
-    # Get bmesh
-    bm = bmesh.new()
-    bm.from_mesh(me_eval)
+    ob_eval = ob.evaluated_get(dg)
+    me_eval = bpy.data.meshes.new_from_object(ob_eval)  # static
+    # Create a new Object, in world coo
+    ob_tmp = bpy.data.objects.new(f"{ob.name}_voxels_tmp", me_eval)
+    ob_tmp.data.transform(ob.matrix_world)
+    context.collection.objects.link(ob_tmp)
+    # bpy.context.view_layer.update()  # push update # FIXME not needed?
+    # Align voxels to world origin and add remesh modifier
+    if not ob.bf_xb_center_voxels:
+        _align_remesh_to_world_origin(context, ob_tmp, voxel_size)
+    _add_remesh_mod(context, ob_tmp, voxel_size)
+    # Get evaluated bmesh from ob_tmp; it is already in world coo
+    bm = utils.get_object_bmesh(context, ob_tmp, world=False)
     # Clean up
-    bpy.data.meshes.remove(ob_copy.data, do_unlink=True)  # no mem leaks # FIXME
+    bpy.data.meshes.remove(ob_tmp.data, do_unlink=True)  # no mem leaks
     # Check
     if len(bm.faces) == 0:  # no faces
         raise BFException(ob, "No voxel/pixel created!")
@@ -65,16 +61,16 @@ def get_voxels(context, ob):
     second_sort_by = choices[1][4]
     # For each face find other sides and build boxes data structure
     boxes, origin = get_boxes(faces, voxel_size)
-    # Join boxes along other axis and return their global coordinates
+    # Join boxes along other axis and return their world coordinates
     boxes = grow_boxes_along_first_axis(boxes, first_sort_by)
     boxes = grow_boxes_along_second_axis(boxes, second_sort_by)
-    # Transform boxes to xbs in world coordinates
-    xbs = list(_get_box_xbs(boxes, origin, voxel_size))
+    # Transform boxes to xbs in world coordinates and correct for unit_settings
+    xbs = list(_get_box_xbs(boxes, origin, voxel_size, scale_length))
     # Clean up
     bm.free()
     if not xbs:
         raise BFException(ob, "No voxel/pixel created!")
-    return xbs, voxel_size
+    return xbs, voxel_size * scale_length
 
 
 def _sort_faces_by_normal(bm):
@@ -139,13 +135,12 @@ def _get_voxel_size(context, ob) -> "voxel_size":
 
 # When appling a remesh modifier to a Blender Object, the octree is aligned with
 # the max dimension of the object. By inserting some loose vertices to the
-# temporary object, we can align the voxelization to FDS global origin
+# temporary object, we can align the voxelization to FDS world origin
 
 
-def _align_remesh_to_global_origin(context, ob, voxel_size):
-    """Modify object mesh for remesh voxel alignment to global origin."""
-    bb = utils.get_bbox(ob)  # the object is already global # FIXME should not be global
-    print(bb)
+def _align_remesh_to_world_origin(context, ob, voxel_size):
+    """Modify object mesh for remesh voxel alignment to world origin."""
+    bb = utils.get_bbox_xbs(context, ob, scale_length=1.0)  # in world coo
     # Calc new bbox (in Blender units)
     #      +---+ pv1
     #      |   |
@@ -183,7 +178,18 @@ def _align_remesh_to_global_origin(context, ob, voxel_size):
         (bb[1], bb[3], bb[4]),
         (bb[1], bb[3], bb[5]),
     )
-    utils.insert_verts_into_mesh(ob.data, verts)
+    _insert_verts_into_mesh(ob.data, verts)
+
+
+def _insert_verts_into_mesh(me, verts):
+    """Insert vertices into mesh."""
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    for v in verts:
+        bm.verts.new(v)
+    bm.to_mesh(me)
+    bm.free()
+    bpy.context.view_layer.update()  # push update
 
 
 # The following functions transform remesh modifier faces into boxes,
@@ -400,20 +406,20 @@ def _grow_boxes_along_z(boxes, sort_by):
     return boxes_grown
 
 
-# Transform boxes in integer coordinates, back to global coordinates
+# Transform boxes in integer coordinates, back to world coordinates
 
 
-def _get_box_xbs(boxes, origin, voxel_size) -> "xbs":
+def _get_box_xbs(boxes, origin, voxel_size, scale_length) -> "xbs":
     """Transform boxes to xbs in world coordinates."""
     epsilon = 1e-5
     return (
         (
-            origin[0] + box[0] * voxel_size - epsilon,
-            origin[0] + box[1] * voxel_size + epsilon,
-            origin[1] + box[2] * voxel_size - epsilon,
-            origin[1] + box[3] * voxel_size + epsilon,
-            origin[2] + box[4] * voxel_size - epsilon,
-            origin[2] + box[5] * voxel_size + epsilon,
+            (origin[0] + box[0] * voxel_size - epsilon) * scale_length,
+            (origin[0] + box[1] * voxel_size + epsilon) * scale_length,
+            (origin[1] + box[2] * voxel_size - epsilon) * scale_length,
+            (origin[1] + box[3] * voxel_size + epsilon) * scale_length,
+            (origin[2] + box[4] * voxel_size - epsilon) * scale_length,
+            (origin[2] + box[5] * voxel_size + epsilon) * scale_length,
         )
         for box in boxes
     )
@@ -422,7 +428,7 @@ def _get_box_xbs(boxes, origin, voxel_size) -> "xbs":
 # Pixelization
 
 
-def get_pixels(context, ob):
+def get_pixels(context, ob, scale_length):
     """Get pixels from flat object in xbs format."""
     print("BFDS: calc_voxels.get_voxels:", ob.name)
     # Check object and init
@@ -443,7 +449,7 @@ def get_pixels(context, ob):
         bpy.data.meshes.remove(ob_copy.data)
         raise BFException(ob, "Object is not flat enough.")
     # Get origin for flat xbs
-    bbox = utils.get_bbox(ob_copy)
+    bbox = utils.get_bbox_xbs(context, ob_copy, scale_length)
     flat_origin = (
         (bbox[1] + bbox[0]) / 2.0,
         (bbox[3] + bbox[2]) / 2.0,
@@ -451,8 +457,8 @@ def get_pixels(context, ob):
     )
     # Add solidify modifier
     _add_solidify_mod(context, ob_copy, voxel_size)
-    # Voxelize
-    xbs, voxel_size = get_voxels(context, ob_copy)
+    # Voxelize (Already corrected for unit_settings)
+    xbs, voxel_size = get_voxels(context, ob_copy, scale_length)
     # Clean up
     bpy.data.meshes.remove(ob_copy.data, do_unlink=True)
     # Flatten the solidified object
