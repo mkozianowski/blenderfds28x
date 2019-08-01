@@ -20,4 +20,5 @@ For more information, and the original BlenderFDS code visit http://www.blenderf
 
 ## How to stay on the edge of development
 
-Use `git update` to update your local BlenderFDS repo in the `blender/2.80/scripts/addons/blenderfds280x` directory.
+`git clone` this repository into the `blender/2.80/scripts/addons/blenderfds280x` directory of your Blender 2.8x install.
+Then `git update` your local repository to follow the development. 
