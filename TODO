@@ -11,6 +11,12 @@ default SURFs
 
 *TODO:*
 
+TRANSPARENCY
+user settings
+default blender file
+simplification UI
+search MATL_ID in text
+search QUANTITY in text
 geometry cache not working, handler crashing
 GEOM geometry mod original object fix
 

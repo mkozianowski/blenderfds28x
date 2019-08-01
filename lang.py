@@ -710,29 +710,19 @@ class MP_FYI(PFYI):
 
 @subscribe
 class MP_RGB(Parameter):
-    label = "RGB"
-    description = "A triplet of integer color values (red, green, blue)"
+    label = "RGB, TRANSPARENCY"
+    description = "Color values (red, green, blue) and transparency"
     fds_label = "RGB"
     bpy_type = Material
     bpy_prop = None  # Do not register
     bpy_idname = "diffuse_color"
 
-    @property
-    def value(self):
-        color = self.element.diffuse_color
-        return int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)
+    def to_fds(self, context):
+        c = self.element.diffuse_color
+        rgb = int(c[0] * 255), int(c[1] * 255), int(c[2] * 255)
+        return f"RGB={rgb[0]},{rgb[1]},{rgb[2]} TRANSPARENCY={c[3]:.2f}"
 
 
-@subscribe
-class MP_TRANSPARENCY(Parameter):  # FIXME it is in diffuse_color!
-    label = "TRANSPARENCY"
-    description = "Transparency"
-    fds_label = "TRANSPARENCY"
-    fds_default = 0.0
-    bpy_type = Material
-    bpy_prop = FloatProperty
-    bpy_other = {"min": 0.0, "max": 1.0, "precision": 2}
-    bpy_idname = "bf_surf_alpha"  # FIXME use Blender prexeisting prop
 
 
 @subscribe
@@ -849,7 +839,6 @@ class MN_SURF(Namelist):
         MP_ID,
         MP_FYI,
         MP_RGB,
-        MP_TRANSPARENCY,
         MP_MATL_ID,
         MP_THICKNESS,
         MP_BACKING,
@@ -866,7 +855,7 @@ class MN_SURF_burner(Namelist):
     fds_label = "SURF"
     bpy_export = "bf_export"
     bpy_export_default = True
-    param_cls = MP_ID, MP_FYI, MP_RGB, MP_TRANSPARENCY, MP_HRRPUA, MP_TAU_Q, MP_other
+    param_cls = MP_ID, MP_FYI, MP_RGB, MP_HRRPUA, MP_TAU_Q, MP_other
 
 
 @subscribe
@@ -882,7 +871,6 @@ class MN_SURF_solid(Namelist):
         MP_ID,
         MP_FYI,
         MP_RGB,
-        MP_TRANSPARENCY,
         MP_HRRPUA,
         MP_TAU_Q,
         MP_MATL_ID,
