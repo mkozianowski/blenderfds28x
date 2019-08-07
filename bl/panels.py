@@ -74,7 +74,7 @@ class SCENE_PT_bf_namelist_HEAD(Panel, SCENE_PT_bf_namelist):
         super().draw(context)
         row = self.layout.row()
         row.operator("scene.bf_show_fds_code", text="Show FDS Code", icon="HIDE_OFF")
-        # row.operator("scene.bf_props_to_sel_obs", text="Copy To")  # FIXME
+        row.operator("scene.bf_props_to_scene", text="Copy To Scene", icon="COPYDOWN")
 
 
 @subscribe
@@ -149,13 +149,18 @@ class OBJECT_PT_bf_namelist(Panel):
         flow.prop(ob, "bf_namelist_cls")
         # Get the namelist class, instanciate it, and draw its panel
         namelists[ob.bf_namelist_cls](ob).draw(context, flow)
-        row = flow.split(factor=0.5, align=True)
+        row = layout.row(align=True)
         if ob.bf_has_tmp:
             row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
         else:
             row.operator("object.bf_show_fds_geometry", icon="HIDE_OFF")
         row.operator("object.bf_show_fds_code", text="Show FDS Code", icon="HIDE_OFF")
-        # row.operator("object.bf_props_to_sel_obs", text="Copy To")  # FIXME
+        row = layout.row()
+        row.operator(
+            "object.bf_props_to_sel_obs",
+            text="Copy To Selected Objects",
+            icon="COPYDOWN",
+        )
 
 
 @subscribe
@@ -194,9 +199,9 @@ class MATERIAL_PT_bf_namelist(Panel):
         flow.prop(ma, "bf_namelist_cls")
         # Get the namelist class, instanciate it, and draw its panel
         namelists[ma.bf_namelist_cls](ma).draw(context, flow)
-        row = flow.row()
-        row.operator("material.bf_show_fds_code", text="Show FDS Code")
-        # row.operator("object.bf_props_to_sel_obs", text="Copy To")  # FIXME
+        row = layout.row()
+        row.operator("material.bf_show_fds_code", text="Show FDS Code", icon="HIDE_OFF")
+        row.operator("material.bf_surf_to_sel_obs", text="Assign To", icon="COPYDOWN")
 
 
 # Register

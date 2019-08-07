@@ -45,6 +45,7 @@ def rm_tmp_objects(context):
         elif ob.bf_has_tmp:
             ob.bf_has_tmp = False
             ob.hide_set(False)
+            ob.select_set(True)
 
 
 # Working on Blender materials

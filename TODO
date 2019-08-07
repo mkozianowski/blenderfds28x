@@ -12,11 +12,11 @@ TRANSPARENCY
 user preferences
 simplification UI
 refactor bf_other and UIList
+op copy properties: bf_others difficulties
 
 *TODO:*
 
-op copy properties: bf_others difficulties
-
+GEOM toolbox
 default blender file
 search MATL_ID in text
 search QUANTITY in text

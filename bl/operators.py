@@ -54,61 +54,61 @@ def subscribe(cls):
 # GEOM, check geometry quality and intersections
 
 
-@subscribe
-class OBJECT_OT_bf_check_intersections(Operator):
-    bl_label = "Check Intersections"
-    bl_idname = "object.bf_geom_check_intersections"
-    bl_description = (
-        "Check self-intersections or intersections with other selected objects"
-    )
+# @subscribe
+# class OBJECT_OT_bf_check_intersections(Operator):
+#     bl_label = "Check Intersections"
+#     bl_idname = "object.bf_geom_check_intersections"
+#     bl_description = (
+#         "Check self-intersections or intersections with other selected objects"
+#     )
 
-    @classmethod
-    def poll(cls, context):
-        return context.object
+#     @classmethod
+#     def poll(cls, context):
+#         return context.object
 
-    def execute(self, context):
-        w = context.window_manager.windows[0]
-        w.cursor_modal_set("WAIT")
-        ob = context.active_object
-        obs = context.selected_objects
-        if obs:
-            obs.remove(ob)
-        try:
-            geometry.calc_trisurfaces.check_intersections(context, ob, obs)
-        except BFException as err:
-            self.report({"ERROR"}, str(err))
-            return {"CANCELLED"}
-        else:
-            self.report({"INFO"}, "No intersection")
-            return {"FINISHED"}
-        finally:
-            w.cursor_modal_restore()
+#     def execute(self, context):
+#         w = context.window_manager.windows[0]
+#         w.cursor_modal_set("WAIT")
+#         ob = context.active_object
+#         obs = context.selected_objects
+#         if obs:
+#             obs.remove(ob)
+#         try:
+#             geometry.calc_trisurfaces.check_intersections(context, ob, obs)
+#         except BFException as err:
+#             self.report({"ERROR"}, str(err))
+#             return {"CANCELLED"}
+#         else:
+#             self.report({"INFO"}, "No intersection")
+#             return {"FINISHED"}
+#         finally:
+#             w.cursor_modal_restore()
 
 
-@subscribe
-class SCENE_OT_bf_check_quality(Operator):
-    bl_label = "Check Quality"
-    bl_idname = "object.bf_geom_check_quality"
-    bl_description = "Check if closed orientable manifold, with no degenerate geometry"
+# @subscribe
+# class SCENE_OT_bf_check_quality(Operator):
+#     bl_label = "Check Quality"
+#     bl_idname = "object.bf_geom_check_quality"
+#     bl_description = "Check if closed orientable manifold, with no degenerate geometry"
 
-    @classmethod
-    def poll(cls, context):
-        return context.object
+#     @classmethod
+#     def poll(cls, context):
+#         return context.object
 
-    def execute(self, context):
-        w = context.window_manager.windows[0]
-        w.cursor_modal_set("WAIT")
-        ob = context.active_object
-        try:
-            geometry.calc_trisurfaces.check_mesh_quality(context, ob)
-        except BFException as err:
-            self.report({"ERROR"}, str(err))
-            return {"CANCELLED"}
-        else:
-            self.report({"INFO"}, "Geometry quality ok")
-            return {"FINISHED"}
-        finally:
-            w.cursor_modal_restore()
+#     def execute(self, context):
+#         w = context.window_manager.windows[0]
+#         w.cursor_modal_set("WAIT")
+#         ob = context.active_object
+#         try:
+#             geometry.calc_trisurfaces.check_mesh_quality(context, ob)
+#         except BFException as err:
+#             self.report({"ERROR"}, str(err))
+#             return {"CANCELLED"}
+#         else:
+#             self.report({"INFO"}, "Geometry quality ok")
+#             return {"FINISHED"}
+#         finally:
+#             w.cursor_modal_restore()
 
 
 # Show FDS code
@@ -326,6 +326,152 @@ class WM_OT_bf_dialog(Operator):
             for description in descriptions:
                 row = col.row()
                 row.label(description)
+
+
+# Copy FDS parameters between Blender elements
+
+from .. import lang
+
+
+def _bf_props_copy(context, source_element, dest_elements):
+    """Copy all parameters from source_element to dest_elements"""
+    for _, param in lang.params.items():
+        # Get value
+        if not isinstance(source_element, param.bpy_type):
+            continue
+        bpy_idname = param.bpy_idname
+        if not bpy_idname or param.bf_other.get("copy_protect"):
+            continue
+        bpy_value = getattr(source_element, bpy_idname)
+        # Set value
+        print(f"BFDS: Copy: {source_element.name} ->")
+        if isinstance(bpy_value, bpy.types.bpy_prop_collection):
+            for dest_element in dest_elements:
+                dest_coll = getattr(dest_element, bpy_idname)
+                dest_coll.clear()
+                for source_item in bpy_value:
+                    dest_item = dest_coll.add()
+                    for k, v in source_item.items():
+                        dest_item[k] = v
+                        print(f"BFDS:   -> {dest_element.name}: {bpy_idname}: {k}={v}")
+        else:
+            for dest_element in dest_elements:
+                setattr(dest_element, bpy_idname, bpy_value)
+                print(f"BFDS:   -> {dest_element.name}: {bpy_idname}={bpy_value}")
+
+
+@subscribe
+class SCENE_OT_bf_copy_props_to_scene(Operator):
+    bl_label = "Copy To Scene"
+    bl_idname = "scene.bf_props_to_scene"
+    bl_description = "Copy all current scene FDS parameters to another Scene"
+
+    bf_destination_element: StringProperty(name="Destination Scene")
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.prop_search(
+            self, "bf_destination_element", bpy.data, "scenes", text="Scene"
+        )
+
+    def execute(self, context):
+        # Get source and destination scenes
+        source_element = context.scene
+        destination_elements = (
+            bpy.data.scenes.get(self.bf_destination_element, None),
+        )  # a tuple!
+        if not destination_elements[0]:
+            self.report({"WARNING"}, "No destination Scene")
+            return {"CANCELLED"}
+        if not source_element:
+            self.report({"WARNING"}, "No source Scene")
+            return {"CANCELLED"}
+        # Copy
+        _bf_props_copy(context, source_element, destination_elements)
+        self.report({"INFO"}, "Copied to destination Scene")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        # Call dialog
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+
+@subscribe
+class OBJECT_OT_bf_copy_FDS_properties_to_sel_obs(Operator):
+    bl_label = "Copy To Selected Objects"
+    bl_idname = "object.bf_props_to_sel_obs"
+    bl_description = "Copy current object FDS parameters to selected Objects"
+
+    def invoke(self, context, event):  # Ask for confirmation
+        wm = context.window_manager
+        return wm.invoke_confirm(self, event)
+
+    def execute(self, context):
+        if context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
+        # Get source and destination objects
+        source_element = context.active_object
+        destination_elements = set(
+            ob
+            for ob in context.selected_objects
+            if ob.type == "MESH" and ob != source_element
+        )
+        if not destination_elements:
+            self.report({"WARNING"}, "No destination Object")
+            return {"CANCELLED"}
+        if not source_element:
+            self.report({"WARNING"}, "No source Object")
+            return {"CANCELLED"}
+        # Copy
+        _bf_props_copy(context, source_element, destination_elements)
+        self.report({"INFO"}, "Copied to selected Objects")
+        return {"FINISHED"}
+
+
+@subscribe
+class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
+    bl_label = "Assign To Selected Objects"
+    bl_idname = "material.bf_surf_to_sel_obs"
+    bl_description = "Assign current boundary condition to selected Objects"
+
+    def invoke(self, context, event):  # Ask for confirmation
+        wm = context.window_manager
+        return wm.invoke_confirm(self, event)
+
+    def execute(self, context):
+        bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
+        # Get source and destination materials
+        source_element = context.active_object
+        active_material = source_element.active_material
+        destination_elements = set(
+            ob
+            for ob in context.selected_objects
+            if ob.type == "MESH" and ob != source_element
+        )
+        if not destination_elements:
+            self.report({"WARNING"}, "No destination Object")
+            return {"CANCELLED"}
+        if not source_element:
+            self.report({"WARNING"}, "No source Object")
+            return {"CANCELLED"}
+        if not active_material:
+            self.report({"WARNING"}, "No boundary condition to assign")
+            return {"CANCELLED"}
+        # Loop on objects
+        for ob in destination_elements:
+            ob.active_material = active_material
+            print(
+                "BlenderFDS: Assign Material '{}' -> {}".format(
+                    active_material.name, ob.name
+                )
+            )
+        # Set myself as exported
+        active_material.bf_export = True
+        # Return
+        self.report({"INFO"}, "Assigned to selected Objects")
+        return {"FINISHED"}
 
 
 # Register

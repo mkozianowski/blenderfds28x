@@ -1408,9 +1408,6 @@ class OP_GEOM(Parameter):
 
     def draw(self, context, layout):
         ob = self.element
-        row = layout.row()
-        row.operator("object.bf_geom_check_intersections")
-        row.operator("object.bf_geom_check_quality")
         OP_GEOM_check_quality(ob).draw(context, layout)
 
     def to_fds(self, context):
@@ -1896,15 +1893,16 @@ class BFCollection:
 
 
 def register():
+    from bpy.utils import register_class
     # Blender classes
     for cls in bl_classes:
         print(f"BFDS: registering Blender class <{cls.__name__}>")
-        bpy.utils.register_class(cls)
+        register_class(cls)
     # System parameters for tmp obs and file version
     print(f"BFDS: registering sys properties")
     Object.bf_is_tmp = BoolProperty(name='Is Tmp', description='Set if this Object is tmp', default=False)
     Object.bf_has_tmp = BoolProperty(name='Has Tmp', description='Set if this Object has tmp companions', default=False)
-    Scene.bf_file_version = IntVectorProperty(name='BlenderFDS File Version', size=3, default=(5,0,0))
+    Scene.bf_file_version = IntVectorProperty(name='BlenderFDS File Version', size=3, default=(5,0,0))  # FIXME
     # params and namelists
     for _, cls in params.items():
         cls.register()
@@ -1918,6 +1916,7 @@ def register():
 
 
 def unregister():
+    from bpy.utils import unregister_class
     # Blender Object, Material, and Scene
     print(f"BFDS: unregistering sys properties")
     BFObject.unregister()
@@ -1936,4 +1935,4 @@ def unregister():
     # Blender classes
     for cls in bl_classes:
         print(f"BFDS: unregistering Blender class <{cls.__name__}>")
-        bpy.utils.unregister_class(cls)
+        unregister_class(cls)
