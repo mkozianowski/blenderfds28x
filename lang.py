@@ -41,7 +41,6 @@ from . import geometry
 
 from .lib.exceptions import BFException
 from .lib.types import Parameter, Namelist, PString, PFYI, POthers
-#from .lib.custom_uilist import OPSlotAdd, OPSlotMv, OPSlotRm
 from .lib.config import separator, comment
 
 # Collections
