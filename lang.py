@@ -40,8 +40,8 @@ from bpy.props import (
 from . import geometry
 
 from .lib.exceptions import BFException
-from .lib.types import Parameter, Namelist, PString, PFYI, POthers, PFilepaths
-from .lib.custom_uilist import OPSlotAdd, OPSlotMv, OPSlotRm
+from .lib.types import Parameter, Namelist, PString, PFYI, POthers
+#from .lib.custom_uilist import OPSlotAdd, OPSlotMv, OPSlotRm
 from .lib.config import separator, comment
 
 # Collections
@@ -63,6 +63,38 @@ def subscribe(cls):
     else:
         bf_classes.append(cls)
     return cls
+
+# PropertyGroup and UIList
+
+@subscribe
+class WM_PG_bf_others(PropertyGroup):
+    bf_export: BoolProperty(name="Export", default=False)
+    name: StringProperty(name="Name")
+
+@subscribe
+class WM_UL_bf_others_items(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data):
+        col = layout.column()
+        col.active = item.bf_export
+        col.prop(item, "name", text="", emboss=False, icon_value=icon)
+        col = layout.column()
+        col.prop(item, "bf_export", text="")
+
+
+@subscribe
+class WM_PG_bf_filepaths(PropertyGroup):
+    bf_export: BoolProperty(name="Export", default=False)
+    name: StringProperty(name="Name", subtype="FILE_PATH")
+
+@subscribe
+class WM_UL_bf_filepaths_items(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data):
+        col = layout.column()
+        col.active = item.bf_export
+        col.prop(item, "name", text="", emboss=False, icon_value=icon)
+        col = layout.column()
+        col.prop(item, "bf_export", text="")
+
 
 # HEAD
 
@@ -234,6 +266,8 @@ class SP_TIME_T_END(Parameter):
 class SP_TIME_other(POthers):
     bpy_type = Scene
     bpy_idname = "bf_time_others"
+    bpy_pg = WM_PG_bf_others
+    bpy_ul = WM_UL_bf_others_items
 
 
 @subscribe
@@ -292,6 +326,8 @@ class SP_MISC_THICKEN_OBSTRUCTIONS(Parameter):
 class SP_MISC_other(POthers):
     bpy_type = Scene
     bpy_idname = "bf_misc_others"
+    bpy_pg = WM_PG_bf_others
+    bpy_ul = WM_UL_bf_others_items
 
 
 @subscribe
@@ -394,6 +430,9 @@ class SP_REAC_IDEAL(Parameter):
 class SP_REAC_other(POthers):
     bpy_type = Scene
     bpy_idname = "bf_reac_others"
+    bpy_pg = WM_PG_bf_others
+    bpy_ul = WM_UL_bf_others_items
+
 
 
 @subscribe
@@ -503,6 +542,9 @@ class SP_RADI_RADIATION_ITERATIONS(Parameter):
 class SP_RADI_other(POthers):
     bpy_type = Scene
     bpy_idname = "bf_radi_others"
+    bpy_pg = WM_PG_bf_others
+    bpy_ul = WM_UL_bf_others_items
+
 
 
 @subscribe
@@ -603,6 +645,9 @@ class SP_DUMP_DT_RESTART(Parameter):
 class SP_DUMP_other(POthers):
     bpy_type = Scene
     bpy_idname = "bf_dump_others"
+    bpy_pg = WM_PG_bf_others
+    bpy_ul = WM_UL_bf_others_items
+
 
 
 @subscribe
@@ -627,7 +672,6 @@ class SN_DUMP(Namelist):
 
 # CATF
 
-# FIXME title in panel UI
 # FIXME to_fds
 @subscribe
 class SP_CATF_check_files(Parameter):
@@ -642,9 +686,13 @@ class SP_CATF_check_files(Parameter):
 
 
 @subscribe
-class SP_CATF_files(PFilepaths):  # FIXME
+class SP_CATF_files(POthers):  # FIXME
+    label = "Concatenated Files"
+    description = "Concatenated files (eg. PROP='/drive/test.catf')"
     bpy_type = Scene
     bpy_idname = "bf_catf_files"
+    bpy_pg = WM_PG_bf_filepaths
+    bpy_ul = WM_UL_bf_filepaths_items
 
     def draw(self, context, layout):
         sc = self.element
@@ -824,6 +872,9 @@ class MP_BACKING(Parameter):
 class MP_other(POthers):
     bpy_type = Material
     bpy_idname = "bf_others"
+    bpy_pg = WM_PG_bf_others
+    bpy_ul = WM_UL_bf_others_items
+
 
 
 @subscribe
@@ -914,6 +965,7 @@ class OP_ID(PString):
     label = "ID"
     description = "Object identification name"
     fds_label = "ID"
+    bf_other = {"copy_protect": True}
     bpy_type = Object
     bpy_prop = None  # to avoid creation
     bpy_idname = "name"
@@ -1271,6 +1323,9 @@ class OP_SURF_ID(Parameter):
 class OP_other(POthers):
     bpy_type = Object
     bpy_idname = "bf_others"
+    bpy_pg = WM_PG_bf_others
+    bpy_ul = WM_UL_bf_others_items
+
 
 
 @subscribe
@@ -1842,7 +1897,12 @@ class BFCollection:
 
 
 def register():
+    # Blender classes
+    for cls in bl_classes:
+        print(f"BFDS: registering Blender class <{cls.__name__}>")
+        bpy.utils.register_class(cls)
     # System parameters for tmp obs and file version
+    print(f"BFDS: registering sys properties")
     Object.bf_is_tmp = BoolProperty(name='Is Tmp', description='Set if this Object is tmp', default=False)
     Object.bf_has_tmp = BoolProperty(name='Has Tmp', description='Set if this Object has tmp companions', default=False)
     Scene.bf_file_version = IntVectorProperty(name='BlenderFDS File Version', size=3, default=(5,0,0))
@@ -1859,17 +1919,22 @@ def register():
 
 
 def unregister():
-    # System parameters for tmp obs and file version
-    del Object.bf_is_tmp
-    del Object.bf_has_tmp
-    del Scene.bf_file_version
+    # Blender Object, Material, and Scene
+    print(f"BFDS: unregistering sys properties")
+    BFObject.unregister()
+    BFMaterial.unregister()
+    BFScene.unregister()
+    BFCollection.unregister()
     # params and namelists
     for _, cls in params.items():
         cls.unregister()
     for _, cls in namelists.items():
         cls.unregister()
-    # Blender Object, Material, and Scene
-    BFObject.unregister()
-    BFMaterial.unregister()
-    BFScene.unregister()
-    BFCollection.unregister()
+    # System parameters for tmp obs and file version
+    del Object.bf_is_tmp
+    del Object.bf_has_tmp
+    del Scene.bf_file_version
+    # Blender classes
+    for cls in bl_classes:
+        print(f"BFDS: unregistering Blender class <{cls.__name__}>")
+        bpy.utils.unregister_class(cls)

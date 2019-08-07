@@ -8,19 +8,22 @@ fix center voxel/pixels
 scale factor for units (length, time)
 "global" to "world"
 default SURFs
+TRANSPARENCY
+user preferences
+simplification UI
+refactor bf_other and UIList
 
 *TODO:*
 
-TRANSPARENCY
-user settings
+op copy properties: bf_others difficulties
+
 default blender file
-simplification UI
 search MATL_ID in text
 search QUANTITY in text
 geometry cache not working, handler crashing
-GEOM geometry mod original object fix
+GEOM geometry mod original object fix, tool panel?
 
-op copy properties
+
 op mesh
 op find MATL, 
 default appearance
@@ -31,3 +34,4 @@ from_fds, import
 file version
 
 geographic reference and coordinates, find coordinate, put cursor at coordinate
+TERRAIN and its checks
