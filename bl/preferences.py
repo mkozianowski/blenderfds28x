@@ -30,7 +30,7 @@ class BFPreferences(AddonPreferences):
         layout.prop(self, "bf_pref_simplify_ui")
         layout.prop(paths, "use_load_ui")
         layout.prop(paths, "use_relative_paths")
-        layout.label(text="Binary filepaths:")
+        layout.label(text="Executable filepaths:")
         layout.prop(self, "bf_quadriflow_filepath")
         return layout
 
