@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import bpy
 from bpy.types import (
     bpy_struct,
@@ -37,8 +38,10 @@ from bpy.props import (
 )
 
 from ..lib.exceptions import BFException
+from ..lib import config
 from .. import geometry
 from ..lang import OP_XB, OP_XYZ, OP_PB
+
 
 # Collections
 
@@ -54,61 +57,148 @@ def subscribe(cls):
 # GEOM, check geometry quality and intersections
 
 
-# @subscribe
-# class OBJECT_OT_bf_check_intersections(Operator):
-#     bl_label = "Check Intersections"
-#     bl_idname = "object.bf_geom_check_intersections"
-#     bl_description = (
-#         "Check self-intersections or intersections with other selected objects"
-#     )
+@subscribe
+class OBJECT_OT_bf_check_intersections(Operator):
+    bl_label = "Check Intersections"
+    bl_idname = "object.bf_geom_check_intersections"
+    bl_description = (
+        "Check self-intersections or intersections with other selected objects"
+    )
 
-#     @classmethod
-#     def poll(cls, context):
-#         return context.object
+    @classmethod
+    def poll(cls, context):
+        return context.object
 
-#     def execute(self, context):
-#         w = context.window_manager.windows[0]
-#         w.cursor_modal_set("WAIT")
-#         ob = context.active_object
-#         obs = context.selected_objects
-#         if obs:
-#             obs.remove(ob)
-#         try:
-#             geometry.calc_trisurfaces.check_intersections(context, ob, obs)
-#         except BFException as err:
-#             self.report({"ERROR"}, str(err))
-#             return {"CANCELLED"}
-#         else:
-#             self.report({"INFO"}, "No intersection")
-#             return {"FINISHED"}
-#         finally:
-#             w.cursor_modal_restore()
+    def execute(self, context):
+        w = context.window_manager.windows[0]
+        w.cursor_modal_set("WAIT")
+        ob = context.active_object
+        obs = context.selected_objects
+        if obs:
+            obs.remove(ob)
+        try:
+            geometry.calc_trisurfaces.check_intersections(
+                context, ob, obs, protect=ob.bf_geom_protect
+            )
+        except BFException as err:
+            self.report({"ERROR"}, str(err))
+            return {"CANCELLED"}
+        else:
+            self.report({"INFO"}, "No intersection")
+            return {"FINISHED"}
+        finally:
+            w.cursor_modal_restore()
 
 
-# @subscribe
-# class SCENE_OT_bf_check_quality(Operator):
-#     bl_label = "Check Quality"
-#     bl_idname = "object.bf_geom_check_quality"
-#     bl_description = "Check if closed orientable manifold, with no degenerate geometry"
+@subscribe
+class SCENE_OT_bf_check_quality(Operator):
+    bl_label = "Check Quality"
+    bl_idname = "object.bf_geom_check_quality"
+    bl_description = "Check if closed orientable manifold, with no degenerate geometry"
 
-#     @classmethod
-#     def poll(cls, context):
-#         return context.object
+    @classmethod
+    def poll(cls, context):
+        return context.object
 
-#     def execute(self, context):
-#         w = context.window_manager.windows[0]
-#         w.cursor_modal_set("WAIT")
-#         ob = context.active_object
-#         try:
-#             geometry.calc_trisurfaces.check_mesh_quality(context, ob)
-#         except BFException as err:
-#             self.report({"ERROR"}, str(err))
-#             return {"CANCELLED"}
-#         else:
-#             self.report({"INFO"}, "Geometry quality ok")
-#             return {"FINISHED"}
-#         finally:
-#             w.cursor_modal_restore()
+    def execute(self, context):
+        w = context.window_manager.windows[0]
+        w.cursor_modal_set("WAIT")
+        ob = context.active_object
+        try:
+            geometry.calc_trisurfaces.check_geom_quality(
+                context, ob, protect=ob.bf_geom_protect
+            )
+        except BFException as err:
+            self.report({"ERROR"}, str(err))
+            return {"CANCELLED"}
+        else:
+            self.report({"INFO"}, "Geometry quality ok")
+            return {"FINISHED"}
+        finally:
+            w.cursor_modal_restore()
+
+
+# GEOM remesh
+
+import subprocess
+
+
+@subscribe
+class OBJECT_OT_quadriflow_remesh(Operator):
+    bl_idname = "object.quadriflow_remesh"
+    bl_label = "Quadriflow Remesh"
+
+    bl_options = {"REGISTER", "UNDO"}
+
+    resolution: bpy.props.IntProperty(
+        name="Resolution",
+        description="Octree resolution",
+        min=5,
+        max=10000,
+        default=300,
+    )
+    sharp: bpy.props.BoolProperty(
+        name="Sharp edges",
+        description="Detect and perserve the sharp edges",
+        default=True,
+    )
+    mcf: bpy.props.BoolProperty(
+        name="Min-cost flow",
+        description="Adaptive network simplex minimum-cost flow solver",
+        default=False,
+    )
+
+    @classmethod
+    def poll(cls, context):
+        # FIXME no binary, OBJECT mode, SCULPT
+        return context.object
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "resolution")
+        layout.prop(self, "sharp")
+        layout.prop(self, "mcf")
+
+    def execute(self, context):
+        bf_quadriflow_filepath = (
+            "/home/egissi/github/blenderfds28x/bin/hjwdzh/quadriflow"
+        )  # bpy.context.preferences.addons[
+        ob = context.object
+        input_path = os.path.join(bpy.app.tempdir, f"{ob.name}.obj")
+        output_path = os.path.join(bpy.app.tempdir, f"{ob.name}_quadflow.obj")
+        bpy.ops.export_scene.obj(
+            filepath=input_path,
+            check_existing=True,
+            use_selection=True,
+            use_mesh_modifiers=False,
+            use_normals=True,
+            use_uvs=True,
+            use_materials=False,
+            use_triangles=True,
+            path_mode="AUTO",
+        )
+        quadriflow_command = [
+            bf_quadriflow_filepath,
+            "-i",
+            input_path,
+            "-o",
+            output_path,
+            "-f",
+            str(self.resolution),
+        ]
+        if self.mcf:
+            quadriflow_command.append("-mcf")
+        if self.sharp:
+            quadriflow_command.append("-sharp")
+        print("Command:", quadriflow_command)
+        try:
+            subprocess.run(quadriflow_command, check=True)
+        except subprocess.CalledProcessError:
+            self.report({"ERROR"}, "Subprocess error")  # FIXME specify
+            return {"CANCELLED"}
+        #        bpy.ops.object.delete() FIXME
+        bpy.ops.import_scene.obj(filepath=output_path)
+        return {"FINISHED"}
 
 
 # Show FDS code

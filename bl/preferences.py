@@ -17,6 +17,12 @@ class BFPreferences(AddonPreferences):
         default=True,
     )
 
+    bf_quadriflow_filepath: StringProperty(
+        name="Quadriflow",
+        description="Quadriflow executable filepath",
+        subtype="FILE_PATH",
+    )
+
     def draw(self, context):
         layout = self.layout
         paths = context.preferences.filepaths
@@ -24,6 +30,8 @@ class BFPreferences(AddonPreferences):
         layout.prop(self, "bf_pref_simplify_ui")
         layout.prop(paths, "use_load_ui")
         layout.prop(paths, "use_relative_paths")
+        layout.label(text="Binary filepaths:")
+        layout.prop(self, "bf_quadriflow_filepath")
         return layout
 
 

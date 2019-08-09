@@ -1399,6 +1399,15 @@ class OP_GEOM_check_quality(Parameter):
     bpy_prop = BoolProperty
     bpy_default = True
 
+@subscribe
+class OP_GEOM_protect(Parameter):
+    label = "Protect Original"
+    description = "Protect original Object geometry while checking quality"
+    bpy_type = Object
+    bpy_idname = "bf_geom_protect"
+    bpy_prop = BoolProperty
+    bpy_default = True
+
 
 @subscribe
 class OP_GEOM(Parameter):
@@ -1443,6 +1452,26 @@ class OP_GEOM(Parameter):
             msg,
         )
 
+@subscribe
+class OP_GEOM_IS_TERRAIN(Parameter):  # FIXME
+    label = "IS_TERRAIN"
+    description = "Set if it represents a terrain"
+    fds_label = "IS_TERRAIN"
+    fds_default = False
+    bpy_type = Object
+    bpy_prop = BoolProperty
+    bpy_idname = "bf_geom_is_terrain"
+
+@subscribe
+class OP_GEOM_EXTEND_TERRAIN(Parameter):  # FIXME
+    label = "EXTEND_TERRAIN"
+    description = "Set if this terrain needs extension to fully cover the domain"
+    fds_label = "EXTEND_TERRAIN"
+    fds_default = False
+    bpy_type = Object
+    bpy_prop = BoolProperty
+    bpy_idname = "bf_geom_extend_terrain"
+
 
 @subscribe
 class ON_GEOM(Namelist):
@@ -1453,7 +1482,7 @@ class ON_GEOM(Namelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    param_cls = OP_ID, OP_FYI, OP_GEOM, OP_other
+    param_cls = OP_ID, OP_FYI, OP_GEOM, OP_GEOM_IS_TERRAIN, OP_GEOM_EXTEND_TERRAIN, OP_other  # FIXME
 
 
 # HOLE

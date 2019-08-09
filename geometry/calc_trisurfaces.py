@@ -14,14 +14,16 @@ from . import utils
 # FIXME check mesh for quality
 
 
-def get_trisurface(context, ob, scale_length, check=True) -> "mas, verts, faces":
+def get_trisurface(
+    context, ob, scale_length, check=True, terrain=False
+) -> "mas, verts, faces":
     """Get triangulated surface from object in xbs format."""
     print("BFDS: calc_voxels.get_trisurface:", ob.name)
     mas = _get_materials(context, ob)
     bm = _get_prepared_bmesh(context, ob)
     # Check
     if check:
-        _check_bm_quality(context, ob, bm)
+        _check_bm_quality(context, ob, bm, protect=True)
     # Extract verts and faces from bmesh
     verts = [
         (v.co.x * scale_length, v.co.y * scale_length, v.co.z * scale_length)
@@ -76,33 +78,31 @@ def _get_materials(context, ob):
     return mas
 
 
-# FIXME modifies original ob! Maybe triangulate modif?
+# Check quality
 
 
-def check_mesh_quality(context, ob):
+def check_geom_quality(context, ob, protect):
     """Check that Object is a closed orientable manifold,
     with no degenerate geometry."""
     bm = _get_prepared_bmesh(context, ob)
-    _check_bm_quality(context, ob, bm)
-    # Clean up
+    _check_bm_quality(context, ob, bm, protect)
     bm.free()
 
 
-def _check_bm_quality(context, ob, bm):
+def _check_bm_quality(context, ob, bm, protect):
     """Check that bmesh is a closed orientable manifold, with no degenerate geometry."""
     epsilon_len = context.scene.bf_config_min_edge_length
     epsilon_area = context.scene.bf_config_min_face_area
-    _check_manifold_vertices(context, ob, bm, epsilon_len, epsilon_area)
-    _check_manifold_edges(context, ob, bm, epsilon_len, epsilon_area)
-    _check_contiguous_normals(context, ob, bm, epsilon_len, epsilon_area)
-    _check_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area)
-    _check_degenerate_faces(context, ob, bm, epsilon_len, epsilon_area)
-    _check_loose_vertices(context, ob, bm, epsilon_len, epsilon_area)
-    _check_normal_orientation(context, ob, bm, epsilon_len, epsilon_area)
-    _check_duplicate_vertices(context, ob, bm, epsilon_len, epsilon_area)
+    _check_bm_manifold_verts(context, ob, bm, epsilon_len, epsilon_area, protect)
+    _check_bm_manifold_edges(context, ob, bm, epsilon_len, epsilon_area, protect)
+    _check_bm_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area, protect)
+    _check_bm_degenerate_faces(context, ob, bm, epsilon_len, epsilon_area, protect)
+    _check_bm_loose_vertices(context, ob, bm, epsilon_len, epsilon_area, protect)
+    _check_bm_duplicate_vertices(context, ob, bm, epsilon_len, epsilon_area, protect)
+    _check_bm_normals(context, ob, bm, epsilon_len, epsilon_area, protect)
 
 
-def _check_manifold_vertices(context, ob, bm, epsilon_len, epsilon_area):
+def _check_bm_manifold_verts(context, ob, bm, epsilon_len, epsilon_area, protect):
     """Check manifold vertices."""
     bad_verts = list()
     for vert in bm.verts:
@@ -110,10 +110,10 @@ def _check_manifold_vertices(context, ob, bm, epsilon_len, epsilon_area):
             bad_verts.append(vert)
     if bad_verts:
         msg = f"Non manifold vertices detected ({len(bad_verts)} vertices)."
-        raise BFException(ob, msg)
+        _raise_bad_geometry(context, ob, bm, msg, protect, bad_verts=bad_verts)
 
 
-def _check_manifold_edges(context, ob, bm, epsilon_len, epsilon_area):
+def _check_bm_manifold_edges(context, ob, bm, epsilon_len, epsilon_area, protect):
     """Check manifold edges, each edge should join two faces, no more no less."""
     bad_edges = list()
     for edge in bm.edges:
@@ -121,21 +121,23 @@ def _check_manifold_edges(context, ob, bm, epsilon_len, epsilon_area):
             bad_edges.append(edge)
     if bad_edges:
         msg = f"Non manifold or open geometry detected ({len(bad_edges)} edges)."
-        raise BFException(ob, msg)
+        _raise_bad_geometry(context, ob, bm, msg, protect, bad_edges=bad_edges)
 
 
-def _check_contiguous_normals(context, ob, bm, epsilon_len, epsilon_area):
-    """Check contiguous normals, adjoining faces should have normals in the same directions"""
+def _check_bm_normals(context, ob, bm, epsilon_len, epsilon_area, protect):
+    """Check normals, adjoining faces should have normals in the same directions."""
     bad_edges = list()
     for edge in bm.edges:
         if not edge.is_contiguous:
             bad_edges.append(edge)
     if bad_edges:
         msg = f"Inconsistent face normals detected ({len(bad_edges)} edges)."
-        raise BFException(ob, msg)
+        _raise_bad_geometry(context, ob, bm, msg, protect, bad_edges=bad_edges)
+    if not protect:
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
 
 
-def _check_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area):
+def _check_bm_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area, protect):
     """Check no degenerate edges, zero lenght edges."""
     bad_edges = list()
     for edge in bm.edges:
@@ -143,10 +145,12 @@ def _check_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area):
             bad_edges.append(edge)
     if bad_edges:
         msg = f"Too short edges detected ({len(bad_edges)} edges)."
-        raise BFException(ob, msg)
+        _raise_bad_geometry(context, ob, bm, msg, protect, bad_edges=bad_edges)
 
 
-def _check_degenerate_faces(context, ob, bm, epsilon_len, epsilon_area):
+def _check_bm_degenerate_faces(
+    context, ob, bm, epsilon_len, epsilon_area, protect=True
+):
     """Check degenerate faces, zero area faces."""
     bad_faces = list()
     for face in bm.faces:
@@ -154,10 +158,10 @@ def _check_degenerate_faces(context, ob, bm, epsilon_len, epsilon_area):
             bad_faces.append(face)
     if bad_faces:
         msg = f"Too small area faces detected ({len(bad_faces)} faces)."
-        raise BFException(ob, msg)
+        _raise_bad_geometry(context, ob, bm, msg, protect, bad_faces=bad_faces)
 
 
-def _check_loose_vertices(context, ob, bm, epsilon_len, epsilon_area):
+def _check_bm_loose_vertices(context, ob, bm, epsilon_len, epsilon_area, protect):
     """Check loose vertices, vertices that have no connectivity."""
     bad_verts = list()
     for vert in bm.verts:
@@ -165,17 +169,10 @@ def _check_loose_vertices(context, ob, bm, epsilon_len, epsilon_area):
             bad_verts.append(vert)
     if bad_verts:
         msg = f"Loose vertices detected ({len(bad_verts)} vertices)."
-        raise BFException(ob, msg)
+        _raise_bad_geometry(context, ob, bm, msg, protect, bad_verts=bad_verts)
 
 
-def _check_normal_orientation(context, ob, bm, epsilon_len, epsilon_area):
-    """CHeck overall normals."""
-    # bad_verts, bad_edges, bad_faces = list(), list(), list()
-    # bmesh.ops.recalc_face_normals(bm, faces=bm.faces)  # FIXME detect wrong side normals
-    pass
-
-
-def _check_duplicate_vertices(context, ob, bm, epsilon_len, epsilon_area):
+def _check_bm_duplicate_vertices(context, ob, bm, epsilon_len, epsilon_area, protect):
     """Check duplicate vertices."""
     bad_verts = list()
     size = len(bm.verts)
@@ -192,10 +189,10 @@ def _check_duplicate_vertices(context, ob, bm, epsilon_len, epsilon_area):
                 bad_verts.append(bm.verts[i])
     if bad_verts:
         msg = f"Duplicate vertices detected ({len(bad_verts)} vertices)."
-        raise BFException(ob, msg)
+        _raise_bad_geometry(context, ob, bm, msg, protect, bad_verts=bad_verts)
 
 
-# Check intersections # FIXME
+# Check intersections
 
 
 def _get_bm_and_tree(context, ob, epsilon_len=0.0, matrix=None):
@@ -210,7 +207,7 @@ def _get_bm_and_tree(context, ob, epsilon_len=0.0, matrix=None):
     return bm, tree
 
 
-def _get_intersected_faces(bm, tree, other_tree):
+def _get_bm_intersected_faces(bm, tree, other_tree):
     """Get intersected faces between trees."""
     overlap = tree.overlap(other_tree)
     if overlap:
@@ -219,8 +216,7 @@ def _get_intersected_faces(bm, tree, other_tree):
     return list()
 
 
-# FIXME
-def check_intersections(context, ob, other_obs=None):
+def check_intersections(context, ob, other_obs=None, protect=True):
     """Check ob self-intersection and intersection with other_obs."""
     print(
         f"BFDS: Check self intersections in Object <{ob.name}>, and intersections with other selected obs"
@@ -230,7 +226,7 @@ def check_intersections(context, ob, other_obs=None):
     bad_faces = list()
     bm, tree = _get_bm_and_tree(context, ob, epsilon_len=epsilon_len)
     # Get self-intersections
-    bad_faces.extend(_get_intersected_faces(bm, tree, tree))
+    bad_faces.extend(_get_bm_intersected_faces(bm, tree, tree))
     # Get intersections
     for other_ob in other_obs or tuple():
         matrix = (
@@ -239,20 +235,22 @@ def check_intersections(context, ob, other_obs=None):
         _, other_tree = _get_bm_and_tree(
             context, other_ob, epsilon_len=epsilon_len, matrix=matrix
         )
-        bad_faces.extend(_get_intersected_faces(bm, tree, other_tree))
+        bad_faces.extend(_get_bm_intersected_faces(bm, tree, other_tree))
     # Raise
     if bad_faces:
         msg = "Intersection detected."
-        raise BFException(ob, msg)
+        _raise_bad_geometry(context, ob, bm, msg, protect, bad_faces=bad_faces)
 
 
 # Raise bad geometry
 
 
 def _raise_bad_geometry(
-    context, ob, bm, msg, bad_verts=None, bad_edges=None, bad_faces=None
+    context, ob, bm, msg, protect, bad_verts=None, bad_edges=None, bad_faces=None
 ):
     """Select bad elements, show them, raise BFException."""
+    if protect:
+        raise BFException(ob, msg)
     # Deselect all in bmesh
     for vert in bm.verts:
         vert.select = False
@@ -271,6 +269,7 @@ def _raise_bad_geometry(
         select_type = "VERT"
         for b in bad_verts:
             b.select = True
+    ob.modifiers.clear()
     bm.to_mesh(ob.data)
     bm.free()
     # Select object and go to edit mode
