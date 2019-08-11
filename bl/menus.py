@@ -22,8 +22,8 @@ from bpy.types import Operator
 from bpy.props import StringProperty, BoolProperty, FloatProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-from ..lib.utils import is_writable, write_to_file
-from ..lib.types import BFException
+from ..utils import is_writable, write_to_file
+from ..types import BFException
 
 # Collections
 

@@ -18,7 +18,8 @@ import bpy
 from bpy.types import Panel, UIList, Operator, bpy_struct
 
 from ..lang import namelists
-from ..lib import custom_uilist, config
+from . import custom_uilist
+from .. import config
 
 bl_classes = list()
 bf_classes = list()

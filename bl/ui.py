@@ -16,7 +16,6 @@
 
 import bpy
 from bpy.types import Panel, Menu
-from bpy.utils import register_class, unregister_class
 
 # Collections
 
@@ -103,7 +102,7 @@ class TOPBAR_MT_editor_menus(Menu):
 
 
 def register():
-
+    from bpy.utils import register_class, unregister_class
     for cls in classes_rm:
         try:
             unregister_class(getattr(bpy.types, cls))
@@ -117,6 +116,6 @@ def register():
 
 
 # def unregister():  # FIXME reload Blender
-
+#     from bpy.utils import register_class, unregister_class
 #     for cls in reversed(bl_classes):
 #         unregister_class(cls)

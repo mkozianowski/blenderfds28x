@@ -39,8 +39,8 @@ from bpy.props import (
     CollectionProperty,
 )
 
-from ..lib.exceptions import BFException
-from ..lib import config
+from ..types import BFException
+from .. import config
 from .. import geometry
 from ..lang import OP_XB, OP_XYZ, OP_PB
 

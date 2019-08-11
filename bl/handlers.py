@@ -3,7 +3,7 @@ from bpy.app.handlers import persistent, load_post, save_pre, depsgraph_update_p
 from bpy.types import Object
 
 from .. import geometry
-from ..lib import config
+from .. import config
 
 # Handlers
 

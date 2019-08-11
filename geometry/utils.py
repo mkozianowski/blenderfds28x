@@ -2,7 +2,7 @@
 
 import bpy, bmesh
 
-from ..lib.exceptions import BFException
+from ..types import BFException
 
 
 # Working on Blender objects

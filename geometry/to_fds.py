@@ -5,7 +5,7 @@ from time import time
 from . import utils
 from . import calc_voxels
 from . import calc_trisurfaces
-from ..lib.exceptions import BFException
+from ..types import BFException
 
 
 # to GEOM

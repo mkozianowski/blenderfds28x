@@ -39,9 +39,8 @@ from bpy.props import (
 )
 from . import geometry
 
-from .lib.exceptions import BFException
-from .lib.types import Parameter, Namelist, PString, PFYI, POthers
-from .lib.config import separator, comment
+from .types import BFException, Parameter, Namelist, PString, PFYI, POthers
+from .config import separator, comment
 
 # Collections
 

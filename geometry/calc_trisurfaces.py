@@ -4,7 +4,7 @@ import bpy, bmesh, mathutils
 from time import time
 from math import floor, ceil
 
-from ..lib.exceptions import BFException
+from ..types import BFException
 from . import utils
 
 

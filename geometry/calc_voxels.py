@@ -5,7 +5,7 @@ from math import floor, ceil
 
 from mathutils import Matrix
 
-from ..lib.exceptions import BFException
+from ..types import BFException
 from . import utils
 
 DEBUG = False
