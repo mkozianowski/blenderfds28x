@@ -15,6 +15,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
+
 import bpy
 from bpy.types import (
     bpy_struct,
@@ -120,8 +122,6 @@ class SCENE_OT_bf_check_quality(Operator):
 
 # GEOM remesh
 
-import subprocess
-
 
 @subscribe
 class OBJECT_OT_quadriflow_remesh(Operator):
@@ -153,16 +153,12 @@ class OBJECT_OT_quadriflow_remesh(Operator):
         # FIXME no binary, OBJECT mode, SCULPT
         return context.object
 
-    def draw(self, context):
-        layout = self.layout
-        layout.prop(self, "resolution")
-        layout.prop(self, "sharp")
-        layout.prop(self, "mcf")
-
     def execute(self, context):
-        bf_quadriflow_filepath = (
-            "/home/egissi/github/blenderfds28x/bin/hjwdzh/quadriflow"
-        )  # bpy.context.preferences.addons[
+        w = context.window_manager.windows[0]
+        w.cursor_modal_set("WAIT")
+        bf_quadriflow_filepath = bpy.context.preferences.addons[
+            "blenderfds28x"
+        ].preferences.bf_quadriflow_filepath
         ob = context.object
         input_path = os.path.join(bpy.app.tempdir, f"{ob.name}.obj")
         output_path = os.path.join(bpy.app.tempdir, f"{ob.name}_quadflow.obj")
@@ -177,7 +173,7 @@ class OBJECT_OT_quadriflow_remesh(Operator):
             use_triangles=True,
             path_mode="AUTO",
         )
-        quadriflow_command = [
+        cmd = [
             bf_quadriflow_filepath,
             "-i",
             input_path,
@@ -187,18 +183,25 @@ class OBJECT_OT_quadriflow_remesh(Operator):
             str(self.resolution),
         ]
         if self.mcf:
-            quadriflow_command.append("-mcf")
+            cmd.append("-mcf")
         if self.sharp:
-            quadriflow_command.append("-sharp")
-        print("Command:", quadriflow_command)
+            cmd.append("-sharp")
+        print("BFDS: External command:", " ".join(cmd))
+        timeout = 60  # seconds
         try:
-            subprocess.run(quadriflow_command, check=True)
-        except subprocess.CalledProcessError:
-            self.report({"ERROR"}, "Subprocess error")  # FIXME specify
+            subprocess.run(cmd, timeout=timeout, check=True, capture_output=True)
+        except subprocess.CalledProcessError as err:
+            self.report({"ERROR"}, f"Subprocess error:\n{err.stdout}")
             return {"CANCELLED"}
-        #        bpy.ops.object.delete() FIXME
-        bpy.ops.import_scene.obj(filepath=output_path)
-        return {"FINISHED"}
+        except subprocess.TimeoutExpired as err:
+            self.report({"ERROR"}, f"Subprocess timeout:\n{err.stdout}")
+            return {"CANCELLED"}
+        else:
+            # bpy.ops.object.delete() FIXME
+            bpy.ops.import_scene.obj(filepath=output_path)
+            return {"FINISHED"}
+        finally:
+            w.cursor_modal_restore()
 
 
 # Show FDS code

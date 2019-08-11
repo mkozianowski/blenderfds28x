@@ -19,7 +19,19 @@ class BFPreferences(AddonPreferences):
 
     bf_quadriflow_filepath: StringProperty(
         name="Quadriflow",
-        description="Quadriflow executable filepath",
+        description="Quadriflow executable filepath (see: github.com/hjwdzh)",
+        subtype="FILE_PATH",
+    )
+
+    bf_manifold_filepath: StringProperty(
+        name="Manifold",
+        description="Manifold executable filepath (see: github.com/hjwdzh)",
+        subtype="FILE_PATH",
+    )
+
+    bf_simplify_filepath: StringProperty(
+        name="Simplify",
+        description="Simplify executable filepath (see: github.com/hjwdzh)",
         subtype="FILE_PATH",
     )
 
@@ -27,11 +39,14 @@ class BFPreferences(AddonPreferences):
         layout = self.layout
         paths = context.preferences.filepaths
         # layout.operator("wm.bf_load_blenderfds_settings") # FIXME BF default settings
+        layout.label(text="User Interface:")
         layout.prop(self, "bf_pref_simplify_ui")
         layout.prop(paths, "use_load_ui")
         layout.prop(paths, "use_relative_paths")
-        layout.label(text="Executable filepaths:")
+        layout.label(text="External executable filepaths:")
         layout.prop(self, "bf_quadriflow_filepath")
+        layout.prop(self, "bf_manifold_filepath")
+        layout.prop(self, "bf_simplify_filepath")
         return layout
 
 
