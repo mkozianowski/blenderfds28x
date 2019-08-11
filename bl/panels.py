@@ -210,7 +210,7 @@ class MATERIAL_PT_bf_namelist(Panel):
 
 class BF_GEOM_Toolbar:
     bl_category = "FDS"
-    bl_label = "GEOM Check"
+    bl_label = "GEOM Inspect"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
@@ -259,9 +259,14 @@ class BF_Remesh_Toolbar:
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
+        me = context.object.data
         flow = layout.grid_flow(
             row_major=True, columns=0, even_columns=True, even_rows=False, align=False
         )
+        flow.label(text=f"Verts: {len(me.vertices)} | Faces: {len(me.polygons)}")
+        flow.menu("VIEW3D_MT_edit_mesh_clean")
+        flow.operator("mesh.quads_convert_to_tris")
+        flow.separator()
         flow.operator("object.manifold")
         flow.operator("object.quadriflow")
         flow.operator("object.simplify")
