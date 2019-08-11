@@ -208,21 +208,16 @@ class MATERIAL_PT_bf_namelist(Panel):
 # Toolbar panels
 
 
-class BF_GEOM_Solid_Toolbar:
+class BF_GEOM_Toolbar:
     bl_category = "FDS"
-    bl_label = "GEOM Solid"
+    bl_label = "GEOM Check"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
     @classmethod
     def poll(cls, context):
         ob = context.active_object
-        return (
-            ob
-            and ob.type == "MESH"
-            and ob.bf_namelist_cls == "ON_GEOM"
-            and not ob.bf_geom_is_terrain
-        )
+        return ob and ob.type == "MESH" and ob.bf_namelist_cls == "ON_GEOM"
 
     def draw(self, context):
         layout = self.layout
@@ -235,89 +230,52 @@ class BF_GEOM_Solid_Toolbar:
         flow.prop(ob, "bf_geom_protect")
         flow.operator("object.bf_geom_check_intersections")
         flow.operator("object.bf_geom_check_quality")
-        flow.separator()
-        flow.operator("object.quadriflow_remesh")
-
-        # FIXME
-        # Check intersections
-        # Check quality with mod
-
-        # col.operator("mesh.print3d_check_solid", text="Solid")
-        # rowsub = col.row(align=True)
-        # rowsub.operator("mesh.print3d_check_degenerate", text="Degenerate")
-        # rowsub.prop(print_3d, "threshold_zero", text="")
-        # rowsub = col.row(align=True)
-        # rowsub.operator("mesh.print3d_check_distort", text="Distorted")
-        # rowsub.prop(print_3d, "angle_distort", text="")
-        # rowsub = col.row(align=True)
-        # rowsub.operator("mesh.print3d_check_thick", text="Thickness")
-        # rowsub.prop(print_3d, "thickness_min", text="")
-        # rowsub = col.row(align=True)
-        # rowsub.operator("mesh.print3d_check_sharp", text="Edge Sharp")
-        # rowsub.prop(print_3d, "angle_sharp", text="")
-        # rowsub = col.row(align=True)
-        # rowsub.operator("mesh.print3d_check_overhang", text="Overhang")
-        # rowsub.prop(print_3d, "angle_overhang", text="")
-        # col = layout.column()
-        # col.operator("mesh.print3d_check_all", text="Check All")
-
-        row = layout.row()
-        row.label(text="Cleanup:")
-        col = layout.column(align=True)
-        # FIXME
-        # Remesh, Instant Mesh (path in prefs), others?
-
-        # col.operator("mesh.print3d_clean_isolated", text="Isolated")
-        # rowsub = col.row(align=True)
-        # rowsub.operator("mesh.print3d_clean_distorted", text="Distorted")
-        # rowsub.prop(print_3d, "angle_distort", text="")
-        # col = layout.column()
-        # col.operator("mesh.print3d_clean_non_manifold", text="Make Manifold")
 
 
 @subscribe
-class VIEW3D_PT_BF_GEOM_Solid_Object(Panel, BF_GEOM_Solid_Toolbar):
+class VIEW3D_PT_BF_GEOM_Object(Panel, BF_GEOM_Toolbar):
     bl_idname = "VIEW3D_PT_bf_geom_object"
     bl_context = "objectmode"
 
 
 @subscribe
-class VIEW3D_PT_BF_GEOM_Solid_Mesh(Panel, BF_GEOM_Solid_Toolbar):
+class VIEW3D_PT_BF_GEOM_Mesh(Panel, BF_GEOM_Toolbar):
     bl_idname = "VIEW3D_PT_bf_geom_mesh"
     bl_context = "mesh_edit"
 
 
-class BF_GEOM_Terrain_Toolbar:
+class BF_Remesh_Toolbar:
     bl_category = "FDS"
-    bl_label = "GEOM Terrain"
+    bl_label = "Remesh"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
     @classmethod
     def poll(cls, context):
         ob = context.active_object
-        return (
-            ob
-            and ob.type == "MESH"
-            and ob.bf_namelist_cls == "ON_GEOM"
-            and ob.bf_geom_is_terrain
-        )
+        return ob and ob.type == "MESH"
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row()
-        row.label(text="Test Terrain")
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+        flow = layout.grid_flow(
+            row_major=True, columns=0, even_columns=True, even_rows=False, align=False
+        )
+        flow.operator("object.manifold")
+        flow.operator("object.quadriflow")
+        flow.operator("object.simplify")
 
 
 @subscribe
-class VIEW3D_PT_BF_GEOM_Terrain_Object(Panel, BF_GEOM_Terrain_Toolbar):
-    bl_idname = "VIEW3D_PT_bf_terrain_object"
+class VIEW3D_PT_BF_Remesh_Toolbar_Object(Panel, BF_Remesh_Toolbar):
+    bl_idname = "VIEW3D_PT_bf_remesh_toolbar_object"
     bl_context = "objectmode"
 
 
 @subscribe
-class VIEW3D_PT_BF_GEOM_Terrain_Mesh(Panel, BF_GEOM_Terrain_Toolbar):
-    bl_idname = "VIEW3D_PT_bf_terrain_mesh"
+class VIEW3D_PT_BF_Remesh_Toolbar_Mesh(Panel, BF_Remesh_Toolbar):
+    bl_idname = "VIEW3D_PT_bf_remesh_toolbar_mesh"
     bl_context = "mesh_edit"
 
 

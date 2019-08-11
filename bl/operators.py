@@ -123,12 +123,62 @@ class SCENE_OT_bf_check_quality(Operator):
 # GEOM remesh
 
 
-@subscribe
-class OBJECT_OT_quadriflow_remesh(Operator):
-    bl_idname = "object.quadriflow_remesh"
-    bl_label = "Quadriflow Remesh"
-
+class _external_tool:
     bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return cls._get_exe(context) and context.object
+
+    @classmethod
+    def _get_exe(self, context):  # to be reloaded
+        return ""
+
+    def _get_cmd(self, context, ob):  # to be reloaded
+        cmd, input_obj, output_obj = "", "", ""
+        return cmd, input_obj, output_obj
+
+    def execute(self, context):
+        w = context.window_manager.windows[0]
+        w.cursor_modal_set("WAIT")
+        ob = context.object
+        cmd, input_obj, output_obj = self._get_cmd(context, ob)
+        # Export obj
+        bpy.ops.export_scene.obj(
+            filepath=input_obj,
+            check_existing=True,
+            use_selection=True,
+            use_mesh_modifiers=False,
+            use_normals=True,
+            use_uvs=True,
+            use_materials=False,
+            use_triangles=True,
+            path_mode="AUTO",
+        )
+        # Run cmd and import obj
+        try:
+            subprocess.run(cmd, timeout=60, check=True, capture_output=True)
+        except subprocess.CalledProcessError as err:
+            self.report({"ERROR"}, f"Subprocess error:\n{err.stdout}")
+            return {"CANCELLED"}
+        except subprocess.TimeoutExpired as err:
+            self.report({"ERROR"}, f"Subprocess timeout:\n{err.stdout}")
+            return {"CANCELLED"}
+        else:
+            bpy.ops.import_scene.obj(filepath=output_obj)
+            _bf_props_copy(context, ob, context.selected_objects)
+            ob.hide_set(True)
+            context.view_layer.objects.active = context.selected_objects[0]
+            return {"FINISHED"}
+        finally:
+            w.cursor_modal_restore()
+
+
+@subscribe
+class OBJECT_OT_manifold(Operator, _external_tool):
+    bl_idname = "object.manifold"
+    bl_label = "Make Manifold"
+    bl_description = "Manifold generation from broken Meshes"
 
     resolution: bpy.props.IntProperty(
         name="Resolution",
@@ -136,6 +186,30 @@ class OBJECT_OT_quadriflow_remesh(Operator):
         min=5,
         max=10000,
         default=300,
+    )
+
+    @classmethod
+    def _get_exe(self, context):  # to be reloaded
+        pref = context.preferences.addons["blenderfds28x"].preferences
+        return pref.bf_manifold_filepath  # FIXME or predefined with linux...
+
+    def _get_cmd(self, context, ob):
+        tempdir = bpy.app.tempdir
+        input_obj = os.path.join(tempdir, f"{ob.name}.obj")
+        output_obj = os.path.join(tempdir, f"{ob.name}_manifold.obj")
+        cmd = [self._get_exe(context), input_obj, output_obj, str(self.resolution)]
+        print("BFDS: External command:", " ".join(cmd))
+        return cmd, input_obj, output_obj
+
+
+@subscribe
+class OBJECT_OT_quadriflow(Operator, _external_tool):
+    bl_idname = "object.quadriflow"
+    bl_label = "Quadriflow Remesh"
+    bl_description = "A robust algorithm for quadrangulation of manifold Meshes"
+
+    resolution: bpy.props.IntProperty(
+        name="Resolution", description="Octree resolution", min=10, default=300
     )
     sharp: bpy.props.BoolProperty(
         name="Sharp edges",
@@ -149,59 +223,63 @@ class OBJECT_OT_quadriflow_remesh(Operator):
     )
 
     @classmethod
-    def poll(cls, context):
-        # FIXME no binary, OBJECT mode, SCULPT
-        return context.object
+    def _get_exe(cls, context):
+        pref = context.preferences.addons["blenderfds28x"].preferences
+        return pref.bf_quadriflow_filepath  # FIXME or predefined with linux...simplify
 
-    def execute(self, context):
-        w = context.window_manager.windows[0]
-        w.cursor_modal_set("WAIT")
-        bf_quadriflow_filepath = bpy.context.preferences.addons[
-            "blenderfds28x"
-        ].preferences.bf_quadriflow_filepath
-        ob = context.object
-        input_path = os.path.join(bpy.app.tempdir, f"{ob.name}.obj")
-        output_path = os.path.join(bpy.app.tempdir, f"{ob.name}_quadflow.obj")
-        bpy.ops.export_scene.obj(
-            filepath=input_path,
-            check_existing=True,
-            use_selection=True,
-            use_mesh_modifiers=False,
-            use_normals=True,
-            use_uvs=True,
-            use_materials=False,
-            use_triangles=True,
-            path_mode="AUTO",
-        )
+    def _get_cmd(self, context, ob):
+        tempdir = bpy.app.tempdir
+        input_obj = os.path.join(tempdir, f"{ob.name}.obj")
+        output_obj = os.path.join(tempdir, f"{ob.name}_quadriflow.obj")
         cmd = [
-            bf_quadriflow_filepath,
+            self._get_exe(context),
             "-i",
-            input_path,
+            input_obj,
             "-o",
-            output_path,
+            output_obj,
             "-f",
             str(self.resolution),
         ]
-        if self.mcf:
-            cmd.append("-mcf")
-        if self.sharp:
-            cmd.append("-sharp")
+        self.mcf and cmd.append("-mcf")
+        self.sharp and cmd.append("-sharp")
         print("BFDS: External command:", " ".join(cmd))
-        timeout = 60  # seconds
-        try:
-            subprocess.run(cmd, timeout=timeout, check=True, capture_output=True)
-        except subprocess.CalledProcessError as err:
-            self.report({"ERROR"}, f"Subprocess error:\n{err.stdout}")
-            return {"CANCELLED"}
-        except subprocess.TimeoutExpired as err:
-            self.report({"ERROR"}, f"Subprocess timeout:\n{err.stdout}")
-            return {"CANCELLED"}
-        else:
-            # bpy.ops.object.delete() FIXME
-            bpy.ops.import_scene.obj(filepath=output_path)
-            return {"FINISHED"}
-        finally:
-            w.cursor_modal_restore()
+        return cmd, input_obj, output_obj
+
+
+@subscribe
+class OBJECT_OT_simplify(Operator, _external_tool):
+    bl_idname = "object.simplify"
+    bl_label = "Simplify Mesh"
+    bl_description = "Simplify current mesh by reducing the number of faces"
+
+    face_num: bpy.props.IntProperty(
+        name="Number of Faces",
+        description="Desired number of faces",
+        min=100,
+        default=1000,
+    )
+
+    @classmethod
+    def _get_exe(cls, context):
+        pref = context.preferences.addons["blenderfds28x"].preferences
+        return pref.bf_simplify_filepath  # FIXME or predefined with linux...simplify
+
+    def _get_cmd(self, context, ob):
+        tempdir = bpy.app.tempdir
+        input_obj = os.path.join(tempdir, f"{ob.name}.obj")
+        output_obj = os.path.join(tempdir, f"{ob.name}_simplify.obj")
+        cmd = [
+            self._get_exe(context),
+            "-m",
+            "-i",
+            input_obj,
+            "-o",
+            output_obj,
+            "-f",
+            str(self.face_num),
+        ]
+        print("BFDS: External command:", " ".join(cmd))
+        return cmd, input_obj, output_obj
 
 
 # Show FDS code
