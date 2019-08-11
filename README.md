@@ -16,9 +16,12 @@ For more information, and the original BlenderFDS code visit http://www.blenderf
 
 3. Rename the downloaded zip file to `blenderfds28x`;
 
-3. Open Blender 2.8x and open the `Edit > Preferences` menu. Then install and enable the downloaded addon as described in [Blender Manual](https://docs.blender.org/manual/en/dev/editors/preferences/addons.html?highlight=addon#).
+4. Launch Blender 2.8x and open the `Edit > Preferences` menu. Then install and enable the downloaded addon as described in [Blender Manual](https://docs.blender.org/manual/en/dev/editors/preferences/addons.html?highlight=addon#).
 
 ## How to stay on the edge of development
 
-`git clone` this repository into the `blender/2.80/scripts/addons/blenderfds280x` directory of your Blender 2.8x install.
-Then `git update` your local repository to follow the development. 
+1. `git clone` this repository into the `blender/2.80/scripts/addons/blenderfds280x` directory of your Blender 2.8x install. No need to zip it.
+
+2. Launch Blender 2.8x and open the `Edit > Preferences` menu. Search for the `BlenderFDS` Addon and enable it.
+
+3. To follow the development: `git update` your local repository, and relaunch Blender 2.8x.
