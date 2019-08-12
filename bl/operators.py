@@ -287,7 +287,10 @@ class OBJECT_OT_simplify(Operator, _external_tool):
 
 class _show_fds_code:
     def draw(self, context):
-        lines = self.lines.split("\n") or ("No FDS code is exported",)
+        if self.lines:
+            lines = self.lines.split("\n")
+        else:
+            lines = ("No FDS code is exported",)
         if len(lines) > 20:
             lines = lines[:20]
             lines.append("...")

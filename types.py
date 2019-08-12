@@ -180,10 +180,10 @@ class Parameter:
 
     def to_fds(self, context) -> "str or (str, msg) or None":
         """Get FDS exported string and msg."""
-        self.check(context)
-        # Check if export requested
-        if not self.exported:
+        # Export requested and check
+        if not self.exported or not self.fds_label:
             return
+        self.check(context)
         # If value is not an iterable, then put it in a tuple
         value = self.value
         if not is_iterable(value):
@@ -202,10 +202,7 @@ class Parameter:
             value = ",".join(f"'{v}'" for v in values)
         else:
             raise Exception(f"Parameter.to_fds: Unknown value type '{value}'")
-        # Return
-        if self.fds_label:
-            return "=".join((self.fds_label, value))
-        return value
+        return "=".join((self.fds_label, value))
 
 
 class Namelist(Parameter):
