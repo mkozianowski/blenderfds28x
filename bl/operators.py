@@ -190,8 +190,8 @@ class OBJECT_OT_manifold(Operator, _external_tool):
 
     @classmethod
     def _get_exe(self, context):  # to be reloaded
-        pref = context.preferences.addons["blenderfds28x"].preferences
-        return pref.bf_manifold_filepath  # FIXME or predefined with linux...
+        prefs = config.get_prefs()
+        return prefs.bf_manifold_filepath  # FIXME or predefined with linux...
 
     def _get_cmd(self, context, ob):
         tempdir = bpy.app.tempdir
@@ -224,8 +224,8 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        pref = context.preferences.addons["blenderfds28x"].preferences
-        return pref.bf_quadriflow_filepath  # FIXME or predefined with linux...simplify
+        prefs = get_prefs()
+        return prefs.bf_quadriflow_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
         tempdir = bpy.app.tempdir
@@ -261,8 +261,8 @@ class OBJECT_OT_simplify(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        pref = context.preferences.addons["blenderfds28x"].preferences
-        return pref.bf_simplify_filepath  # FIXME or predefined with linux...simplify
+        prefs = get_prefs()
+        return prefs.bf_simplify_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
         tempdir = bpy.app.tempdir

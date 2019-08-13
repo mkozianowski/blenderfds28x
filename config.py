@@ -16,12 +16,19 @@
 
 import bpy
 
-# # Shortcut
-# module = "blenderfds28x"
-# preferences = bpy.context.preferences.addons[module].preferences  # FIXME
+
+# Shortcut
+
+module = "blenderfds28x"
+
+
+def get_prefs():
+    return bpy.context.preferences.addons[module].preferences
+
 
 # Default separator
 separator = "\n      "
+
 
 # Default comment format
 def comment(msg):
