@@ -29,6 +29,22 @@ bl_info = {
 }
 
 
+# Setup logging
+
+import logging
+
+logsFormat = "%(levelname)s:%(name)s:%(lineno)d:%(message)s"
+logging.basicConfig(level=logging.getLevelName("INFO"), format=logsFormat)
+
+# Use like this FIXME:
+# import logging
+# log = logging.getLogger(__name__)
+# log.warning('Origin proj has been deleted because the property could not be updated', exc_info=True)
+# log.error('Cannot update crs', exc_info=True)
+# self.report({'ERROR'}, 'Cannot update crs. Check logs form more info')
+# return {'CANCELLED'}
+# log.info("Read shapefile...")
+
 # Register
 
 import bpy
@@ -39,6 +55,12 @@ from .bl import operators, panels, menus, ui, handlers, preferences
 
 def register():
     preferences.register()
+
+    # Set log level
+    pref = bpy.context.preferences.addons[__package__].preferences
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.getLevelName(pref.bf_loglevel))
+
     lang.register()
     operators.register()
     panels.register()

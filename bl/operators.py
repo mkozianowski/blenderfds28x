@@ -224,7 +224,7 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = get_prefs()
+        prefs = config.get_prefs()
         return prefs.bf_quadriflow_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
@@ -261,7 +261,7 @@ class OBJECT_OT_simplify(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = get_prefs()
+        prefs = config.get_prefs()
         return prefs.bf_simplify_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):

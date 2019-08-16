@@ -16,8 +16,6 @@
 
 import re, os.path, time, sys
 
-from . import config
-
 import bpy
 from bpy.types import (
     bpy_struct,
@@ -42,7 +40,11 @@ from bpy.props import (
 from . import geometry
 
 from .types import BFException, Parameter, Namelist, PString, PFYI, POthers
-from .config import separator, comment
+from .config import separator, comment, default_mas
+
+import logging
+log = logging.getLogger(__name__)
+
 
 # Collections
 
@@ -898,7 +900,7 @@ class MN_SURF(Namelist):
 
     @property
     def exported(self) -> "bool":
-        return self.element.bf_export and self.element.name not in config.default_mas
+        return self.element.bf_export and self.element.name not in default_mas
 
 @subscribe
 class MN_SURF_burner(MN_SURF):
@@ -1235,7 +1237,6 @@ class OP_PB(Parameter):
             return None, msg
         elif len(pbs) == 1:
             pb = pbs[0]
-            print(pb)
             return self._format_pb[pb[0]].format(pb[1]), msg
         else:
             name = ob.name
@@ -1929,10 +1930,10 @@ def register():
     from bpy.utils import register_class
     # Blender classes
     for cls in bl_classes:
-        print(f"BFDS: registering Blender class <{cls.__name__}>")
+        log.info(f"Registering Blender class <{cls.__name__}>")
         register_class(cls)
     # System parameters for tmp obs and file version
-    print(f"BFDS: registering sys properties")
+    log.info(f"BFDS: registering sys properties")
     Object.bf_is_tmp = BoolProperty(name='Is Tmp', description='Set if this Object is tmp', default=False)
     Object.bf_has_tmp = BoolProperty(name='Has Tmp', description='Set if this Object has tmp companions', default=False)
     Scene.bf_file_version = IntVectorProperty(name='BlenderFDS File Version', size=3, default=(5,0,0))  # FIXME
@@ -1951,7 +1952,7 @@ def register():
 def unregister():
     from bpy.utils import unregister_class
     # Blender Object, Material, and Scene
-    print(f"BFDS: unregistering sys properties")
+    log.info(f"Unregistering sys properties")
     BFObject.unregister()
     BFMaterial.unregister()
     BFScene.unregister()
@@ -1967,5 +1968,5 @@ def unregister():
     del Scene.bf_file_version
     # Blender classes
     for cls in bl_classes:
-        print(f"BFDS: unregistering Blender class <{cls.__name__}>")
+        log.info(f"Unregistering Blender class <{cls.__name__}>")
         unregister_class(cls)
