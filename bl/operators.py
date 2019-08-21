@@ -43,6 +43,7 @@ from ..types import BFException
 from .. import config
 from .. import geometry
 from ..lang import OP_XB, OP_XYZ, OP_PB
+from .. import gis
 
 
 # Collections
@@ -647,6 +648,57 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
         self.report({"INFO"}, "Assigned to selected Objects")
         return {"FINISHED"}
 
+
+# Gis FIXME
+
+
+@subscribe
+class SCENE_OT_bf_set_origin_pos(Operator):
+    bl_label = "Set Origin from Lat/Lon (WGS84)"
+    bl_idname = "scene.bf_set_origin_pos"
+    bl_description = "Set world origin position from latitude and longitude (WGS84)"
+
+    bf_lat: FloatProperty(
+        name="Latitude",
+        description="Latitude of world origin in decimal degrees with WGS84 reference system (EPSG:4326)",
+        default=+44.409400,
+        min=-90,
+        max=+90,
+        precision=8,
+    )  # Monte Fasce, Genova, Italy
+
+    bf_lon: FloatProperty(
+        name="Longitude",
+        description="Longitude of world origin in decimal degrees with WGS84 reference system (EPSG:4326)",
+        default=+9.034440,
+        min=-180,
+        max=+180,
+        precision=9,
+    )  # Monte Fasce, Genova, Italy
+
+    def execute(self, context):
+        try:
+            utm = gis.LonLat(self.bf_lon, self.bf_lat).to_UTM()
+        except ValueError as err:
+            self.report({"WARNING"}, str(err))
+            return {"CANCELLED"}
+        sc = context.scene
+        sc.bf_utm_zn = utm.zn
+        sc.bf_utm_ze = utm.ze
+        sc.bf_utm_e = utm.easting
+        sc.bf_utm_n = utm.northing
+        self.report({"INFO"}, "World origin position set")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        # Call dialog
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+
+# FIXME Set UTM or latlon to world origin, or convert
+# FIXME Set cursor at coordinate UTM or latlon + height
+# FIXME Get coordinate + height at cursor
 
 # Register
 

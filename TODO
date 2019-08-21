@@ -13,25 +13,33 @@ user preferences
 simplification UI
 refactor bf_other and UIList
 op copy properties: bf_others difficulties
+GEOM toolbox
+GEOM geometry mod original object fix, tool panel?
+logger
 
 *TODO:*
 
-GEOM toolbox
+Geography:
+lon, lat, north heading, height of scene world origin
+put cursor at coordinate (wgs84 lonlat, utm)
+get coordinate at cursor (wgs84 lonlat, utm)
+import geotiff
+import srtm
+import osm buildings, trees
+import landcover
+
+GEOM terrain toolbox
+geographic reference and coordinates, find coordinate, put cursor at coordinate
+TERRAIN and its checks
+MESH toolbox, mesh alignment
 default blender file
 search MATL_ID in text
 search QUANTITY in text
 geometry cache not working, handler crashing
-GEOM geometry mod original object fix, tool panel?
-
 
 op mesh
-op find MATL, 
 default appearance
 
-mesh alignment
 from_fds, import
 
 file version
-
-geographic reference and coordinates, find coordinate, put cursor at coordinate
-TERRAIN and its checks

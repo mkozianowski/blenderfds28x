@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import re, os.path, time, sys
+import re, os.path, time, sys, logging
 
 import bpy
 from bpy.types import (
@@ -38,11 +38,10 @@ from bpy.props import (
     CollectionProperty,
 )
 from . import geometry
-
 from .types import BFException, Parameter, Namelist, PString, PFYI, POthers
 from .config import separator, comment, default_mas
+from . import gis
 
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -66,12 +65,15 @@ def subscribe(cls):
         bf_classes.append(cls)
     return cls
 
+
 # PropertyGroup and UIList
+
 
 @subscribe
 class WM_PG_bf_others(PropertyGroup):
     bf_export: BoolProperty(name="Export", default=False)
     name: StringProperty(name="Name")
+
 
 @subscribe
 class WM_UL_bf_others_items(UIList):
@@ -87,6 +89,7 @@ class WM_UL_bf_others_items(UIList):
 class WM_PG_bf_filepaths(PropertyGroup):
     bf_export: BoolProperty(name="Export", default=False)
     name: StringProperty(name="Name", subtype="FILE_PATH")
+
 
 @subscribe
 class WM_UL_bf_filepaths_items(UIList):
@@ -188,6 +191,83 @@ class SP_config_default_voxel_size(Parameter):
     bpy_default = 0.1
     bpy_other = {"unit": "LENGTH", "step": 1.0, "precision": 3}
 
+@subscribe
+class SP_utm_zn(Parameter):
+    label = "UTM Zone Number (WGS84)"
+    description = "UTM zone number (WGS84 datum) of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_utm_zn"  # not compatible with BlenderGIS
+    bpy_prop = IntProperty
+    bpy_default = 32  # Monte Fasce, Genova, Italy
+    bpy_other = {"min": 1, "max": 60}
+
+    def draw(self, context, layout):
+        sc = self.element
+        row = layout.row(align=True)
+        row.label(text="UTM Zone")
+        row.prop(sc, "bf_utm_zn", text="")
+        row.prop(sc, "bf_utm_ze", text="")
+
+@subscribe
+class SP_utm_ze(Parameter):
+    label = "UTM Zone Emisphere (WGS84)"
+    description = "UTM zone emisphere (WGS84 datum) of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_utm_ze"  # not compatible with BlenderGIS
+    bpy_prop = EnumProperty
+    bpy_default = "N"  # Monte Fasce, Genova, Italy
+    bpy_other = {
+        "items": (("N", "N", "Northern Emisphere"), ("S", "S", "Southern Emisphere"))
+    }
+
+    def draw(self, context, layout):
+        pass
+
+@subscribe
+class SP_utm_e(Parameter):
+    label = "UTM Easting (WGS84)"
+    description = "UTM easting (WGS84 datum) of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_utm_e"  # not compatible with BlenderGIS
+    bpy_prop = IntProperty
+    bpy_default = 502742  # Monte Fasce, Genova, Italy
+    bpy_other = {"min": 100000, "max": 900000}
+
+
+@subscribe
+class SP_utm_n(Parameter):
+    label = "UTM Northing (WGS84)"
+    description = "UTM northing (WGS84 datum) of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_utm_n"  # not compatible with BlenderGIS
+    bpy_prop = IntProperty
+    bpy_default = 4917346  # Monte Fasce, Genova, Italy
+    bpy_other = {"min": 0, "max": 10000000}
+
+
+# FIXME This is not compatible with FDS convention for WIND namelist
+@subscribe
+class SP_config_north_heading(Parameter):
+    label = "World North Heading"
+    description = "Angle between +y axis and north heading"
+    bpy_type = Scene
+    bpy_idname = "bf_north_heading"  # not compatible with BlenderGIS
+    bpy_prop = FloatProperty
+    bpy_default = 0.0
+    bpy_other = {"unit": "ROTATION", "precision": 4}
+
+
+# FIXME This is not compatible with FDS convention for pressure?
+@subscribe
+class SP_config_height(Parameter):
+    label = "World Origin Height"
+    description = "Height of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_height"  # not compatible with BlenderGIS
+    bpy_prop = FloatProperty
+    bpy_default = 0.0
+    bpy_other = {"unit": "LENGTH", "precision": 4}
+
 
 @subscribe
 class SN_config(Namelist):
@@ -200,6 +280,21 @@ class SN_config(Namelist):
         sc = self.element
         col = layout.column()
         col.prop(sc, "bf_head_directory")
+        col.separator()
+
+        col = col.column()
+        sub = col.column(align=True)
+        row = sub.row(align=True)
+        row.prop(sc, "bf_utm_zn", text="World Origin UTM Zone")
+        row.prop(sc, "bf_utm_ze", text="")
+        row.operator("scene.bf_set_origin_pos", text="", icon="IMPORT")
+        utm = gis.UTM(sc.bf_utm_zn, True, sc.bf_utm_e, sc.bf_utm_n)
+        row.operator("wm.url_open", text="", icon="URL").url = utm.to_url()
+        sub.prop(sc, "bf_utm_e", text="UTM Easting")
+        sub.prop(sc, "bf_utm_n", text="UTM Northing")
+        col.prop(sc, "bf_height")
+        col.prop(sc, "bf_north_heading")
+
         col.separator()
         col.prop(sc, "bf_config_min_edge_length")
         col.prop(sc, "bf_config_min_face_area")
@@ -436,7 +531,6 @@ class SP_REAC_other(POthers):
     bpy_ul = WM_UL_bf_others_items
 
 
-
 @subscribe
 class SN_REAC(Namelist):
     label = "REAC"
@@ -548,7 +642,6 @@ class SP_RADI_other(POthers):
     bpy_ul = WM_UL_bf_others_items
 
 
-
 @subscribe
 class SN_RADI(Namelist):
     label = "RADI"
@@ -651,7 +744,6 @@ class SP_DUMP_other(POthers):
     bpy_ul = WM_UL_bf_others_items
 
 
-
 @subscribe
 class SN_DUMP(Namelist):
     label = "DUMP"
@@ -741,6 +833,7 @@ class MP_namelist_cls(Parameter):
             return
         super().to_fds(context)
 
+
 @subscribe
 class MP_ID(PString):
     label = "ID"
@@ -771,8 +864,6 @@ class MP_RGB(Parameter):
         c = self.element.diffuse_color
         rgb = int(c[0] * 255), int(c[1] * 255), int(c[2] * 255)
         return f"RGB={rgb[0]},{rgb[1]},{rgb[2]} TRANSPARENCY={c[3]:.2f}"
-
-
 
 
 @subscribe
@@ -878,7 +969,6 @@ class MP_other(POthers):
     bpy_ul = WM_UL_bf_others_items
 
 
-
 @subscribe
 class MN_SURF(Namelist):
     label = "SURF"
@@ -888,19 +978,12 @@ class MN_SURF(Namelist):
     fds_label = "SURF"
     bpy_export = "bf_export"
     bpy_export_default = True
-    param_cls = (
-        MP_ID,
-        MP_FYI,
-        MP_RGB,
-        MP_MATL_ID,
-        MP_THICKNESS,
-        MP_BACKING,
-        MP_other,
-    )
+    param_cls = (MP_ID, MP_FYI, MP_RGB, MP_MATL_ID, MP_THICKNESS, MP_BACKING, MP_other)
 
     @property
     def exported(self) -> "bool":
         return self.element.bf_export and self.element.name not in default_mas
+
 
 @subscribe
 class MN_SURF_burner(MN_SURF):
@@ -953,6 +1036,7 @@ class OP_namelist_cls(Parameter):
         "items": (("ON_OBST", "OBST", "Obstruction", 1000),),
         "update": update_OP_namelist_cls,
     }
+
 
 # OBST
 
@@ -1323,7 +1407,6 @@ class OP_other(POthers):
     bpy_ul = WM_UL_bf_others_items
 
 
-
 @subscribe
 class ON_OBST(Namelist):
     label = "OBST"
@@ -1396,6 +1479,7 @@ class OP_GEOM_check_quality(Parameter):
     bpy_prop = BoolProperty
     bpy_default = True
 
+
 @subscribe
 class OP_GEOM_protect(Parameter):
     label = "Protect Original"
@@ -1449,6 +1533,7 @@ class OP_GEOM(Parameter):
             msg,
         )
 
+
 @subscribe
 class OP_GEOM_IS_TERRAIN(Parameter):  # FIXME
     label = "IS_TERRAIN"
@@ -1458,6 +1543,7 @@ class OP_GEOM_IS_TERRAIN(Parameter):  # FIXME
     bpy_type = Object
     bpy_prop = BoolProperty
     bpy_idname = "bf_geom_is_terrain"
+
 
 @subscribe
 class OP_GEOM_EXTEND_TERRAIN(Parameter):  # FIXME
@@ -1474,6 +1560,7 @@ class OP_GEOM_EXTEND_TERRAIN(Parameter):  # FIXME
         ob = self.element
         return ob.bf_geom_is_terrain
 
+
 @subscribe
 class ON_GEOM(Namelist):
     label = "GEOM"
@@ -1483,7 +1570,15 @@ class ON_GEOM(Namelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    param_cls = OP_ID, OP_FYI, OP_GEOM_check_quality, OP_GEOM_IS_TERRAIN, OP_GEOM_EXTEND_TERRAIN, OP_other, OP_GEOM
+    param_cls = (
+        OP_ID,
+        OP_FYI,
+        OP_GEOM_check_quality,
+        OP_GEOM_IS_TERRAIN,
+        OP_GEOM_EXTEND_TERRAIN,
+        OP_other,
+        OP_GEOM,
+    )
 
 
 # HOLE
@@ -1859,7 +1954,7 @@ class BFScene:
             filepath = "..." + filepath[-57:]
         bodies = [
             f"! Generated by BlenderFDS {version} on Blender {bpy.app.version_string}",
-            f"! Scene: <{self.name}>  Date: <{now}>  File: <{filepath}>"
+            f"! Scene: <{self.name}>  Date: <{now}>  File: <{filepath}>",
         ]
         bodies.extend(
             n(self).to_fds(context) for n in self.bf_namelists
@@ -1909,7 +2004,9 @@ class BFCollection:
         obs.sort(key=lambda k: k.name)  # alphabetic order by name
         bodies = list()
         if obs:
-            bodies.append(f"\n! --- Geometric namelists from Blender Collection <{self.name}>")
+            bodies.append(
+                f"\n! --- Geometric namelists from Blender Collection <{self.name}>"
+            )
             bodies.extend(ob.to_fds(context) for ob in obs)
         bodies.extend(child.to_fds(context) for child in self.children)
         return "\n".join(b for b in bodies if b)  # remove empties
@@ -1928,15 +2025,24 @@ class BFCollection:
 
 def register():
     from bpy.utils import register_class
+
     # Blender classes
     for cls in bl_classes:
         log.info(f"Registering Blender class <{cls.__name__}>")
         register_class(cls)
     # System parameters for tmp obs and file version
     log.info(f"BFDS: registering sys properties")
-    Object.bf_is_tmp = BoolProperty(name='Is Tmp', description='Set if this Object is tmp', default=False)
-    Object.bf_has_tmp = BoolProperty(name='Has Tmp', description='Set if this Object has tmp companions', default=False)
-    Scene.bf_file_version = IntVectorProperty(name='BlenderFDS File Version', size=3, default=(5,0,0))  # FIXME
+    Object.bf_is_tmp = BoolProperty(
+        name="Is Tmp", description="Set if this Object is tmp", default=False
+    )
+    Object.bf_has_tmp = BoolProperty(
+        name="Has Tmp",
+        description="Set if this Object has tmp companions",
+        default=False,
+    )
+    Scene.bf_file_version = IntVectorProperty(
+        name="BlenderFDS File Version", size=3, default=(5, 0, 0)
+    )  # FIXME
     # params and namelists
     for _, cls in params.items():
         cls.register()
@@ -1951,6 +2057,7 @@ def register():
 
 def unregister():
     from bpy.utils import unregister_class
+
     # Blender Object, Material, and Scene
     log.info(f"Unregistering sys properties")
     BFObject.unregister()
