@@ -1,22 +1,34 @@
 # TODO
 
+unit testing (WUIFI-21)
+
+automatic developer's doc with doxygen (WUIFI-21)
+
+user doc (WUIFI-21)
+
 MESH toolbox, mesh alignment
+
 default blender file
 
 search MATL_ID in text
+
 search QUANTITY in text
+
 geometry cache not working, handler crashing
 
 op mesh
+
 default appearance
 
 from_fds, import
+
 file version management
 
 ## Geography:
 import geotiff, srtm, osm buildings, trees, landcover
 
 GEOM terrain new quality checks
+
 GEOM terrain toolbox
 
 
