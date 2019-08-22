@@ -540,6 +540,7 @@ class SCENE_OT_bf_copy_props_to_scene(Operator):
     bl_label = "Copy To Scene"
     bl_idname = "scene.bf_props_to_scene"
     bl_description = "Copy all current scene FDS parameters to another Scene"
+    bl_options = {"REGISTER", "UNDO"}
 
     bf_destination_element: StringProperty(name="Destination Scene")
 
@@ -578,6 +579,7 @@ class OBJECT_OT_bf_copy_FDS_properties_to_sel_obs(Operator):
     bl_label = "Copy To Selected Objects"
     bl_idname = "object.bf_props_to_sel_obs"
     bl_description = "Copy current object FDS parameters to selected Objects"
+    bl_options = {"REGISTER", "UNDO"}
 
     def invoke(self, context, event):  # Ask for confirmation
         wm = context.window_manager
@@ -610,6 +612,7 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
     bl_label = "Assign To Selected Objects"
     bl_idname = "material.bf_surf_to_sel_obs"
     bl_description = "Assign current boundary condition to selected Objects"
+    bl_options = {"REGISTER", "UNDO"}
 
     def invoke(self, context, event):  # Ask for confirmation
         wm = context.window_manager
@@ -649,56 +652,146 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
         return {"FINISHED"}
 
 
-# Gis FIXME
+# GIS
 
 
-@subscribe
-class SCENE_OT_bf_set_origin_pos(Operator):
-    bl_label = "Set Origin from Lat/Lon (WGS84)"
-    bl_idname = "scene.bf_set_origin_pos"
-    bl_description = "Set world origin position from latitude and longitude (WGS84)"
+class _bf_set_geoloc:
+    bl_label = "Get/Set Geo Location"
+    # bl_idname = "scene.bf_set_geoloc"
+    bl_description = "Get and set geographic location (WGS84)"
+    bl_options = {"REGISTER", "UNDO"}
 
-    bf_lat: FloatProperty(
-        name="Latitude",
-        description="Latitude of world origin in decimal degrees with WGS84 reference system (EPSG:4326)",
-        default=+44.409400,
-        min=-90,
-        max=+90,
-        precision=8,
-    )  # Monte Fasce, Genova, Italy
+    show: BoolProperty(name="Show Geo Location", default=False)
 
     bf_lon: FloatProperty(
         name="Longitude",
-        description="Longitude of world origin in decimal degrees with WGS84 reference system (EPSG:4326)",
-        default=+9.034440,
+        description="Longitude (WGS84, EPSG:4326) in decimal degrees",
         min=-180,
         max=+180,
         precision=9,
-    )  # Monte Fasce, Genova, Italy
+    )
+
+    bf_lat: FloatProperty(
+        name="Latitude",
+        description="Latitude (WGS84, EPSG:4326) in decimal degrees",
+        min=-80,
+        max=+84,
+        precision=9,
+    )
+
+    bf_utm_easting: FloatProperty(
+        name="UTM Easting",
+        description="UTM easting (WGS84)",
+        min=0,
+        max=1000000,
+        unit="LENGTH",
+    )
+
+    bf_utm_northing: FloatProperty(
+        name="UTM Northing",
+        description="UTM northing (WGS84)",
+        min=0,
+        max=10000000,
+        unit="LENGTH",
+    )
+
+    bf_elevation: FloatProperty(
+        name="Elevation", description="Elevation", unit="LENGTH", precision=4
+    )
+
+    def draw(self, context):
+        sc = context.scene
+        layout = self.layout
+        col = layout.column(align=True)
+        if sc.bf_crs == "LonLat":
+            col.prop(self, "bf_lon", text="Longitude")
+            col.prop(self, "bf_lat", text="Latitude")
+        else:
+            col.prop(self, "bf_utm_easting", text="Easting")
+            col.prop(self, "bf_utm_northing", text="Northing")
+        col.prop(self, "bf_elevation", text="Elevation")
+
+    def _get_loc(self, context):  # redefine
+        return 0.0, 0.0, 0.0
+
+    def _set_loc(self, context, x, y, z):  # redefine
+        pass
 
     def execute(self, context):
-        try:
-            utm = gis.LonLat(self.bf_lon, self.bf_lat).to_UTM()
-        except ValueError as err:
-            self.report({"WARNING"}, str(err))
-            return {"CANCELLED"}
+        x, y, z = self._get_loc(context)
         sc = context.scene
-        sc.bf_utm_zn = utm.zn
-        sc.bf_utm_ze = utm.ze
-        sc.bf_utm_e = utm.easting
-        sc.bf_utm_n = utm.northing
-        self.report({"INFO"}, "World origin position set")
+        if sc.bf_crs == "LonLat":
+            utm = gis.LonLat(
+                lon=self.bf_lon, lat=self.bf_lat, elevation=self.bf_elevation
+            ).to_UTM(force_zn=sc.bf_utm_zn, force_ne=sc.bf_utm_ne)
+        else:
+            utm = gis.UTM(
+                zn=sc.bf_utm_zn,
+                ne=sc.bf_utm_ne,
+                easting=self.bf_utm_easting,
+                northing=self.bf_utm_northing,
+                elevation=self.bf_elevation,
+            )
+        # Compute loc relative to scene origin
+        scale_length = 1.0  # = sc.unit_settings.scale_length
+        x = (utm.easting - sc.bf_utm_easting) / scale_length
+        y = (utm.northing - sc.bf_utm_northing) / scale_length
+        z = utm.elevation - sc.bf_elevation  # scale_length self managed
+        self._set_loc(context, x, y, z)
+        self.report({"INFO"}, "Geo location set")
         return {"FINISHED"}
 
     def invoke(self, context, event):
+        # Get loc, convert
+        x, y, z = self._get_loc(context)
+        sc = context.scene
+        scale_length = 1.0  # = sc.unit_settings.scale_length
+        utm = gis.UTM(
+            zn=sc.bf_utm_zn,
+            ne=sc.bf_utm_ne,
+            easting=sc.bf_utm_easting + x * scale_length,
+            northing=sc.bf_utm_northing + y * scale_length,
+            elevation=sc.bf_elevation + z,  # scale_length self managed
+        )  # FIXME scale
+        lonlat = utm.to_LonLat()
+        # Show
+        if self.show:
+            url = lonlat.to_url()
+            bpy.ops.wm.url_open(url=url)
+            self.report({"INFO"}, "Geo location shown")
+            return {"FINISHED"}
+        # Set defaults
+        self.bf_lon = lonlat.lon
+        self.bf_lat = lonlat.lat
+        self.bf_utm_easting = utm.easting
+        self.bf_utm_northing = utm.northing
+        self.bf_elevation = utm.elevation
         # Call dialog
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
 
 
-# FIXME Set UTM or latlon to world origin, or convert
-# FIXME Set cursor at coordinate UTM or latlon + height
-# FIXME Get coordinate + height at cursor
+@subscribe
+class SCENE_OT_bf_set_cursor_geoloc(Operator, _bf_set_geoloc):
+    bl_idname = "scene.bf_set_cursor_geoloc"
+
+    def _get_loc(self, context):  # redefine
+        return context.scene.cursor.location
+
+    def _set_loc(self, context, x, y, z):  # redefine
+        context.scene.cursor.location = x, y, z
+
+
+@subscribe
+class SCENE_OT_bf_set_ob_geoloc(Operator, _bf_set_geoloc):
+    bl_idname = "scene.bf_set_ob_geoloc"
+
+    def _get_loc(self, context):  # redefine
+        return context.active_object.location
+
+    def _set_loc(self, context, x, y, z):  # redefine
+        context.active_object.location = x, y, z
+
 
 # Register
 

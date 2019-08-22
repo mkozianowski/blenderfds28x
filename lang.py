@@ -191,81 +191,132 @@ class SP_config_default_voxel_size(Parameter):
     bpy_default = 0.1
     bpy_other = {"unit": "LENGTH", "step": 1.0, "precision": 3}
 
-@subscribe
-class SP_utm_zn(Parameter):
-    label = "UTM Zone Number (WGS84)"
-    description = "UTM zone number (WGS84 datum) of world origin"
-    bpy_type = Scene
-    bpy_idname = "bf_utm_zn"  # not compatible with BlenderGIS
-    bpy_prop = IntProperty
-    bpy_default = 32  # Monte Fasce, Genova, Italy
-    bpy_other = {"min": 1, "max": 60}
 
-    def draw(self, context, layout):
-        sc = self.element
-        row = layout.row(align=True)
-        row.label(text="UTM Zone")
-        row.prop(sc, "bf_utm_zn", text="")
-        row.prop(sc, "bf_utm_ze", text="")
 
 @subscribe
-class SP_utm_ze(Parameter):
-    label = "UTM Zone Emisphere (WGS84)"
-    description = "UTM zone emisphere (WGS84 datum) of world origin"
+class SP_crs(Parameter):
+    label = "Coordinate Reference System"
+    description = "Coordinate reference system"
     bpy_type = Scene
-    bpy_idname = "bf_utm_ze"  # not compatible with BlenderGIS
+    bpy_idname = "bf_crs"
     bpy_prop = EnumProperty
-    bpy_default = "N"  # Monte Fasce, Genova, Italy
+    bpy_default = "LonLat"
     bpy_other = {
-        "items": (("N", "N", "Northern Emisphere"), ("S", "S", "Southern Emisphere"))
+        "items": (
+            (
+                "LonLat",
+                "WGS84 Lon/Lat",
+                "Decimal degrees longitude/latitude geographic coordinates\nwith WGS84 coordinate reference system",
+            ),
+            (
+                "UTM",
+                "WGS84 UTM",
+                "Universal Transverse Mercator projected coordinates\nwith WGS84 coordinate reference system",
+            ),
+        )
     }
 
-    def draw(self, context, layout):
-        pass
+
+def update_lonlat(self, context):
+    sc = context.scene
+    utm = gis.LonLat(sc.bf_lon, sc.bf_lat).to_UTM()
+    sc["bf_utm_zn"] = utm.zn  # avoid triggering another update
+    sc["bf_utm_ne"] = utm.ne
+    sc["bf_utm_easting"] = utm.easting
+    sc["bf_utm_northing"] = utm.northing
+
+
+def update_utm(self, context):
+    sc = context.scene
+    lonlat = gis.UTM(
+        sc.bf_utm_zn, sc.bf_utm_ne, sc.bf_utm_easting, sc.bf_utm_northing
+    ).to_LonLat()
+    sc["bf_lon"] = lonlat.lon  # avoid triggering another update
+    sc["bf_lat"] = lonlat.lat
 
 @subscribe
-class SP_utm_e(Parameter):
-    label = "UTM Easting (WGS84)"
-    description = "UTM easting (WGS84 datum) of world origin"
+class SP_geoname(Parameter):
+    label = "Origin Geoname"
+    description = "Origin location geographic name"
     bpy_type = Scene
-    bpy_idname = "bf_utm_e"  # not compatible with BlenderGIS
-    bpy_prop = IntProperty
-    bpy_default = 502742  # Monte Fasce, Genova, Italy
-    bpy_other = {"min": 100000, "max": 900000}
-
+    bpy_idname = "bf_geoname"
+    bpy_prop = StringProperty
+    bpy_default = "Monte di Portofino, Genova, Italy"
 
 @subscribe
-class SP_utm_n(Parameter):
-    label = "UTM Northing (WGS84)"
-    description = "UTM northing (WGS84 datum) of world origin"
+class SP_lon(Parameter):
+    label = "Origin Longitude"
+    description = "Longitude (WGS84, EPSG:4326) of world origin in decimal degrees"
     bpy_type = Scene
-    bpy_idname = "bf_utm_n"  # not compatible with BlenderGIS
-    bpy_prop = IntProperty
-    bpy_default = 4917346  # Monte Fasce, Genova, Italy
-    bpy_other = {"min": 0, "max": 10000000}
-
-
-# FIXME This is not compatible with FDS convention for WIND namelist
-@subscribe
-class SP_config_north_heading(Parameter):
-    label = "World North Heading"
-    description = "Angle between +y axis and north heading"
-    bpy_type = Scene
-    bpy_idname = "bf_north_heading"  # not compatible with BlenderGIS
+    bpy_idname = "bf_lon"
     bpy_prop = FloatProperty
-    bpy_default = 0.0
-    bpy_other = {"unit": "ROTATION", "precision": 4}
+    bpy_default = 9.1688903
+    bpy_other = {"min": -180.0, "max": 180.0, "precision": 9, "update": update_lonlat}
 
 
-# FIXME This is not compatible with FDS convention for pressure?
 @subscribe
-class SP_config_height(Parameter):
-    label = "World Origin Height"
-    description = "Height of world origin"
+class SP_lat(Parameter):
+    label = "Origin Latitude"
+    description = "Latitude (WGS84, EPSG:4326) of world origin in decimal degrees"
     bpy_type = Scene
-    bpy_idname = "bf_height"  # not compatible with BlenderGIS
+    bpy_idname = "bf_lat"
     bpy_prop = FloatProperty
-    bpy_default = 0.0
+    bpy_default = 44.3267618
+    bpy_other = {"min": -80.0, "max": 84.0, "precision": 9, "update": update_lonlat}
+
+
+@subscribe
+class SP_utm_zn(Parameter):
+    label = "Origin UTM Zone Number"
+    description = "UTM Zone Number (WGS84) of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_utm_zn"
+    bpy_prop = IntProperty
+    bpy_default = 32
+    bpy_other = {"min": 1, "max": 60, "update": update_utm}
+
+
+@subscribe
+class SP_utm_ne(Parameter):
+    label = "Origin UTM Northern Emisphere"
+    description = "UTM northern emisphere (WGS84) of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_utm_ne"
+    bpy_prop = BoolProperty
+    bpy_default = True  # Monte Fasce, Genova, Italy
+    bpy_other = {"update": update_utm}
+
+
+@subscribe
+class SP_utm_easting(Parameter):
+    label = "Origin UTM Easting"
+    description = "UTM easting (WGS84) of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_utm_easting"
+    bpy_prop = FloatProperty
+    bpy_default = 513466.0
+    bpy_other = {"unit": "LENGTH", "update": update_utm, "min": 0, "max": 1000000}
+
+
+@subscribe
+class SP_utm_northing(Parameter):
+    label = "Origin UTM Northing"
+    description = "UTM northing (WGS84) of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_utm_northing"
+    bpy_prop = FloatProperty
+    bpy_default = 4908185.0
+    bpy_other = {"unit": "LENGTH", "update": update_utm, "min": 0, "max": 10000000}
+
+
+@subscribe
+class SP_elevation(Parameter):
+    label = "Origin Elevation"
+    description = "Elevation of world origin"
+    bpy_type = Scene
+    bpy_idname = "bf_elevation"
+    bpy_prop = FloatProperty
+    bpy_default = 610.0
     bpy_other = {"unit": "LENGTH", "precision": 4}
 
 
@@ -280,25 +331,32 @@ class SN_config(Namelist):
         sc = self.element
         col = layout.column()
         col.prop(sc, "bf_head_directory")
-        col.separator()
 
-        col = col.column()
+        col.separator()
+        row = col.row()
+        row.prop(sc, "bf_crs", text="Coordinate Ref Sys")
+        url = gis.LonLat(lon=sc.bf_lon, lat=sc.bf_lat).to_url()
+        row.operator("wm.url_open", text="", icon="URL").url = url
+
         sub = col.column(align=True)
-        row = sub.row(align=True)
-        row.prop(sc, "bf_utm_zn", text="World Origin UTM Zone")
-        row.prop(sc, "bf_utm_ze", text="")
-        row.operator("scene.bf_set_origin_pos", text="", icon="IMPORT")
-        utm = gis.UTM(sc.bf_utm_zn, True, sc.bf_utm_e, sc.bf_utm_n)
-        row.operator("wm.url_open", text="", icon="URL").url = utm.to_url()
-        sub.prop(sc, "bf_utm_e", text="UTM Easting")
-        sub.prop(sc, "bf_utm_n", text="UTM Northing")
-        col.prop(sc, "bf_height")
-        col.prop(sc, "bf_north_heading")
+        sub.prop(sc, "bf_geoname", text="Origin Geoname")
+        if sc.bf_crs == "LonLat":
+            sub.prop(sc, "bf_lon", text="Longitude")
+            sub.prop(sc, "bf_lat", text="Latitude")
+        else:
+            row = sub.row(align=True)
+            row.prop(sc, "bf_utm_zn", text="UTM Zone")
+            row.prop(sc, "bf_utm_ne", text="N", toggle=1)
+            row.prop(sc, "bf_utm_ne", text="S", toggle=1, invert_checkbox=True)
+            sub.prop(sc, "bf_utm_easting", text="Easting")
+            sub.prop(sc, "bf_utm_northing", text="Northing")
+        sub.prop(sc, "bf_elevation", text="Elevation")
 
         col.separator()
         col.prop(sc, "bf_config_min_edge_length")
         col.prop(sc, "bf_config_min_face_area")
         col.prop(sc, "bf_default_voxel_size")
+
         col.separator()
         unit = sc.unit_settings
         col.prop(unit, "system")

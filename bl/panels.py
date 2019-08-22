@@ -20,6 +20,7 @@ from bpy.types import Panel, UIList, Operator, bpy_struct
 from ..lang import namelists
 from . import custom_uilist
 from .. import config
+from .. import gis
 
 bl_classes = list()
 bf_classes = list()
@@ -278,6 +279,42 @@ class VIEW3D_PT_BF_Remesh_Toolbar_Object(Panel, BF_Remesh_Toolbar):
 @subscribe
 class VIEW3D_PT_BF_Remesh_Toolbar_Mesh(Panel, BF_Remesh_Toolbar):
     bl_idname = "VIEW3D_PT_bf_remesh_toolbar_mesh"
+    bl_context = "mesh_edit"
+
+
+class BF_Geoloc_Toolbar:
+    bl_category = "FDS"
+    bl_label = "Geo Location"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    def draw(self, context):
+        cursor = context.scene.cursor
+        ob = context.active_object
+        layout = self.layout
+        col = layout.column(align=True)
+        col.prop(cursor, "location", text="Cursor Location")
+        row = col.row(align=True)
+        row.operator("scene.bf_set_cursor_geoloc").show = False
+        row.operator("scene.bf_set_cursor_geoloc", text="", icon="URL").show = True
+        if not ob:
+            return
+        col = layout.column(align=True)
+        col.prop(ob, "location", text="Item Location")
+        row = col.row(align=True)
+        row.operator("scene.bf_set_ob_geoloc").show = False
+        row.operator("scene.bf_set_ob_geoloc", text="", icon="URL").show = True
+
+
+@subscribe
+class VIEW3D_PT_BF_Geoloc_Toolbar_Object(Panel, BF_Geoloc_Toolbar):
+    bl_idname = "VIEW3D_PT_bf_geoloc_toolbar_object"
+    bl_context = "objectmode"
+
+
+@subscribe
+class VIEW3D_PT_BF_Geoloc_Toolbar_Mesh(Panel, BF_Geoloc_Toolbar):
+    bl_idname = "VIEW3D_PT_bf_geoloc_toolbar_mesh"
     bl_context = "mesh_edit"
 
 

@@ -8,10 +8,10 @@
 
 # The crs is WGS84
 # zn: UTM zone number
-# ne: UTM northern emisphere
-# ze: UTM zone emisphere N or S
-# easting:  UTM easting
-# northing:  UTM northing
+# ne: UTM north emisphere True/False
+# easting: easting
+# northing: northing
+# elevation: elevation
 # lon: longitude in decimal degrees
 # lat: latitude in decimal degrees
 # epsg: string "EPSG:1234"
@@ -64,20 +64,32 @@ def _lonlat_to_zn(lon, lat):
 
 
 def _lat_to_ne(lat):
-    return lat >= 0
+    if lat >= -1e-6:
+        return True
+    else:
+        return False
 
 
 def _zn_to_central_lon(zn):
     return (zn - 1) * 6 - 180 + 3
 
 
-def _lonlat_to_utm(lon, lat):
+def _lonlat_to_utm(lon, lat, force_zn=None, force_ne=None):
+    # Check range
     if not -80.0 <= lat <= 84.0:
         raise ValueError(f"Latitude {lat} out of UTM range")
     if not -180.0 <= lon <= 180.0:
         raise ValueError(f"Longitude {lon} out of UTM range")
-    zn = _lonlat_to_zn(lon=lon, lat=lat)
-    ne = _lat_to_ne(lat=lat)
+    # Force zone and emisphere
+    if force_zn is not None:
+        zn = force_zn
+    else:
+        zn = _lonlat_to_zn(lon=lon, lat=lat)
+    if force_ne is not None:
+        ne = force_ne
+    else:
+        ne = _lat_to_ne(lat=lat)
+    # Compute
     lat_rad = math.radians(lat)
     lat_sin = math.sin(lat_rad)
     lat_cos = math.cos(lat_rad)
@@ -123,7 +135,7 @@ def _lonlat_to_utm(lon, lat):
     )
     if not ne:
         northing += 10000000
-    return zn, ne, int(easting), int(northing)
+    return zn, ne, easting, northing
 
 
 def _utm_to_lonlat(zn, ne, easting, northing):
@@ -247,13 +259,14 @@ def lonLatToWebMerc(lon, lat):
 
 
 class UTM:  # WGS84
-    def __init__(self, zn=1, ne=True, easting=500000, northing=5000000):
+    def __init__(self, zn=1, ne=True, easting=500000, northing=5000000, elevation=0.0):
+        # Check range
         if not 1 <= zn <= 60:
             raise ValueError(f"Zone number {zn} out of range")
         if not 100000 <= easting < 900000:
             raise ValueError(f"Easting {easting} out of range")
         if ne:
-            if not 0 <= northing <= 9300000:
+            if not -1e-6 <= northing <= 9300000:
                 raise ValueError(
                     f"Northing {northing} out of range in northern emisphere"
                 )
@@ -262,18 +275,20 @@ class UTM:  # WGS84
                 raise ValueError(
                     f"Northing {northing} out of range in southern emisphere"
                 )
-
-        self.zn, self.ne, self.easting, self.northing = zn, ne, easting, northing
+        # Assign
+        self.zn, self.ne, self.easting, self.northing, self.elevation = (
+            zn,
+            ne,
+            easting,
+            northing,
+            elevation,
+        )
 
     def __str__(self):
-        return f"{self.zn}{self.ze}  {int(self.easting)}m E  {int(self.northing)}m N (WGS84)"
+        return f"{self.zn}{self.ne and 'N' or 'S'}  {self.easting:.1f}m E  {self.northing:.1f}m N (WGS84) h={self.elevation}m"
 
     def __repr__(self):
-        return f"UTM({self.zn}, {self.ne}, {self.easting}, {self.northing})"
-
-    @property
-    def ze(self):
-        return self.ne and "N" or "S"
+        return f"UTM({self.zn}, {self.ne}, {self.easting}, {self.northing}, {self.elevation})"
 
     @property
     def epsg(self):
@@ -295,22 +310,26 @@ class UTM:  # WGS84
 
 
 class LonLat:  # WGS84
-    def __init__(self, lon=0.0, lat=0.0):
+    def __init__(self, lon=0.0, lat=0.0, elevation=0.0):
         if not -180.0 <= lon <= 180.0:
             raise ValueError(f"Longitude {lon} out of range")
         if not -90.0 <= lat <= 90.0:
             raise ValueError(f"Latitude {lat} out of range")
-        self.lon, self.lat = lon, lat
+        self.lon, self.lat, self.elevation = lon, lat, elevation
 
     def __str__(self):
-        return f"{self.lon:.6f}° {self.lon<0. and 'W' or 'E'}  {self.lat:.6f}° {self.lat<0. and 'S' or 'N'} (WGS84)"
+        return f"{self.lon:.6f}° {self.lon<0. and 'W' or 'E'}  {self.lat:.6f}° {self.lat<0. and 'S' or 'N'} (WGS84) h={self.elevation}m"
 
     def __repr__(self):
-        return f"LonLat({self.lon}, {self.lat})"
+        return f"LonLat({self.lon}, {self.lat}, {self.elevation})"
 
-    def to_UTM(self):
-        return UTM(*_lonlat_to_utm(lon=self.lon, lat=self.lat))
+    def to_UTM(self, force_zn=None, force_ne=None):
+        return UTM(
+            *_lonlat_to_utm(
+                lon=self.lon, lat=self.lat, force_zn=force_zn, force_ne=force_ne
+            ),
+            self.elevation,
+        )
 
     def to_url(self):
         return f"http://www.openstreetmap.org/?mlat={self.lat}&mlon={self.lon}&zoom=12"
-
