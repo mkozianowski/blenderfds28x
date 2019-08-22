@@ -1,4 +1,4 @@
-*TODO:*
+# TODO
 
 Geography:
 import geotiff, srtm, osm buildings, trees, landcover
@@ -19,7 +19,7 @@ default appearance
 from_fds, import
 file version management
 
-*DONE:*
+# DONE
 
 voxelization fix for API change
 show FDS code
