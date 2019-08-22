@@ -1,3 +1,24 @@
+*TODO:*
+
+Geography:
+import geotiff, srtm, osm buildings, trees, landcover
+
+GEOM terrain new quality checks
+GEOM terrain toolbox
+
+MESH toolbox, mesh alignment
+default blender file
+
+search MATL_ID in text
+search QUANTITY in text
+geometry cache not working, handler crashing
+
+op mesh
+default appearance
+
+from_fds, import
+file version management
+
 *DONE:*
 
 voxelization fix for API change
@@ -17,29 +38,7 @@ GEOM toolbox
 GEOM geometry mod original object fix, tool panel?
 logger
 
-*TODO:*
-
 Geography:
-lon, lat, north heading, height of scene world origin
-put cursor at coordinate (wgs84 lonlat, utm)
-get coordinate at cursor (wgs84 lonlat, utm)
-import geotiff
-import srtm
-import osm buildings, trees
-import landcover
-
-GEOM terrain toolbox
-geographic reference and coordinates, find coordinate, put cursor at coordinate
-TERRAIN and its checks
-MESH toolbox, mesh alignment
-default blender file
-search MATL_ID in text
-search QUANTITY in text
-geometry cache not working, handler crashing
-
-op mesh
-default appearance
-
-from_fds, import
-
-file version
+lon, lat, elevation of scene world origin and relative transformations
+put cursor/object at coordinate (wgs84 lonlat, utm)
+get coordinate at cursor/object (wgs84 lonlat, utm)
