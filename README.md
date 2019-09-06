@@ -14,7 +14,7 @@ For more information, and the original BlenderFDS code visit http://www.blenderf
 
 2. Download the BlenderFDS addon from this [GitHub repository](https://github.com/firetools/blenderfds280/archive/master.zip);
 
-3. Rename the downloaded zip file to `blenderfds28x`;
+3. Rename both the downloaded .zip file and the folder within the .zip file to `blenderfds28x`;
 
 4. Launch Blender 2.8x and open the `Edit > Preferences` menu. Then install and enable the downloaded addon as described in [Blender Manual](https://docs.blender.org/manual/en/dev/editors/preferences/addons.html?highlight=addon#).
 
