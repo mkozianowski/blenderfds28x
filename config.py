@@ -32,15 +32,6 @@ def get_prefs():
     return bpy.context.preferences.addons[module].preferences
 
 
-# Default separator
-separator = "\n      "
-
-
-# Default comment format
-def comment(msg):
-    return "! {}\n".format(msg)
-
-
 # FDS default SURFs: name, diffuse_color
 default_mas = {
     "INERT": ((0.8, 0.8, 0.2, 1.0),),

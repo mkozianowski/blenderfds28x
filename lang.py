@@ -15,6 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re, os.path, time, sys, logging
+from collections import OrderedDict
 
 import bpy
 from bpy.types import (
@@ -39,7 +40,7 @@ from bpy.props import (
 )
 from . import geometry
 from .types import BFException, Parameter, Namelist, PString, PFYI, POthers
-from .config import separator, comment, default_mas
+from .config import default_mas
 from . import gis
 
 log = logging.getLogger(__name__)
@@ -192,7 +193,6 @@ class SP_config_default_voxel_size(Parameter):
     bpy_other = {"unit": "LENGTH", "step": 1.0, "precision": 3}
 
 
-
 @subscribe
 class SP_crs(Parameter):
     label = "Coordinate Reference System"
@@ -234,6 +234,7 @@ def update_utm(self, context):
     sc["bf_lon"] = lonlat.lon  # avoid triggering another update
     sc["bf_lat"] = lonlat.lat
 
+
 @subscribe
 class SP_geoname(Parameter):
     label = "Origin Geoname"
@@ -242,6 +243,7 @@ class SP_geoname(Parameter):
     bpy_idname = "bf_geoname"
     bpy_prop = StringProperty
     bpy_default = "Monte di Portofino, Genova, Italy"
+
 
 @subscribe
 class SP_lon(Parameter):
@@ -1211,14 +1213,14 @@ class OP_XB(Parameter):
 
     _format_xb = "XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}"
     _format_xbs = {
-        "IDI": "ID='{1}_{2}'{3}XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDX": "ID='{1}_X{0[0]:+.3f}'{3}XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDY": "ID='{1}_Y{0[2]:+.3f}'{3}XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDZ": "ID='{1}_Z{0[4]:+.3f}'{3}XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDXY": "ID='{1}_X{0[0]:+.3f}_Y{0[2]:+.3f}'{3}XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDXZ": "ID='{1}_X{0[0]:+.3f}_Z{0[4]:+.3f}'{3}XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDYZ": "ID='{1}_Y{0[2]:+.3f}_Z{0[4]:+.3f}'{3}XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDXYZ": "ID='{1}_X{0[0]:+.3f}_Y{0[2]:+.3f}_Z{0[4]:+.3f}'{3}XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
+        "IDI": "ID='{1}_{2}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
+        "IDX": "ID='{1}_X{0[0]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
+        "IDY": "ID='{1}_Y{0[2]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
+        "IDZ": "ID='{1}_Z{0[4]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
+        "IDXY": "ID='{1}_X{0[0]:+.3f}_Y{0[2]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
+        "IDXZ": "ID='{1}_X{0[0]:+.3f}_Z{0[4]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
+        "IDYZ": "ID='{1}_Y{0[2]:+.3f}_Z{0[4]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
+        "IDXYZ": "ID='{1}_X{0[0]:+.3f}_Y{0[2]:+.3f}_Z{0[4]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
     }
 
     def to_fds(self, context):
@@ -1237,7 +1239,7 @@ class OP_XB(Parameter):
                 self.element.bf_id_suffix
             ]  # choose formatting string
             return (
-                (format_xbs.format(xb, name, i, separator) for i, xb in enumerate(xbs)),
+                (format_xbs.format(xb, name, i) for i, xb in enumerate(xbs)),
                 msg,
             )
 
@@ -1285,14 +1287,14 @@ class OP_XYZ(Parameter):
 
     _format_xyz = "XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}"
     _format_xyzs = {
-        "IDI": "ID='{1}_{2}'{3}XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDX": "ID='{1}_X{0[0]:+.3f}'{3}XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDY": "ID='{1}_Y{0[1]:+.3f}'{3}XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDZ": "ID='{1}_Z{0[2]:+.3f}'{3}XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDXY": "ID='{1}_X{0[0]:+.3f}_Y{0[1]:+.3f}'{3}XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDXZ": "ID='{1}_X{0[0]:+.3f}_Z{0[2]:+.3f}'{3}XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDYZ": "ID='{1}_Y{0[1]:+.3f}_Z{0[2]:+.3f}'{3}XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDXYZ": "ID='{1}_X{0[0]:+.3f}_Y{0[1]:+.3f}_Z{0[2]:+.3f}'{3}XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
+        "IDI": "ID='{1}_{2}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
+        "IDX": "ID='{1}_X{0[0]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
+        "IDY": "ID='{1}_Y{0[1]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
+        "IDZ": "ID='{1}_Z{0[2]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
+        "IDXY": "ID='{1}_X{0[0]:+.3f}_Y{0[1]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
+        "IDXZ": "ID='{1}_X{0[0]:+.3f}_Z{0[2]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
+        "IDYZ": "ID='{1}_Y{0[1]:+.3f}_Z{0[2]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
+        "IDXYZ": "ID='{1}_X{0[0]:+.3f}_Y{0[1]:+.3f}_Z{0[2]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
     }
 
     def to_fds(self, context):
@@ -1312,7 +1314,7 @@ class OP_XYZ(Parameter):
             ]  # choose formatting string
             return (
                 (
-                    format_xyzs.format(xyz, name, i, separator)
+                    format_xyzs.format(xyz, name, i)
                     for i, xyz in enumerate(xyzs)
                 ),
                 msg,
@@ -1356,14 +1358,14 @@ class OP_PB(Parameter):
     _format_pb = ("PBX={0:.6f}", "PBY={0:.6f}", "PBZ={0:.6f}")
     _format_pbs = {
         "IDI": (
-            "ID='{1}_{2}'{3}PBX={0:.6f}",
-            "ID='{1}_{2}'{3}PBY={0:.6f}",
-            "ID='{1}_{2}'{3}PBZ={0:.6f}",
+            "ID='{1}_{2}' PBX={0:.6f}",
+            "ID='{1}_{2}' PBY={0:.6f}",
+            "ID='{1}_{2}' PBZ={0:.6f}",
         ),
         "IDXYZ": (
-            "ID='{1}_X{0:+.3f}'{3}PBX={0:.6f}",
-            "ID='{1}_Y{0:+.3f}'{3}PBY={0:.6f}",
-            "ID='{1}_Z{0:+.3f}'{3}PBZ={0:.6f}",
+            "ID='{1}_X{0:+.3f}' PBX={0:.6f}",
+            "ID='{1}_Y{0:+.3f}' PBY={0:.6f}",
+            "ID='{1}_Z{0:+.3f}' PBZ={0:.6f}",
         ),
     }
 
@@ -1388,7 +1390,7 @@ class OP_PB(Parameter):
                 format_pbs = self._format_pbs["IDXYZ"]
             return (
                 (
-                    format_pbs[pb[0]].format(pb[1], name, i, separator)
+                    format_pbs[pb[0]].format(pb[1], name, i)
                     for i, pb in enumerate(pbs)
                 ),
                 msg,
@@ -1979,6 +1981,20 @@ class BFMaterial:
     def to_fds(self, context):
         return self.bf_namelist.to_fds(context)
 
+    def from_fds(self, context, value):
+        pass
+        # # Parse
+        # if isinstance(value, str):
+        #     try:
+        #         nmls = f90nml.Parser().reads(value)
+        #     except Exception as err:
+        #         raise BFException(self, f"Error with <{value}>:\n{str(err)}")
+        # elif isinstance(value, f90nml.Namelist):
+        #     nmls = value
+        # else:
+        #     raise BFException(self, f"Unrecognized value <{value}>")
+            
+
     @classmethod
     def register(cls):
         Material.bf_namelist = cls.bf_namelist
@@ -2033,6 +2049,30 @@ class BFScene:
                 bodies.append("\n&TAIL /")
         return "\n".join(b for b in bodies if b)  # remove empties
 
+    def from_fds(self, context, value=None, filepath=None):
+        pass
+        # # Parse
+        # if value and not filepath:
+        #     try:
+        #         nmls = f90nml.Parser().reads(value)
+        #     except Exception as err:
+        #         raise BFException(self, f"Cannot parse value: {str(err)}")
+        # elif not value and filepath:
+        #     try:
+        #         nmls = f90nml.read(filepath)
+        #     except Exception as err:
+        #         raise BFException(self, f"Cannot parse <{filepath}>: {str(err)}")
+        # else:
+        #     raise TypeError("Set either 'value' or 'filepath' argument")
+        # # Import SURF namelist
+        # print("nmls:", nmls)
+        # print("SURF:", nmls["surf"])
+        # Sort
+#        nmls = OrderedDict(sorted(nmls.items(), key=lambda k: k[0] != "surf"))
+        # Print
+#        for key, value in nmls.items():
+#            print(key, value)
+
     def to_ge1(self, context):
         return geometry.to_ge1.scene_to_ge1(context, self)
 
@@ -2041,12 +2081,14 @@ class BFScene:
         Scene.bf_namelists = cls.bf_namelists
         Scene.to_fds = cls.to_fds
         Scene.to_ge1 = cls.to_ge1
+        Scene.from_fds = cls.from_fds
 
     @classmethod
     def unregister(cls):
         del Scene.bf_namelists
         del Scene.to_fds
         del Scene.to_ge1
+        del Scene.from_fds
 
 
 # Extend Blender Collection
