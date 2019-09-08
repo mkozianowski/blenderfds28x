@@ -284,7 +284,7 @@ class VIEW3D_PT_BF_Remesh_Toolbar_Mesh(Panel, BF_Remesh_Toolbar):
 
 class BF_Geoloc_Toolbar:
     bl_category = "FDS"
-    bl_label = "Geo Location"
+    bl_label = "Geolocation"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 

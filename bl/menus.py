@@ -41,7 +41,7 @@ def subscribe(cls):
 
 @subscribe
 class ImportFDS(Operator, ImportHelper):
-    """Import FDS case file to a new Scene"""
+    """Import FDS case file to a Scene"""
 
     bl_idname = "import_scene.fds"
     bl_label = "Import FDS"
@@ -49,13 +49,32 @@ class ImportFDS(Operator, ImportHelper):
 
     filename_ext = ".fds"
     filter_glob: StringProperty(default="*.fds", options={"HIDDEN"})
+    new_scene: BoolProperty(name="Into New Scene", default=True)
 
     @classmethod
     def poll(cls, context):
         return context.scene is not None
 
     def execute(self, context):
-        return {"CANCELLED"}
+        # Init
+        w = context.window_manager.windows[0]
+        w.cursor_modal_set("WAIT")
+        # Current or new Scene
+        if self.new_scene:
+            sc = bpy.data.scenes.new("imported_FDS_case")
+        else:
+            sc = context.scene
+        # Import
+        try:
+            sc.from_fds(context, filepath=self.filepath)
+        except Exception as err:
+            w.cursor_modal_restore()
+            self.report({"ERROR"}, f"Import error: {str(err)}")
+            return {"CANCELLED"}
+        # Close
+        w.cursor_modal_restore()
+        self.report({"INFO"}, "FDS case imported")
+        return {"FINISHED"}
 
 
 def menu_func_import_FDS(self, context):
@@ -168,7 +187,7 @@ def register():
 
     for cls in bl_classes:
         register_class(cls)
-    #    bpy.types.TOPBAR_MT_file_import.append(menu_func_import_FDS)  # FIXME implement
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import_FDS)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export_FDS)
 
 
@@ -177,5 +196,5 @@ def unregister():
 
     for cls in reversed(bl_classes):
         unregister_class(cls)
-    #    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_FDS)  # FIXME implement
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_FDS)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_FDS)
