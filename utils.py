@@ -40,17 +40,39 @@ def is_iterable(var):
 
 def is_writable(filepath):
     """Check if filepath is writable"""
-    return write_to_file(filepath, "! Test: this file is writable")
-
-
-def write_to_file(filepath, text_file):
-    """Write text_file to filepath"""
-    if text_file is None:
-        text_file = str()
     try:
-        with open(filepath, "w", encoding="utf8", errors="ignore") as out_file:
-            out_file.write(text_file)
-        return True
+        write_to_file(filepath, "! Test")
     except IOError:
         return False
+    # FIXME rm written test file
+    return True
+
+
+def write_to_file(filepath, text):
+    """Write text_file to filepath"""
+    if text is None:
+        text = str()
+    with open(filepath, "w", encoding="utf8", errors="ignore") as f:
+        f.write(text)
+
+
+# Read text file
+
+
+def read_from_file(filepath):
+    encodings = [
+        ("utf8", "ignore"),
+        ("windows-1252", None),
+        ("utf8", None),
+    ]  # Last tested first
+    while encodings:
+        e = encodings.pop()
+        try:
+            with open(filepath, "r", encoding=e[0], errors=e[1]) as f:
+                return f.read()
+        except UnicodeDecodeError:
+            pass
+        except Exception as err:
+            raise IOError(f"File not readable: {err}")
+    raise IOError("File not readable, unknown text encoding")
 

@@ -1,12 +1,14 @@
 """BlenderFDS, algorithms for triangulated surfaces."""
 
-import bpy, bmesh, mathutils
 from time import time
 from math import floor, ceil
+
+import bpy, bmesh, mathutils, logging
 
 from ..types import BFException
 from . import utils
 
+log = logging.getLogger(__name__)
 
 # Get triangulated surface
 
@@ -18,7 +20,7 @@ def get_trisurface(
     context, ob, scale_length, check=True, terrain=False
 ) -> "mas, verts, faces":
     """Get triangulated surface from object in xbs format."""
-    print("BFDS: calc_voxels.get_trisurface:", ob.name)
+    log.debug(ob.name)
     mas = _get_materials(context, ob)
     bm = _get_prepared_bmesh(context, ob)
     # Check
@@ -218,9 +220,7 @@ def _get_bm_intersected_faces(bm, tree, other_tree):
 
 def check_intersections(context, ob, other_obs=None, protect=True):
     """Check ob self-intersection and intersection with other_obs."""
-    print(
-        f"BFDS: Check self intersections in Object <{ob.name}>, and intersections with other selected obs"
-    )
+    log.debug(f"Check intersections in Object <{ob.name}>")
     bpy.ops.object.mode_set(mode="OBJECT")
     epsilon_len = context.scene.bf_config_min_edge_length
     bad_faces = list()

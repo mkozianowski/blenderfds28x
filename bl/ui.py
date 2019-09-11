@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import bpy
+import bpy, logging
 from bpy.types import Panel, Menu
+
+log = logging.getLogger(__name__)
 
 # Collections
 
@@ -107,9 +109,9 @@ def register():
         try:
             unregister_class(getattr(bpy.types, cls))
         except AttributeError:
-            print(f"BFDS: cannot rm <{cls}>")
+            log.warning(f"Cannot rm <{cls}>")
         else:
-            print(f"BFDS: rm <{cls}>")
+            log.debug(f"rm <{cls}>")
 
     for cls in classes:
         register_class(cls)

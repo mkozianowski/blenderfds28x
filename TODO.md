@@ -37,6 +37,8 @@ GEOM terrain toolbox (WUIFI-21)
 
 # DONE
 
+Fixed logging
+
 Improved FDS import parser
 
 Unified formatting of parameters and namelist

@@ -17,13 +17,16 @@
 
 import os
 
-import bpy
+import bpy, logging
 from bpy.types import Operator
 from bpy.props import StringProperty, BoolProperty, FloatProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
 from ..utils import is_writable, write_to_file
 from ..types import BFException
+
+log = logging.getLogger(__name__)
+
 
 # Collections
 
@@ -105,7 +108,6 @@ class ExportFDS(Operator, ExportHelper):
         w.cursor_modal_set("WAIT")
         sc = context.scene
         # Prepare FDS filepath
-        print(f"BFDS: Exporting Blender Scene <{sc.name}> to FDS file...")
         filepath = self.filepath
         if not filepath.lower().endswith(".fds"):
             filepath += ".fds"
@@ -124,11 +126,12 @@ class ExportFDS(Operator, ExportHelper):
             return {"CANCELLED"}
         # Add namelist index # TODO develop
         # Write FDS file
-        if not write_to_file(filepath, fds_file):
+        try:
+            write_to_file(filepath, fds_file)
+        except IOError:
             w.cursor_modal_restore()
             self.report({"ERROR"}, "FDS file not writable, cannot export")
             return {"CANCELLED"}
-        print(f"BFDS: FDS file written.")
         # GE1 description file requested?
         if sc.bf_dump_render_file:
             print(
@@ -176,7 +179,7 @@ def menu_func_export_FDS(self, context):
         basename = "{0}.fds".format(bpy.path.clean_name(sc.name))
     # Call the exporter operator
     filepath = f"{directory}/{basename}"
-    self.layout.operator("export_scene.fds", text="Scene to NIST FDS (.fds)")
+    self.layout.operator("export_scene.fds", text="NIST FDS (.fds)")
 
 
 # Register

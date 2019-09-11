@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import re, os.path
+import re, os.path, logging
 
 import bpy
 from bpy.types import PropertyGroup, UIList, Object, Scene, Material
@@ -30,6 +30,8 @@ from bpy.props import (
 
 from .bl.custom_uilist import get_ops, draw_ops
 from .utils import is_iterable
+
+log = logging.getLogger(__name__)
 
 # Blender representations of FDS entities
 
@@ -56,7 +58,7 @@ class BFException(Exception):
         return f"! {self}"
 
 
-class Parameter:
+class BFParameter:
     """Blender representation of an FDS parameter."""
 
     label = "No Label"  # Object label
@@ -79,7 +81,7 @@ class Parameter:
     @classmethod
     def register(cls):
         """Register related Blender properties."""
-        print(f"BFDS: registering <{cls.label}>")
+        log.debug(f"Registering <{cls.label}>")
         if not cls.bpy_type:
             raise Exception(f"No bpy_type in class <{cls}>")
         # Insert fds_default
@@ -94,14 +96,14 @@ class Parameter:
             if not cls.bpy_idname or not cls.label or not cls.description:
                 raise Exception(f"No bpy_idname, label or description in class <{cls}>")
             if hasattr(cls.bpy_type, cls.bpy_idname):
-                print(
-                    f"BFDS:   Warning: Cannot redefine bpy_idname <{cls.bpy_idname}> in class <{cls}>"
+                log.warning(
+                    f"Cannot redefine bpy_idname <{cls.bpy_idname}> in class <{cls}>"
                 )
                 return
             bpy_other = cls.bpy_other.copy()
             if cls.bpy_default is not None:
                 bpy_other["default"] = cls.bpy_default
-            print(f"BFDS:   setting <{cls.bpy_idname}> Blender property")
+            log.debug(f"Setting <{cls.bpy_idname}> Blender property")
             setattr(
                 cls.bpy_type,
                 cls.bpy_idname,
@@ -109,7 +111,7 @@ class Parameter:
             )
         # Check and create bpy_export
         if cls.bpy_export and not hasattr(cls.bpy_type, cls.bpy_export):
-            print(f"BFDS:   setting <{cls.bpy_export}> Blender property")
+            log.debug(f"Setting <{cls.bpy_export}> Blender property")
             setattr(
                 cls.bpy_type,
                 cls.bpy_export,
@@ -222,7 +224,7 @@ class Parameter:
         self.set_exported(context, True)
 
 
-class Namelist(Parameter):
+class BFNamelist(BFParameter):
     """Blender representation of an FDS namelist group."""
 
     fds_label = None
@@ -291,7 +293,7 @@ class Namelist(Parameter):
         self.set_exported(context, True)
 
 
-class PString(Parameter):
+class BFParameterStr(BFParameter):
     """Helper for FDS string parameter."""
 
     bpy_prop = StringProperty
@@ -302,7 +304,7 @@ class PString(Parameter):
             raise BFException(self, "Special characters not allowed in string")
 
 
-class PFYI(PString):
+class BFParameterFYI(BFParameterStr):
     """Helper for FDS FYI parameter."""
 
     label = "FYI"
@@ -323,7 +325,7 @@ class PFYI(PString):
         return col
 
 
-class POthers(Parameter):
+class BFParameterOthers(BFParameter):
     """Helper for FDS other parameters."""
 
     label = "Other parameters"
@@ -560,7 +562,7 @@ class FDSNamelist:
             try:
                 p.from_fds(f90_values=f90_values)
             except SyntaxError as err:
-                print("Warning:", label, err)  # FIXME log
+                log.warning(f"<{label}> <{err}>")  # FIXME error msg
             else:
                 self.params.append(p)
             if following_label is None:
@@ -606,11 +608,11 @@ class FDSCase:
         re.VERBOSE | re.DOTALL | re.IGNORECASE | re.MULTILINE,
     )  # MULTILINE, so that ^ is the beginning of each line
 
-    def from_fds(self, fds_text):
+    def from_fds(self, fdstext):
         self.namelists = list()
-        for match in re.finditer(self._scan, fds_text):
+        for match in re.finditer(self._scan, fdstext):
             nl = FDSNamelist(label=match.groups()[0])
-            nl.from_fds(f90_params=fds_text[match.end() :])
+            nl.from_fds(f90_params=fdstext[match.end() :])
             self.namelists.append(nl)
 
 

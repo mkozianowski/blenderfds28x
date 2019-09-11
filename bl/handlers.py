@@ -1,9 +1,11 @@
-import bpy
+import bpy, logging
 from bpy.app.handlers import persistent, load_post, save_pre, depsgraph_update_post
 from bpy.types import Object
 
 from .. import geometry
 from .. import config
+
+log = logging.getLogger(__name__)
 
 # Handlers
 
@@ -45,14 +47,13 @@ def _save_pre(self):  # Beware: self is None
 #             ob["ob_to_xbs_cache"] = False
 #             ob["ob_to_xyzs_cache"] = False
 #             ob["ob_to_pbs_cache"] = False
-#             print("BFDS: _depsgraph_update_post updated:", ob.name)  # FIXME
 
 
 # Register
 
 
 def register():
-    print("BFDS: Registering handlers")
+    log.debug(f"Registering handlers")
     load_post.append(_load_post)
     save_pre.append(_save_pre)
 
@@ -61,7 +62,7 @@ def register():
 
 
 def unregister():
-    print("BFDS: Unregistering handlers")
+    log.debug(f"Unregistering handlers")
     load_post.remove(_load_post)
     save_pre.remove(_save_pre)
 

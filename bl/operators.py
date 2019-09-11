@@ -17,7 +17,7 @@
 import os
 import subprocess
 
-import bpy
+import bpy, logging
 from bpy.types import (
     bpy_struct,
     PropertyGroup,
@@ -44,6 +44,8 @@ from .. import config
 from .. import geometry
 from ..lang import OP_XB, OP_XYZ, OP_PB
 from .. import gis
+
+log = logging.getLogger(__name__)
 
 
 # Collections
@@ -199,7 +201,6 @@ class OBJECT_OT_manifold(Operator, _external_tool):
         input_obj = os.path.join(tempdir, f"{ob.name}.obj")
         output_obj = os.path.join(tempdir, f"{ob.name}_manifold.obj")
         cmd = [self._get_exe(context), input_obj, output_obj, str(self.resolution)]
-        print("BFDS: External command:", " ".join(cmd))
         return cmd, input_obj, output_obj
 
 
@@ -243,7 +244,6 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
         ]
         self.mcf and cmd.append("-mcf")
         self.sharp and cmd.append("-sharp")
-        print("BFDS: External command:", " ".join(cmd))
         return cmd, input_obj, output_obj
 
 
@@ -279,7 +279,6 @@ class OBJECT_OT_simplify(Operator, _external_tool):
             "-f",
             str(self.face_num),
         ]
-        print("BFDS: External command:", " ".join(cmd))
         return cmd, input_obj, output_obj
 
 
@@ -519,7 +518,7 @@ def _bf_props_copy(context, source_element, dest_elements):
             continue
         bpy_value = getattr(source_element, bpy_idname)
         # Set value
-        print(f"BFDS: Copy: {source_element.name} ->")
+        log.debug(f"Copy: {source_element.name} ->")
         if isinstance(bpy_value, bpy.types.bpy_prop_collection):
             for dest_element in dest_elements:
                 dest_coll = getattr(dest_element, bpy_idname)
@@ -528,11 +527,11 @@ def _bf_props_copy(context, source_element, dest_elements):
                     dest_item = dest_coll.add()
                     for k, v in source_item.items():
                         dest_item[k] = v
-                        print(f"BFDS:   -> {dest_element.name}: {bpy_idname}: {k}={v}")
+                        log.debug(f"   -> {dest_element.name}: {bpy_idname}: {k}={v}")
         else:
             for dest_element in dest_elements:
                 setattr(dest_element, bpy_idname, bpy_value)
-                print(f"BFDS:   -> {dest_element.name}: {bpy_idname}={bpy_value}")
+                log.debug(f"   -> {dest_element.name}: {bpy_idname}={bpy_value}")
 
 
 @subscribe
@@ -640,11 +639,7 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
         # Loop on objects
         for ob in destination_elements:
             ob.active_material = active_material
-            print(
-                "BlenderFDS: Assign Material '{}' -> {}".format(
-                    active_material.name, ob.name
-                )
-            )
+            log.debug(f"Assign Material <{active_material.name}> -> <{ob.name}>")
         # Set myself as exported
         active_material.bf_export = True
         # Return
