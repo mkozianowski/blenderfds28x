@@ -22,8 +22,8 @@ from bpy.types import Operator
 from bpy.props import StringProperty, BoolProperty, FloatProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-from ..utils import is_writable, write_to_file
-from ..types import BFException
+from .. import utils
+from ..types import BFException, FDSCase
 
 log = logging.getLogger(__name__)
 
@@ -62,15 +62,23 @@ class ImportFDS(Operator, ImportHelper):
         # Init
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
+        # Read and parse
+        fds_case = FDSCase()
+        try:
+            fds_case.from_fds(utils.read_from_file(self.filepath))
+        except Exception as err:
+            w.cursor_modal_restore()
+            self.report({"ERROR"}, f"Read or parse error: {str(err)}")
+            return {"CANCELLED"}
         # Current or new Scene
         if self.new_scene:
-            sc = bpy.data.scenes.new("imported_FDS_case")
+            sc = bpy.data.scenes.new("imported")
         else:
             sc = context.scene
         # Import
         try:
-            sc.from_fds(context, filepath=self.filepath)
-        except Exception as err:
+            sc.from_fds(context, fds_case=fds_case)
+        except BFException as err:
             w.cursor_modal_restore()
             self.report({"ERROR"}, f"Import error: {str(err)}")
             return {"CANCELLED"}
@@ -113,7 +121,7 @@ class ExportFDS(Operator, ExportHelper):
             filepath += ".fds"
         filepath = bpy.path.abspath(filepath)
         # Check FDS filepath writable
-        if not is_writable(filepath):
+        if not utils.is_writable(filepath):
             w.cursor_modal_restore()
             self.report({"ERROR"}, "FDS file not writable, cannot export")
             return {"CANCELLED"}
@@ -127,7 +135,7 @@ class ExportFDS(Operator, ExportHelper):
         # Add namelist index # TODO develop
         # Write FDS file
         try:
-            write_to_file(filepath, fds_file)
+            utils.write_to_file(filepath, fds_file)
         except IOError:
             w.cursor_modal_restore()
             self.report({"ERROR"}, "FDS file not writable, cannot export")
@@ -140,7 +148,7 @@ class ExportFDS(Operator, ExportHelper):
             # # Prepare GE1 filepath
             # print(f"BFDS: Exporting Blender Scene <{sc.name}> to GE1 file...")
             # filepath = filepath[:-4] + ".ge1"
-            # if not is_writable(filepath):
+            # if not utils.is_writable(filepath):
             #     w.cursor_modal_restore()
             #     self.report({"ERROR"}, "GE1 file not writable, cannot export")
             #     return {"CANCELLED"}
@@ -152,7 +160,7 @@ class ExportFDS(Operator, ExportHelper):
             #     self.report({"ERROR"}, str(err))
             #     return {"CANCELLED"}
             # # Write GE1 file
-            # if not write_to_file(filepath, ge1_file):
+            # if not utils.write_to_file(filepath, ge1_file):
             #     w.cursor_modal_restore()
             #     self.report({"ERROR"}, "GE1 file not writable, cannot export")
             #     return {"CANCELLED"}

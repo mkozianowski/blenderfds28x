@@ -193,7 +193,7 @@ class OBJECT_OT_manifold(Operator, _external_tool):
 
     @classmethod
     def _get_exe(self, context):  # to be reloaded
-        prefs = config.get_prefs()
+        prefs = context.preferences.addons[__package__].preferences
         return prefs.bf_manifold_filepath  # FIXME or predefined with linux...
 
     def _get_cmd(self, context, ob):
@@ -226,7 +226,7 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = config.get_prefs()
+        prefs = context.preferences.addons[__package__].preferences
         return prefs.bf_quadriflow_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
@@ -262,7 +262,7 @@ class OBJECT_OT_simplify(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = config.get_prefs()
+        prefs = context.preferences.addons[__package__].preferences
         return prefs.bf_simplify_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
@@ -403,7 +403,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 w.cursor_modal_restore()
         # XB, XYZ, PB*
         msgs = list()
-        if ob.bf_xb_export and OP_XB in ob.bf_namelist.param_cls:  # XB
+        if ob.bf_xb_export and OP_XB in ob.bf_namelist.bf_params:  # XB
             try:
                 xbs, msg = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
             except BFException as err:
@@ -416,7 +416,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 geometry.from_fds.xbs_to_ob(
                     xbs, context, ob_tmp, scale_length, ob.bf_xb
                 )
-        if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.param_cls:  # XYZ
+        if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.bf_params:  # XYZ
             try:
                 xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob, scale_length)
             except BFException as err:
@@ -429,7 +429,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                     context, ob, f"{ob.name}_XYZ_tmp"
                 )
                 geometry.from_fds.xyzs_to_ob(xyzs, context, ob_tmp, scale_length)
-        if ob.bf_pb_export and OP_PB in ob.bf_namelist.param_cls:  # PB
+        if ob.bf_pb_export and OP_PB in ob.bf_namelist.bf_params:  # PB
             try:
                 pbs, msg = geometry.to_fds.ob_to_pbs(context, ob, scale_length)
             except BFException as err:
@@ -509,7 +509,7 @@ from .. import lang
 
 def _bf_props_copy(context, source_element, dest_elements):
     """Copy all parameters from source_element to dest_elements"""
-    for _, param in lang.params.items():
+    for _, param in lang.bf_params.items():
         # Get value
         if not isinstance(source_element, param.bpy_type):
             continue
