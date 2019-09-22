@@ -1,8 +1,9 @@
 """BlenderFDS, translate geometry from FDS notation to a Blender mesh."""
 
-import bpy
+import bpy, logging
 from time import time
 
+log = logging.getLogger(__name__)
 epsilon = 1e-5  # FIXME
 
 # From GEOM
@@ -52,7 +53,7 @@ def geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, me, scale_length):
 
 def geom_to_ob(fds_surfids, fds_verts, fds_faces, context, ob, scale_length):
     """Import GEOM vertices ((x0,y0,z0,), ...) and faces ((1,2,3,), ...) into existing Blender Object."""
-    print("BFDS: geom_to_ob:", ob.name)
+    log.debug(ob.name)
     geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, ob.data, scale_length)
     _set_balanced_center_position(context, ob)
 
@@ -133,7 +134,7 @@ xbs_to_mesh = {
 
 def xbs_to_ob(xbs, context, ob, scale_length, bf_xb="BBOX"):
     """Import xbs geometry ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Object."""
-    print("BFDS: geom_to_ob:", ob.name)
+    log.debug(ob.name)
     xbs_to_mesh[bf_xb](xbs, context, ob.data, scale_length)
     _set_balanced_center_position(context, ob)
     ob.bf_xb_export, ob.bf_xb = True, bf_xb
@@ -171,7 +172,7 @@ def pbs_to_mesh(pbs, context, me, scale_length):
         elif pb[0] == 2:
             xbs.append((-sl, +sl, -sl, +sl, pb[1], pb[1]))  # PBZ is 2
         else:
-            print("BFDS: from_fds.pbs_planes_to_ob: unrecognized PB*:", pb)
+            log.warning(f"Unrecognized PB* <{pb}>")
             continue
     return xbs_faces_to_mesh(xbs, context, me, scale_length)
 

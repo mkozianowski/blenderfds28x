@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import bpy
+import bpy, logging
 from bpy.types import Panel, Menu
+
+log = logging.getLogger(__name__)
 
 # Collections
 
@@ -65,6 +67,7 @@ class PROPERTIES_PT_navigation_bar(Panel):
         view = context.space_data
         layout.scale_x = 1.4
         layout.scale_y = 1.4
+        # layout.prop_tabs_enum(view, "context", icon_only=True)
         layout.prop_enum(view, "context", "TOOL", text="", icon="TOOL_SETTINGS")
         layout.prop_enum(view, "context", "SCENE", text="", icon="SCENE_DATA")
         col = layout.column(align=True)
@@ -78,10 +81,8 @@ class PROPERTIES_PT_navigation_bar(Panel):
                 col.prop_enum(
                     view, "context", "MATERIAL", text="", icon="MATERIAL_DATA"
                 )
-            if ob.mode == "OBJECT":
-                layout.prop_enum(
-                    view, "context", "TEXTURE", text="", icon="TEXTURE_DATA"
-                )
+        # if ob.mode == "OBJECT": # FIXME crashes in new scenes, why? I do not know
+        #     pass  # layout.prop_enum(view, "context", "TEXTURE", text="", icon="TEXTURE_DATA")
 
 
 @subscribe
@@ -103,13 +104,14 @@ class TOPBAR_MT_editor_menus(Menu):
 
 def register():
     from bpy.utils import register_class, unregister_class
+
     for cls in classes_rm:
         try:
             unregister_class(getattr(bpy.types, cls))
         except AttributeError:
-            print(f"BFDS: cannot rm <{cls}>")
+            log.warning(f"Cannot rm <{cls}>")
         else:
-            print(f"BFDS: rm <{cls}>")
+            log.debug(f"rm <{cls}>")
 
     for cls in classes:
         register_class(cls)

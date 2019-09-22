@@ -17,7 +17,7 @@
 import os
 import subprocess
 
-import bpy
+import bpy, logging
 from bpy.types import (
     bpy_struct,
     PropertyGroup,
@@ -44,6 +44,8 @@ from .. import config
 from .. import geometry
 from ..lang import OP_XB, OP_XYZ, OP_PB
 from .. import gis
+
+log = logging.getLogger(__name__)
 
 
 # Collections
@@ -191,7 +193,7 @@ class OBJECT_OT_manifold(Operator, _external_tool):
 
     @classmethod
     def _get_exe(self, context):  # to be reloaded
-        prefs = config.get_prefs()
+        prefs = context.preferences.addons[__package__].preferences
         return prefs.bf_manifold_filepath  # FIXME or predefined with linux...
 
     def _get_cmd(self, context, ob):
@@ -199,7 +201,6 @@ class OBJECT_OT_manifold(Operator, _external_tool):
         input_obj = os.path.join(tempdir, f"{ob.name}.obj")
         output_obj = os.path.join(tempdir, f"{ob.name}_manifold.obj")
         cmd = [self._get_exe(context), input_obj, output_obj, str(self.resolution)]
-        print("BFDS: External command:", " ".join(cmd))
         return cmd, input_obj, output_obj
 
 
@@ -225,7 +226,7 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = config.get_prefs()
+        prefs = context.preferences.addons[__package__].preferences
         return prefs.bf_quadriflow_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
@@ -243,7 +244,6 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
         ]
         self.mcf and cmd.append("-mcf")
         self.sharp and cmd.append("-sharp")
-        print("BFDS: External command:", " ".join(cmd))
         return cmd, input_obj, output_obj
 
 
@@ -262,7 +262,7 @@ class OBJECT_OT_simplify(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = config.get_prefs()
+        prefs = context.preferences.addons[__package__].preferences
         return prefs.bf_simplify_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
@@ -279,7 +279,6 @@ class OBJECT_OT_simplify(Operator, _external_tool):
             "-f",
             str(self.face_num),
         ]
-        print("BFDS: External command:", " ".join(cmd))
         return cmd, input_obj, output_obj
 
 
@@ -404,7 +403,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 w.cursor_modal_restore()
         # XB, XYZ, PB*
         msgs = list()
-        if ob.bf_xb_export and OP_XB in ob.bf_namelist.param_cls:  # XB
+        if ob.bf_xb_export and OP_XB in ob.bf_namelist.bf_params:  # XB
             try:
                 xbs, msg = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
             except BFException as err:
@@ -417,7 +416,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 geometry.from_fds.xbs_to_ob(
                     xbs, context, ob_tmp, scale_length, ob.bf_xb
                 )
-        if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.param_cls:  # XYZ
+        if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.bf_params:  # XYZ
             try:
                 xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob, scale_length)
             except BFException as err:
@@ -430,7 +429,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                     context, ob, f"{ob.name}_XYZ_tmp"
                 )
                 geometry.from_fds.xyzs_to_ob(xyzs, context, ob_tmp, scale_length)
-        if ob.bf_pb_export and OP_PB in ob.bf_namelist.param_cls:  # PB
+        if ob.bf_pb_export and OP_PB in ob.bf_namelist.bf_params:  # PB
             try:
                 pbs, msg = geometry.to_fds.ob_to_pbs(context, ob, scale_length)
             except BFException as err:
@@ -510,7 +509,7 @@ from .. import lang
 
 def _bf_props_copy(context, source_element, dest_elements):
     """Copy all parameters from source_element to dest_elements"""
-    for _, param in lang.params.items():
+    for _, param in lang.bf_params.items():
         # Get value
         if not isinstance(source_element, param.bpy_type):
             continue
@@ -519,7 +518,7 @@ def _bf_props_copy(context, source_element, dest_elements):
             continue
         bpy_value = getattr(source_element, bpy_idname)
         # Set value
-        print(f"BFDS: Copy: {source_element.name} ->")
+        log.debug(f"Copy: {source_element.name} ->")
         if isinstance(bpy_value, bpy.types.bpy_prop_collection):
             for dest_element in dest_elements:
                 dest_coll = getattr(dest_element, bpy_idname)
@@ -528,11 +527,11 @@ def _bf_props_copy(context, source_element, dest_elements):
                     dest_item = dest_coll.add()
                     for k, v in source_item.items():
                         dest_item[k] = v
-                        print(f"BFDS:   -> {dest_element.name}: {bpy_idname}: {k}={v}")
+                        log.debug(f"   -> {dest_element.name}: {bpy_idname}: {k}={v}")
         else:
             for dest_element in dest_elements:
                 setattr(dest_element, bpy_idname, bpy_value)
-                print(f"BFDS:   -> {dest_element.name}: {bpy_idname}={bpy_value}")
+                log.debug(f"   -> {dest_element.name}: {bpy_idname}={bpy_value}")
 
 
 @subscribe
@@ -640,11 +639,7 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
         # Loop on objects
         for ob in destination_elements:
             ob.active_material = active_material
-            print(
-                "BlenderFDS: Assign Material '{}' -> {}".format(
-                    active_material.name, ob.name
-                )
-            )
+            log.debug(f"Assign Material <{active_material.name}> -> <{ob.name}>")
         # Set myself as exported
         active_material.bf_export = True
         # Return

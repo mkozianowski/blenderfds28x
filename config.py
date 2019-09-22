@@ -22,23 +22,9 @@ import bpy
 # TODO
 # from . import bl_info
 # module = bl_info['name']
-module = "blenderfds28x"
 # PKG = __package__
 # mod = addon_utils.addons_fake_modules.get(PKG)
 # mod.bl_info['show_expanded'] = True
-
-
-def get_prefs():
-    return bpy.context.preferences.addons[module].preferences
-
-
-# Default separator
-separator = "\n      "
-
-
-# Default comment format
-def comment(msg):
-    return "! {}\n".format(msg)
 
 
 # FDS default SURFs: name, diffuse_color

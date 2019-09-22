@@ -29,44 +29,30 @@ bl_info = {
 }
 
 
-# Setup logging
-
-import logging
-
-logsFormat = "%(levelname)s:%(name)s:%(lineno)d:%(message)s"
-logging.basicConfig(level=logging.getLevelName("INFO"), format=logsFormat)
-
-# Use like this FIXME:
-# import logging
-# log = logging.getLogger(__name__)
-# log.warning('Origin proj has been deleted because the property could not be updated', exc_info=True)
-# log.error('Cannot update crs', exc_info=True)
-# self.report({'ERROR'}, 'Cannot update crs. Check logs form more info')
-# return {'CANCELLED'}
-# log.info("Read shapefile...")
-
 # Register
 
-import bpy
+import bpy, logging
 
 from . import lang
 from .bl import operators, panels, menus, ui, handlers, preferences
 
+log = logging.getLogger(__name__)
+
 
 def register():
+    # Preferences
     preferences.register()
-
-    # Set log level
     pref = bpy.context.preferences.addons[__package__].preferences
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.getLevelName(pref.bf_loglevel))
-
+    # Set log level from preferences
+    log.setLevel(logging.getLevelName(pref.bf_loglevel))
+    # Register Blender properties, ops, panels, ...
     lang.register()
     operators.register()
     panels.register()
     menus.register()
     handlers.register()
-    if bpy.context.preferences.addons["blenderfds28x"].preferences.bf_pref_simplify_ui:
+    # Simplify UI, if preferred
+    if pref.bf_pref_simplify_ui:
         ui.register()
 
 

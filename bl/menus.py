@@ -17,13 +17,16 @@
 
 import os
 
-import bpy
+import bpy, logging
 from bpy.types import Operator
 from bpy.props import StringProperty, BoolProperty, FloatProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-from ..utils import is_writable, write_to_file
-from ..types import BFException
+from .. import utils
+from ..types import BFException, FDSCase
+
+log = logging.getLogger(__name__)
+
 
 # Collections
 
@@ -41,7 +44,7 @@ def subscribe(cls):
 
 @subscribe
 class ImportFDS(Operator, ImportHelper):
-    """Import FDS case file to a new Scene"""
+    """Import FDS case file to a Scene"""
 
     bl_idname = "import_scene.fds"
     bl_label = "Import FDS"
@@ -49,13 +52,40 @@ class ImportFDS(Operator, ImportHelper):
 
     filename_ext = ".fds"
     filter_glob: StringProperty(default="*.fds", options={"HIDDEN"})
+    new_scene: BoolProperty(name="Into New Scene", default=True)
 
     @classmethod
     def poll(cls, context):
         return context.scene is not None
 
     def execute(self, context):
-        return {"CANCELLED"}
+        # Init
+        w = context.window_manager.windows[0]
+        w.cursor_modal_set("WAIT")
+        # Read and parse
+        fds_case = FDSCase()
+        try:
+            fds_case.from_fds(utils.read_from_file(self.filepath))
+        except Exception as err:
+            w.cursor_modal_restore()
+            self.report({"ERROR"}, f"Read or parse error: {str(err)}")
+            return {"CANCELLED"}
+        # Current or new Scene
+        if self.new_scene:
+            sc = bpy.data.scenes.new("imported")
+        else:
+            sc = context.scene
+        # Import
+        try:
+            sc.from_fds(context, fds_case=fds_case)
+        except BFException as err:
+            w.cursor_modal_restore()
+            self.report({"ERROR"}, f"Import error: {str(err)}")
+            return {"CANCELLED"}
+        # Close
+        w.cursor_modal_restore()
+        self.report({"INFO"}, "FDS case imported")
+        return {"FINISHED"}
 
 
 def menu_func_import_FDS(self, context):
@@ -86,13 +116,12 @@ class ExportFDS(Operator, ExportHelper):
         w.cursor_modal_set("WAIT")
         sc = context.scene
         # Prepare FDS filepath
-        print(f"BFDS: Exporting Blender Scene <{sc.name}> to FDS file...")
         filepath = self.filepath
         if not filepath.lower().endswith(".fds"):
             filepath += ".fds"
         filepath = bpy.path.abspath(filepath)
         # Check FDS filepath writable
-        if not is_writable(filepath):
+        if not utils.is_writable(filepath):
             w.cursor_modal_restore()
             self.report({"ERROR"}, "FDS file not writable, cannot export")
             return {"CANCELLED"}
@@ -105,11 +134,12 @@ class ExportFDS(Operator, ExportHelper):
             return {"CANCELLED"}
         # Add namelist index # TODO develop
         # Write FDS file
-        if not write_to_file(filepath, fds_file):
+        try:
+            utils.write_to_file(filepath, fds_file)
+        except IOError:
             w.cursor_modal_restore()
             self.report({"ERROR"}, "FDS file not writable, cannot export")
             return {"CANCELLED"}
-        print(f"BFDS: FDS file written.")
         # GE1 description file requested?
         if sc.bf_dump_render_file:
             print(
@@ -118,7 +148,7 @@ class ExportFDS(Operator, ExportHelper):
             # # Prepare GE1 filepath
             # print(f"BFDS: Exporting Blender Scene <{sc.name}> to GE1 file...")
             # filepath = filepath[:-4] + ".ge1"
-            # if not is_writable(filepath):
+            # if not utils.is_writable(filepath):
             #     w.cursor_modal_restore()
             #     self.report({"ERROR"}, "GE1 file not writable, cannot export")
             #     return {"CANCELLED"}
@@ -130,7 +160,7 @@ class ExportFDS(Operator, ExportHelper):
             #     self.report({"ERROR"}, str(err))
             #     return {"CANCELLED"}
             # # Write GE1 file
-            # if not write_to_file(filepath, ge1_file):
+            # if not utils.write_to_file(filepath, ge1_file):
             #     w.cursor_modal_restore()
             #     self.report({"ERROR"}, "GE1 file not writable, cannot export")
             #     return {"CANCELLED"}
@@ -157,7 +187,7 @@ def menu_func_export_FDS(self, context):
         basename = "{0}.fds".format(bpy.path.clean_name(sc.name))
     # Call the exporter operator
     filepath = f"{directory}/{basename}"
-    self.layout.operator("export_scene.fds", text="Scene to NIST FDS (.fds)")
+    self.layout.operator("export_scene.fds", text="NIST FDS (.fds)")
 
 
 # Register
@@ -168,7 +198,7 @@ def register():
 
     for cls in bl_classes:
         register_class(cls)
-    #    bpy.types.TOPBAR_MT_file_import.append(menu_func_import_FDS)  # FIXME implement
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import_FDS)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export_FDS)
 
 
@@ -177,5 +207,5 @@ def unregister():
 
     for cls in reversed(bl_classes):
         unregister_class(cls)
-    #    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_FDS)  # FIXME implement
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_FDS)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_FDS)

@@ -1,11 +1,13 @@
 """BlenderFDS, translate Blender object geometry to FDS notation."""
 
-import bpy
+import bpy, logging
 from time import time
 from . import utils
 from . import calc_voxels
 from . import calc_trisurfaces
 from ..types import BFException
+
+log = logging.getLogger(__name__)
 
 
 # to GEOM
@@ -16,7 +18,7 @@ def ob_to_geom(
 ) -> "mas, fds_verts, fds_faces, 'Msg'":
     """Transform Object geometry to FDS mas, verts, faces notation."""
     t0 = time()
-    print("BFDS: ob_to_geom:", ob.name)
+    log.debug(ob.name)
     mas, verts, faces = calc_trisurfaces.get_trisurface(
         context, ob, scale_length, check
     )
@@ -132,7 +134,7 @@ _choice_to_xbs = {
 
 def ob_to_xbs(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     """Transform Object geometry according to ob.bf_xb to FDS notation."""
-    print("BFDS: ob_to_xbs:", ob.name)
+    log.debug(ob.name)
     return _choice_to_xbs[ob.bf_xb](context, ob, scale_length)  # recalc
 
 
@@ -174,7 +176,7 @@ _choice_to_xyzs = {"CENTER": _ob_to_xyzs_center, "VERTICES": _ob_to_xyzs_vertice
 
 def ob_to_xyzs(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
     """Transform Object geometry according to ob.bf_xyz to xyzs notation."""
-    print("BFDS: ob_to_xyzs:", ob.name)
+    log.debug(ob.name)
     return _choice_to_xyzs[ob.bf_xyz](context, ob, scale_length)  # recalc
 
 
@@ -209,5 +211,5 @@ def _ob_to_pbs_planes(
 
 def ob_to_pbs(context, ob, scale_length) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
     """Transform Object geometry according to ob.bf_pb to pbs notation."""
-    print("BFDS: ob_to_pbs:", ob.name)
+    log.debug(ob.name)
     return _ob_to_pbs_planes(context, ob, scale_length)  # recalc

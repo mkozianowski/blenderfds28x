@@ -1,5 +1,7 @@
 # TODO
 
+Automatic path for external tools
+
 unit testing (WUIFI-21)
 
 automatic developer's doc with doxygen (WUIFI-21)
@@ -25,14 +27,21 @@ from_fds, import
 file version management
 
 ## Geography:
-import geotiff, srtm, osm buildings, trees, landcover
 
-GEOM terrain new quality checks
+import geotiff, srtm, osm buildings, trees, landcover (WUIFI-21)
 
-GEOM terrain toolbox
+GEOM terrain new quality checks (WUIFI-21)
+
+GEOM terrain toolbox (WUIFI-21)
 
 
 # DONE
+
+Fixed logging
+
+Improved FDS import parser
+
+Unified formatting of parameters and namelist
 
 voxelization fix for API change
 

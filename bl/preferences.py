@@ -3,8 +3,6 @@
 import bpy
 import logging
 
-PKG = __package__
-
 from bpy.types import AddonPreferences
 from bpy.props import (
     BoolProperty,
@@ -14,12 +12,15 @@ from bpy.props import (
     EnumProperty,
 )
 
+log = logging.getLogger(__name__)
+
 # Get preference value like this:
-# context.preferences.addons["blenderfds28x"].preferences.bf_pref_simplify_ui
+# prefs = context.preferences.addons[__package__].preferences
+# prefs.bf_pref_simplify_ui
 
 
 class BFPreferences(AddonPreferences):
-    bl_idname = "blenderfds28x"
+    bl_idname = __package__.split(".")[0]
 
     bf_pref_simplify_ui: BoolProperty(
         name="Simplify UI [Blender restart required]",
@@ -28,8 +29,7 @@ class BFPreferences(AddonPreferences):
     )
 
     def update_loglevel(self, context):
-        logger = logging.getLogger(PKG)
-        logger.setLevel(logging.getLevelName(self.bf_loglevel))
+        log.setLevel(logging.getLevelName(self.bf_loglevel))
 
     bf_loglevel: EnumProperty(
         name="Log Level",
@@ -42,7 +42,7 @@ class BFPreferences(AddonPreferences):
             ("CRITICAL", "Critical", ""),
         ],
         update=update_loglevel,
-        default="INFO",
+        default="DEBUG",  # FIXME should be INFO
     )
 
     bf_quadriflow_filepath: StringProperty(

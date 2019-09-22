@@ -17,7 +17,7 @@
 import bpy
 from bpy.types import Panel, UIList, Operator, bpy_struct
 
-from ..lang import namelists
+from ..lang import bf_namelists
 from . import custom_uilist
 from .. import config
 from .. import gis
@@ -49,7 +49,7 @@ class SCENE_PT_bf_namelist:
 
     def draw_header(self, context):
         sc = context.scene
-        bf_namelist = namelists[self.bf_namelist_cls]
+        bf_namelist = bf_namelists[self.bf_namelist_cls]
         if bf_namelist.bpy_export:
             self.layout.prop(sc, bf_namelist.bpy_export, icon_only=True)
         self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
@@ -62,7 +62,7 @@ class SCENE_PT_bf_namelist:
             row_major=True, columns=0, even_columns=True, even_rows=False, align=False
         )
         sc = context.scene
-        bf_namelist = namelists[self.bf_namelist_cls]
+        bf_namelist = bf_namelists[self.bf_namelist_cls]
         if bf_namelist.bpy_export:
             flow.active = getattr(sc, bf_namelist.bpy_export, True)
         bf_namelist(sc).draw(context, flow)
@@ -135,7 +135,7 @@ class OBJECT_PT_bf_namelist(Panel):
 
     def draw_header(self, context):
         ob = context.object
-        bf_namelist = namelists[ob.bf_namelist_cls]
+        bf_namelist = bf_namelists[ob.bf_namelist_cls]
         self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
         self.layout.prop(ob, "hide_render", emboss=False, icon_only=True)
 
@@ -150,7 +150,7 @@ class OBJECT_PT_bf_namelist(Panel):
         layout.active = not (ob.hide_render)
         flow.prop(ob, "bf_namelist_cls")
         # Get the namelist class, instanciate it, and draw its panel
-        namelists[ob.bf_namelist_cls](ob).draw(context, flow)
+        bf_namelists[ob.bf_namelist_cls](ob).draw(context, flow)
         row = layout.row(align=True)
         if ob.bf_has_tmp:
             row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
@@ -182,7 +182,7 @@ class MATERIAL_PT_bf_namelist(Panel):
         if ma.name in config.default_mas:  # Default material
             self.bl_label = f"FDS SURF (Predefined Boundary Condition)"
             return
-        bf_namelist = namelists[ma.bf_namelist_cls]
+        bf_namelist = bf_namelists[ma.bf_namelist_cls]
         self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
         self.layout.prop(ma, "bf_export", icon_only=True)
 
@@ -197,7 +197,7 @@ class MATERIAL_PT_bf_namelist(Panel):
         layout.active = ma.bf_export
         flow.prop(ma, "bf_namelist_cls")
         # Get the namelist class, instanciate it, and draw its panel
-        namelists[ma.bf_namelist_cls](ma).draw(context, flow)
+        bf_namelists[ma.bf_namelist_cls](ma).draw(context, flow)
         row = layout.row()
         row.operator("material.bf_show_fds_code", text="Show FDS Code", icon="HIDE_OFF")
         row.operator("material.bf_surf_to_sel_obs", text="Assign To", icon="COPYDOWN")
@@ -284,7 +284,7 @@ class VIEW3D_PT_BF_Remesh_Toolbar_Mesh(Panel, BF_Remesh_Toolbar):
 
 class BF_Geoloc_Toolbar:
     bl_category = "FDS"
-    bl_label = "Geo Location"
+    bl_label = "Geolocation"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
