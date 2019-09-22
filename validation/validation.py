@@ -20,7 +20,7 @@ def export_fds(path, file_name):
     #pprint(dir(bpy.ops.export_scene.fds))
     #bpy.ops.export_scene.fds(filepath=os.path.join(path, 'validation', file_name))
     fds_file = sc.to_fds( context=context, full=True)
-    file=open( os.path.join( path, file_name, "w+")
+    file=open( os.path.join( path, file_name, "w+") )
     file.write( fds_file)
     file.close()
 
