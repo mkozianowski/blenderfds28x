@@ -45,7 +45,7 @@ from .types import (
     BFNamelist,
     BFParamStr,
     BFParamFYI,
-    BFParamOthers,
+    BFParamOther,
     FDSCase,
 )
 from .config import default_mas
@@ -82,16 +82,17 @@ def subscribe(cls):
 
 
 # PropertyGroup and UIList
+# The PG properties should always be: bf_export, name
 
 
 @subscribe
-class WM_PG_bf_others(PropertyGroup):
-    bf_export: BoolProperty(name="Export", default=False)
+class WM_PG_bf_other(PropertyGroup):
+    bf_export: BoolProperty(name="Export", default=True)
     name: StringProperty(name="Name")
 
 
 @subscribe
-class WM_UL_bf_others_items(UIList):
+class WM_UL_bf_other_items(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data):
         col = layout.column()
         col.active = item.bf_export
@@ -154,6 +155,7 @@ class SN_HEAD(BFNamelist):
     bpy_export = "bf_head_export"
     bpy_export_default = True
     bf_params = SP_HEAD_CHID, SP_HEAD_TITLE
+    bf_param_other = None
 
 
 # Case Config
@@ -342,6 +344,7 @@ class SN_config(BFNamelist):
     description = "Case configuration"
     enum_id = 3008
     bpy_type = Scene
+    bf_param_other = None
 
     def draw(self, context, layout):
         sc = self.element
@@ -434,11 +437,11 @@ class SP_TIME_T_END(BFParam):
 
 
 @subscribe
-class SP_TIME_other(BFParamOthers):
+class SP_TIME_other(BFParamOther):
     bpy_type = Scene
-    bpy_idname = "bf_time_others"
-    bpy_pg = WM_PG_bf_others
-    bpy_ul = WM_UL_bf_others_items
+    bpy_idname = "bf_time_other"
+    bpy_pg = WM_PG_bf_other
+    bpy_ul = WM_UL_bf_other_items
 
 
 @subscribe
@@ -450,7 +453,8 @@ class SN_TIME(BFNamelist):
     bpy_type = Scene
     bpy_export = "bf_time_export"
     bpy_export_default = True
-    bf_params = SP_TIME_T_BEGIN, SP_TIME_T_END, SP_TIME_other
+    bf_params = SP_TIME_T_BEGIN, SP_TIME_T_END
+    bf_param_other = SP_TIME_other
 
     def draw(self, context, layout):
         sc = self.element
@@ -494,11 +498,11 @@ class SP_MISC_THICKEN_OBSTRUCTIONS(BFParam):
 
 
 @subscribe
-class SP_MISC_other(BFParamOthers):
+class SP_MISC_other(BFParamOther):
     bpy_type = Scene
-    bpy_idname = "bf_misc_others"
-    bpy_pg = WM_PG_bf_others
-    bpy_ul = WM_UL_bf_others_items
+    bpy_idname = "bf_misc_other"
+    bpy_pg = WM_PG_bf_other
+    bpy_ul = WM_UL_bf_other_items
 
 
 @subscribe
@@ -510,12 +514,8 @@ class SN_MISC(BFNamelist):
     bpy_type = Scene
     bpy_export = "bf_misc_export"
     bpy_export_default = False
-    bf_params = (
-        SP_MISC_FYI,
-        SP_MISC_OVERWRITE,
-        SP_MISC_THICKEN_OBSTRUCTIONS,
-        SP_MISC_other,
-    )
+    bf_params = (SP_MISC_FYI, SP_MISC_OVERWRITE, SP_MISC_THICKEN_OBSTRUCTIONS)
+    bf_param_other = SP_MISC_other
 
 
 # REAC
@@ -598,11 +598,11 @@ class SP_REAC_IDEAL(BFParam):
 
 
 @subscribe
-class SP_REAC_other(BFParamOthers):
+class SP_REAC_other(BFParamOther):
     bpy_type = Scene
-    bpy_idname = "bf_reac_others"
-    bpy_pg = WM_PG_bf_others
-    bpy_ul = WM_UL_bf_others_items
+    bpy_idname = "bf_reac_other"
+    bpy_pg = WM_PG_bf_other
+    bpy_ul = WM_UL_bf_other_items
 
 
 @subscribe
@@ -621,8 +621,8 @@ class SN_REAC(BFNamelist):
         SP_REAC_SOOT_YIELD,
         SP_REAC_HEAT_OF_COMBUSTION,
         SP_REAC_IDEAL,
-        SP_REAC_other,
     )
+    bf_param_other = SP_REAC_other
 
 
 # RADI
@@ -709,11 +709,11 @@ class SP_RADI_RADIATION_ITERATIONS(BFParam):
 
 
 @subscribe
-class SP_RADI_other(BFParamOthers):
+class SP_RADI_other(BFParamOther):
     bpy_type = Scene
-    bpy_idname = "bf_radi_others"
-    bpy_pg = WM_PG_bf_others
-    bpy_ul = WM_UL_bf_others_items
+    bpy_idname = "bf_radi_other"
+    bpy_pg = WM_PG_bf_other
+    bpy_ul = WM_UL_bf_other_items
 
 
 @subscribe
@@ -733,8 +733,8 @@ class SN_RADI(BFNamelist):
         SP_RADI_TIME_STEP_INCREMENT,
         SP_RADI_ANGLE_INCREMENT,
         SP_RADI_RADIATION_ITERATIONS,
-        SP_RADI_other,
     )
+    bf_param_other = SP_RADI_other
 
 
 # DUMP
@@ -811,11 +811,11 @@ class SP_DUMP_DT_RESTART(BFParam):
 
 
 @subscribe
-class SP_DUMP_other(BFParamOthers):
+class SP_DUMP_other(BFParamOther):
     bpy_type = Scene
-    bpy_idname = "bf_dump_others"
-    bpy_pg = WM_PG_bf_others
-    bpy_ul = WM_UL_bf_others_items
+    bpy_idname = "bf_dump_other"
+    bpy_pg = WM_PG_bf_other
+    bpy_ul = WM_UL_bf_other_items
 
 
 @subscribe
@@ -834,19 +834,18 @@ class SN_DUMP(BFNamelist):
         SP_DUMP_NFRAMES,
         SP_DUMP_set_frequency,
         SP_DUMP_DT_RESTART,
-        SP_DUMP_other,
     )
+    bf_param_other = SP_DUMP_other
 
 
-# CATF
+# CATF FIXME to_fds, from_fds, check
+# This namelist has an autonomous behaviour
 
-# FIXME to_fds
+
 @subscribe
 class SP_CATF_check_files(BFParam):
     label = "Check File Existance While Exporting"
-    description = (
-        "Check file existence and export filepaths relative to the case directory"
-    )
+    description = "Check file existence while exporting filepaths"
     bpy_type = Scene
     bpy_idname = "bf_catf_check_files"
     bpy_prop = BoolProperty
@@ -854,30 +853,51 @@ class SP_CATF_check_files(BFParam):
 
 
 @subscribe
-class SP_CATF_files(BFParamOthers):  # FIXME
-    label = "Concatenated Files"
+class SP_CATF_files(BFParamOther):
+    label = "Concatenated File Paths"
     description = "Concatenated files (eg. PROP='/drive/test.catf')"
+    fds_label="OTHER_FILES"
     bpy_type = Scene
     bpy_idname = "bf_catf_files"
     bpy_pg = WM_PG_bf_filepaths
     bpy_ul = WM_UL_bf_filepaths_items
 
-    def draw(self, context, layout):
-        sc = self.element
-        SP_CATF_check_files(sc).draw(context, layout)
-        super().draw(context, layout)
-
+    def to_fds(self, context) -> "gen of str":
+        el = self.element
+        collection = getattr(self.element, self.bpy_idname)
+        result = list()
+        for p in collection:
+            if p.bf_export and p.name:
+                if el.bf_catf_check_files:
+                    if not utils.is_file(p.name):
+                        raise BFException(self, f"File path <{p.name}> does not exist")
+                result.append(f"OTHER_FILES='{p.name}'")
+        return result
 
 @subscribe
-class SN_CATF(BFNamelist):  # FIXME
+class SN_CATF(BFNamelist):
     label = "CATF"
     description = "Concatenated file paths"
     fds_label = "CATF"
     bpy_type = Scene
     bpy_export = "bf_catf_export"
     bpy_export_default = False
-    bf_params = (SP_CATF_files,)
+    # bf_params = (SP_CATF_files,)  # no auto management
+    bf_param_other = None
 
+    def draw(self, context, layout):
+        el = self.element
+        SP_CATF_check_files(el).draw(context, layout)
+        SP_CATF_files(el).draw(context, layout)
+
+    def to_fds(self, context):
+        if not self.exported:
+            return
+        multiparam_strings = SP_CATF_files(self.element).to_fds(context)
+        if multiparam_strings:
+            return "\n".join(f"&CATF {mp} /" for mp in multiparam_strings)
+        else:
+            return "&CATF /"
 
 # Material
 
@@ -1036,11 +1056,11 @@ class MP_BACKING(BFParam):
 
 
 @subscribe
-class MP_other(BFParamOthers):
+class MP_other(BFParamOther):
     bpy_type = Material
-    bpy_idname = "bf_others"
-    bpy_pg = WM_PG_bf_others
-    bpy_ul = WM_UL_bf_others_items
+    bpy_idname = "bf_other"
+    bpy_pg = WM_PG_bf_other
+    bpy_ul = WM_UL_bf_other_items
 
 
 @subscribe
@@ -1052,7 +1072,8 @@ class MN_SURF(BFNamelist):
     fds_label = "SURF"
     bpy_export = "bf_export"
     bpy_export_default = True
-    bf_params = (MP_ID, MP_FYI, MP_RGB, MP_MATL_ID, MP_THICKNESS, MP_BACKING, MP_other)
+    bf_params = (MP_ID, MP_FYI, MP_RGB, MP_MATL_ID, MP_THICKNESS, MP_BACKING)
+    bf_param_other = MP_other
 
     @property
     def exported(self) -> "bool":
@@ -1465,11 +1486,11 @@ class OP_SURF_ID(BFParam):
 
 
 @subscribe
-class OP_other(BFParamOthers):
+class OP_other(BFParamOther):
     bpy_type = Object
-    bpy_idname = "bf_others"
-    bpy_pg = WM_PG_bf_others
-    bpy_ul = WM_UL_bf_others_items
+    bpy_idname = "bf_other"
+    bpy_pg = WM_PG_bf_other
+    bpy_ul = WM_UL_bf_other_items
 
 
 @subscribe
@@ -1482,7 +1503,8 @@ class ON_OBST(BFNamelist):
     bpy_export = "bf_export"
     bpy_export_default = True
 
-    bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB, OP_ID_suffix, OP_other
+    bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB, OP_ID_suffix
+    bf_param_other = OP_other
     bf_xb_idxs, bf_id_suffix_idxs = (0, 1, 2, 3), None  # Volume or faces
 
 
@@ -1524,8 +1546,8 @@ class ON_other(BFNamelist):
         OP_XYZ,
         OP_PB,
         OP_ID_suffix,
-        OP_other,
     )
+    bf_param_other = OP_other
 
     @property
     def fds_label(self):
@@ -1641,9 +1663,9 @@ class ON_GEOM(BFNamelist):
         OP_GEOM_check_quality,
         OP_GEOM_IS_TERRAIN,
         OP_GEOM_EXTEND_TERRAIN,
-        OP_other,
         OP_GEOM,
     )
+    bf_param_other = OP_other
 
 
 # HOLE
@@ -1658,7 +1680,8 @@ class ON_HOLE(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    bf_params = OP_ID, OP_FYI, OP_XB, OP_ID_suffix, OP_other
+    bf_params = OP_ID, OP_FYI, OP_XB, OP_ID_suffix
+    bf_param_other = OP_other
     bf_xb_idxs, bf_id_suffix_idxs = (0, 1), None  # Volume
 
 
@@ -1674,7 +1697,8 @@ class ON_VENT(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB, OP_ID_suffix, OP_other
+    bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB, OP_ID_suffix
+    bf_param_other = OP_other
     bf_xb_idxs, bf_id_suffix_idxs = (2, 3), None  # only faces
 
 
@@ -1756,8 +1780,8 @@ class ON_DEVC(BFNamelist):
         OP_XB,
         OP_XYZ,
         OP_ID_suffix,
-        OP_other,
     )
+    bf_param_other = OP_other
 
 
 # SLCF
@@ -1811,8 +1835,8 @@ class ON_SLCF(BFNamelist):
         OP_XB,
         OP_PB,
         OP_ID_suffix,
-        OP_other,
     )
+    bf_param_other = OP_other
     bf_xb_idxs, bf_id_suffix_idxs = (2,), None  # Faces or planes
 
 
@@ -1828,7 +1852,8 @@ class ON_PROF(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    bf_params = OP_ID, OP_FYI, OP_DEVC_QUANTITY, OP_XYZ, OP_ID_suffix, OP_other
+    bf_params = OP_ID, OP_FYI, OP_DEVC_QUANTITY, OP_XYZ, OP_ID_suffix
+    bf_param_other = OP_other
     # bf_xyz_idxs, bf_id_suffix_idxs = None, None  # FIXME
 
 
@@ -1872,7 +1897,8 @@ class ON_MESH(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB, OP_other
+    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB
+    bf_param_other = OP_other
     bf_xb_idxs = (0,)  # Only BBOX
 
 
@@ -1888,7 +1914,8 @@ class ON_INIT(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    bf_params = OP_ID, OP_FYI, OP_XB, OP_XYZ, OP_ID_suffix, OP_other
+    bf_params = OP_ID, OP_FYI, OP_XB, OP_XYZ, OP_ID_suffix
+    bf_param_other = OP_other
     # bf_xb_idxs, bf_id_suffix_idxs = (1,), None  # FIXME
 
 
@@ -1904,7 +1931,8 @@ class ON_ZONE(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    bf_params = OP_ID, OP_FYI, OP_XB, OP_ID_suffix, OP_other
+    bf_params = OP_ID, OP_FYI, OP_XB, OP_ID_suffix
+    bf_param_other = OP_other
     # bf_xb_idxs, bf_id_suffix_idxs = (1,), None  # FIXME
 
 
@@ -1920,7 +1948,8 @@ class ON_HVAC(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    bf_params = OP_ID, OP_FYI, OP_XYZ, OP_ID_suffix, OP_other
+    bf_params = OP_ID, OP_FYI, OP_XYZ, OP_ID_suffix
+    bf_param_other = OP_other
     # bf_xb_idxs, bf_id_suffix_idxs = (1,), None  # FIXME
 
 
@@ -1966,8 +1995,8 @@ class BFObject:
     def to_fds(self, context):
         return self.bf_namelist.to_fds(context)
 
-    def from_fds(self, context, fds_namelist):  # FIXME
-        self.bf_namelist_cls = f"ON_{fds_namelist.label}"
+    def from_fds(self, context, fds_namelist):  # FIXME from dict by fds
+        self.bf_namelist_cls = f"ON_{fds_namelist.label}"  # FIXME pure chance
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
     @classmethod
@@ -1999,8 +2028,8 @@ class BFMaterial:
     def to_fds(self, context):
         return self.bf_namelist.to_fds(context)
 
-    def from_fds(self, context, fds_namelist):  # FIXME
-        self.bf_namelist_cls = f"MN_{fds_namelist.label}"
+    def from_fds(self, context, fds_namelist):  # FIXME from dict by fds
+        self.bf_namelist_cls = f"MN_{fds_namelist.label}"  # FIXME pure chance
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
     @classmethod
@@ -2018,6 +2047,9 @@ class BFMaterial:
 
 class BFScene:
     """Extension of Blender Scene."""
+
+    name = str()  # fake sc.name
+    bf_head_export = bool()  # fake sc.bf_head_export
 
     @property
     def bf_namelists(self):
@@ -2062,19 +2094,19 @@ class BFScene:
             for i, fds_namelist in enumerate(fds_case):
                 if fds_namelist.label != fds_label:
                     continue
-                hid = fds_namelist.fds_params_by_fds.get("ID", "Imported")  # FIXME rm ID from fds_params
+                hid = fds_namelist.pop("ID", "Imported")
                 if bpy_type == Object:
                     ob = bpy.data.objects.new(hid)
-                    ob.from_fds(fds_namelist=fds_namelist)                                
+                    ob.from_fds(fds_namelist=fds_namelist)
                 elif bpy_type == Material:
                     ma = bpy.data.materials.new(hid)
-                    ma.from_fds(fds_namelist=fds_namelist)                
-#                elif bf_namelist.bpy_type == Scene:
-#                    bf_namelist(self).from_fds()
-#                else:
-#                    raise TypeError(f"Unknown bpy_type for <{bf_namelist}>")
+                    ma.from_fds(fds_namelist=fds_namelist)
+                #                elif bf_namelist.bpy_type == Scene:  # FIXME implement
+                #                    bf_namelist(self).from_fds()
+                #                else:
+                #                    raise TypeError(f"Unknown bpy_type for <{bf_namelist}>")
                 fds_case.pop(i)  # pop treated namelist
-        # FIXME Put remaining namelists into CATF
+        print("Remaining:", fds_case)  # FIXME Put remaining namelists into CATF
 
     def to_ge1(self, context):
         return geometry.to_ge1.scene_to_ge1(context, self)
@@ -2096,6 +2128,10 @@ class BFScene:
 
 class BFCollection:
     """Extension of Blender Collection."""
+
+    name = str()  # collection.name
+    objects = list()  # collection.objects
+    children = list()  # collection.children
 
     def to_fds(self, context):  # FIXME messages and structure
         obs = list(self.objects)

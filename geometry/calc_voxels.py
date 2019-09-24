@@ -224,7 +224,7 @@ def _get_face_center(face):
 
 def _get_boxes_along_x(faces, voxel_size) -> "boxes, origin":
     """Get minimal boxes from faces by raytracing along x axis."""
-    log.debug()
+    log.debug("x boxes")
     # First face center becomes origin of the integer grid for faces
     f_origin = _get_face_center(faces[0])
     hvs = voxel_size / 2.0  # half voxel size
@@ -257,7 +257,7 @@ def _get_boxes_along_x(faces, voxel_size) -> "boxes, origin":
 
 def _get_boxes_along_y(faces, voxel_size) -> "boxes, origin":
     """Get minimal boxes from faces by raytracing along y axis."""
-    log.debug()
+    log.debug("y boxes")
     # First face center becomes origin of the integer grid for faces
     f_origin = _get_face_center(faces[0])
     hvs = voxel_size / 2.0  # half voxel size
@@ -290,7 +290,7 @@ def _get_boxes_along_y(faces, voxel_size) -> "boxes, origin":
 
 def _get_boxes_along_z(faces, voxel_size) -> "boxes, origin":
     """Get minimal boxes from faces by raytracing along z axis."""
-    log.debug()
+    log.debug("z boxes")
     # First face center becomes origin of the integer grid for faces
     f_origin = _get_face_center(faces[0])
     hvs = voxel_size / 2.0  # half voxel size
@@ -327,7 +327,7 @@ def _get_boxes_along_z(faces, voxel_size) -> "boxes, origin":
 
 def _grow_boxes_along_x(boxes, sort_by):
     """Grow boxes by merging neighbours along x axis."""
-    log.debug()
+    log.debug("grow x")
     # Sort boxes
     boxes.sort(key=lambda box: (box[sort_by], box[0]))
     # Grow boxes in -x direction, starting from last one
@@ -354,7 +354,7 @@ def _grow_boxes_along_x(boxes, sort_by):
 
 def _grow_boxes_along_y(boxes, sort_by):
     """Grow boxes by merging neighbours along y axis."""
-    log.debug()
+    log.debug("grow y")
     # Sort boxes
     boxes.sort(key=lambda box: (box[sort_by], box[2]))
     # Grow boxes in -y direction, starting from last one
@@ -381,7 +381,7 @@ def _grow_boxes_along_y(boxes, sort_by):
 
 def _grow_boxes_along_z(boxes, sort_by):
     """Grow boxes by merging neighbours along z axis."""
-    log.debug()
+    log.debug("grow z")
     # Sort boxes
     boxes.sort(key=lambda box: (box[sort_by], box[4]))
     # Grow boxes in -z direction, starting from last one
@@ -430,7 +430,7 @@ def _get_box_xbs(boxes, origin, voxel_size, scale_length) -> "xbs":
 
 def get_pixels(context, ob, scale_length):
     """Get pixels from flat object in xbs format."""
-    log.debug()
+    log.debug(ob.name)
     # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
         raise BFException(ob, "Object can not be converted to mesh.")

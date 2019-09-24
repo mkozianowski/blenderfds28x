@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import os
 
 
 def is_iterable(var):
@@ -35,11 +35,16 @@ def is_iterable(var):
     return True
 
 
-# Write to file
+# File operations
+
+
+def is_file(filepath):
+    """Check if filepath exists and is a file."""
+    return os.path.exists(filepath) and os.path.isfile(filepath)
 
 
 def is_writable(filepath):
-    """Check if filepath is writable"""
+    """Check if filepath is writable."""
     try:
         write_to_file(filepath, "! Test")
     except IOError:
@@ -54,9 +59,6 @@ def write_to_file(filepath, text):
         text = str()
     with open(filepath, "w", encoding="utf8", errors="ignore") as f:
         f.write(text)
-
-
-# Read text file
 
 
 def read_from_file(filepath):
