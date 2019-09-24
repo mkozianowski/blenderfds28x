@@ -132,12 +132,14 @@ xbs_to_mesh = {
 }
 
 
-def xbs_to_ob(xbs, context, ob, scale_length, bf_xb="BBOX"):
+def xbs_to_ob(xbs, context, ob, scale_length, bf_xb="BBOX", ma=None):
     """Import xbs geometry ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Object."""
     log.debug(ob.name)
     xbs_to_mesh[bf_xb](xbs, context, ob.data, scale_length)
     _set_balanced_center_position(context, ob)
     ob.bf_xb_export, ob.bf_xb = True, bf_xb
+    if ma:
+        ob.active_material = ma
 
 
 # From XYZ in Blender units
@@ -150,11 +152,13 @@ def xyzs_to_mesh(xyzs, context, me, scale_length):
     me.from_pydata(xyzs, tuple(), tuple())  # verts, edges, faces
 
 
-def xyzs_to_ob(xyzs, context, ob, scale_length):
+def xyzs_to_ob(xyzs, context, ob, scale_length, ma=None):
     """Import xyzs vertices ((x0,y0,z0,), ...) into existing Blender Object."""
     xyzs_to_mesh(xyzs, context, ob.data, scale_length)
     _set_balanced_center_position(context, ob)
     ob.bf_xyz_export, ob.bf_xyz = True, "VERTICES"
+    if ma:
+        ob.active_material = ma
 
 
 # From PB
@@ -177,11 +181,13 @@ def pbs_to_mesh(pbs, context, me, scale_length):
     return xbs_faces_to_mesh(xbs, context, me, scale_length)
 
 
-def pbs_to_ob(pbs, context, ob, scale_length):
+def pbs_to_ob(pbs, context, ob, scale_length, ma=None):
     """Import pbs planes ((0,x3,), (0,x7,), (1,y9,), ...) into existing Blender Object."""
     pbs_to_mesh(pbs, context, ob.data, scale_length)
     _set_balanced_center_position(context, ob)
     ob.bf_pb_export, ob.bf_pb = True, "PLANES"
+    if ma:
+        ob.active_material = ma
 
 
 # Utils
