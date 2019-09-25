@@ -28,12 +28,13 @@ from bpy.props import (
     CollectionProperty,
 )
 
-from .bl import custom_uilist
-from .utils import is_iterable
+if __name__ != "__main__":  # FIXME
+    from .bl import custom_uilist
+    from .utils import is_iterable
 
 log = logging.getLogger(__name__)
 
-# Blender representations of FDS entities
+# BF specific exception
 
 
 class BFException(Exception):
@@ -54,8 +55,8 @@ class BFException(Exception):
             name = getattr(sender, "name", None) or sender.__class__.__name__
         return "{}: {}".format(name, self.msg)
 
-    def to_fds(self):
-        return f"! {self}"
+
+# Blender representations of FDS entities
 
 
 class BFParam:
@@ -132,7 +133,7 @@ class BFParam:
     def value(self) -> "any":
         """Get value."""
         if not self.bpy_idname:
-            raise Exception(f"value() not implemented in class <{self.__class__}>")
+            raise Exception(f"Not implemented in class <{self.__class__}>")
         return getattr(self.element, self.bpy_idname)
 
     def set_value(self, context, value=None):  # FIXME Test
@@ -196,9 +197,11 @@ class BFParam:
             )
         return col
 
-    def to_fds(self, context) -> "str or (str, msg) or None":
-        """Get FDS exported string and msg."""
-        # Export requested and check
+    def to_fds_param(
+        self, context
+    ) -> "None, FDSParam, or ((FDSParam, ...), ...) as multi":
+        """Return the FDSParam Python representation."""
+        # Get if exported and check
         if not self.exported or not self.fds_label:
             return
         self.check(context)
@@ -208,12 +211,17 @@ class BFParam:
             values = tuple((value,))
         else:
             values = value
-        # Use common format routine
-        return FDSParam._format(
+        # Return
+        return FDSParam(
             label=self.fds_label,
             values=values,
             precision=self.bpy_other.get("precision", 3),
         )
+
+    def to_fds(self, context) -> "None or str":
+        """Return the FDS str representation."""
+        fds_param = self.to_fds_param(context)
+        return fds_param and str(fds_param)
 
     def from_fds(self, context, value):  # FIXME test
         """Set parameter value from value in FDS notation, on error raise BFException."""
@@ -237,6 +245,8 @@ class BFNamelist(BFParam):
     bf_param_other = None
     # Allowed indexes for specific parameters
     bf_xb_idxs, bf_xyz_idxs, bf_pb_idxs, bf_id_suffix_idxs = None, None, None, None
+    # Max column length for formatting
+    max_len = 130
 
     @classmethod
     def register(cls, *args, **kwargs):
@@ -267,61 +277,26 @@ class BFNamelist(BFParam):
         """Get if self is exported."""
         return bool(getattr(self.element, str(self.bpy_export), True))
 
-    # Currently p(el).to_fds(context) result can be:
-    # - None
-    # - a str: PROP='Test'
-    # - a list of two str: PROP='Test', 'This is a msg'
-    # - a list of a tuple/gen and a str: ("P=1 ID='id_1'", "P=2 ID='id_2'", ...), 'This is a msg' (multiparam from XB, XYZ, PB)
-    # The current BFNamelist.to_fds() returns a str or a None
-
-    # Problems:
-    # multiparam: many namelists, self manage per nl ID, remove master ID
-    # FIXME
-
-    # Should always be a list/tuple/generator or a None:
-    # - an empty list or None, if no output is sent
-    # - a list of str:
-    #
-
-    def to_fds(self, context) -> "str or None":
-        """Get FDS exported string and msg."""
-        if not self.exported:
+    def to_fds_namelist(self, context) -> "None or FDSNamelist":
+        """Return the FDSNamelist Python representation."""
+        el = self.element
+        # Get if exported and check
+        if not self.exported or not self.fds_label:
             return
         self.check(context)
-        # Init
-        param_strings, multiparam_strings, msgs, el = list(), None, list(), self.element
-        # Get param_strings and msgs
-        for p in self.bf_params:
-            result = p(el).to_fds(context)
-            if result:
-                if isinstance(result, str):  # no msgs
-                    result and param_strings.append(result)  # a not empty string
-                else:
-                    result[0] and param_strings.append(result[0])  # a not empty string
-                    result[1] and msgs.append(result[1])  # a not empty msg
-        # Get param_strings form bf_param_other
+        # Assemble fds_params from bf_params and bf_param_other
+        fds_params = list(p(el).to_fds_param(context) for p in self.bf_params)
         if self.bf_param_other:
-            param_strings.extend(
-                self.bf_param_other(el).to_fds(context) or tuple()
-            )  # returns a tuple of strings, but not multiparam
-        # Search multiparam_strings
-        for i, p in enumerate(param_strings):
-            if not isinstance(p, str):
-                multiparam_strings = param_strings.pop(i)  # pop multiparam
-                param_strings.pop(0)  # rm ID too, always the first param
-                break
-        # Use common format routine
-        if self.bpy_type == Object:
-            max_cols = 130
-        else:
-            max_cols = 0
-        return FDSNamelist._format(
-            label=self.fds_label,
-            param_strings=param_strings,
-            multiparam_strings=multiparam_strings,
-            msgs=msgs,
-            max_cols=max_cols,
+            fds_params.extend(self.bf_param_other(el).to_fds_param(context) or tuple())
+        # Return
+        return FDSNamelist(
+            label=self.fds_label, fds_params=fds_params, max_len=self.max_len
         )
+
+    def to_fds(self, context) -> "None or str":
+        """Return the FDS str representation."""
+        fds_namelist = self.to_fds_namelist(context)
+        return fds_namelist and str(fds_namelist)
 
     def from_fds(self, context, fds_params):  # FIXME develop
         """Set namelist parameter values from list of FDSParam, on error raise BFException."""
@@ -391,22 +366,11 @@ class BFParamOther(BFParam):
             bpy_type=cls.bpy_type, bpy_idname=cls.bpy_idname, ops=cls._ops
         )
 
-    @property
-    def value(self) -> "any":
-        raise Exception(f"Not implemented in class <{self.__class__}>")
-
     def set_value(self, context, value=None):  # FIXME test
         el = self.element
         collection = getattr(el, self.bpy_idname)
         item = collection.add()
         item.name, item.bf_export = value, True
-
-    @property
-    def exported(self) -> "bool":
-        return True
-
-    def set_exported(self, context, value=None):  # FIXME Test
-        raise Exception(f"Not implemented in class <{self.__class__}>")
 
     def draw(self, context, layout):
         custom_uilist.draw_collection(
@@ -419,67 +383,51 @@ class BFParamOther(BFParam):
             bpy_ul=self.bpy_ul,
         )
 
-    def to_fds(self, context) -> "gen of str":
+    def to_fds_param(self, context):
         self.check(context)
-        collection = getattr(self.element, self.bpy_idname)
-        if collection:
-            return (p.name for p in collection if p.bf_export and p.name)
+        coll = getattr(self.element, self.bpy_idname)
+        if coll:
+            return (FDSParam(label=p.name) for p in coll if p.bf_export and p.name)
 
 
 # Python representations of FDS entities
 
 
 class FDSParam:
-    """Interface between FDS namelist parameter and its Python representation.
+    """Python datastructure for FDS namelist parameter.
     
     label: namelist parameter label
-    values: list of parameter values
+    values: list of parameter values of type float, int, str, bool
     precision: float precision, number of decimal digits
+    msg: comment msg
     """
+
+    def __init__(self, label, values=None, precision=3, msg=None):
+        self.label = label
+        self.values = values or list()
+        self.precision = precision
+        self.msg = msg
+
+    def __str__(self):
+        if not self.values:
+            return self.label
+        # Check first element of the iterable and choose formatting
+        v0 = self.values[0]
+        if isinstance(v0, float):
+            v_string = ",".join(f"{v:.{self.precision}f}" for v in self.values)
+        elif isinstance(v0, str):
+            v_string = ",".join("'" in v and f'"{v}"' or f"'{v}'" for v in self.values)
+        elif isinstance(v0, bool):  # always before int
+            v_string = ",".join(v and "T" or "F" for v in self.values)
+        elif isinstance(v0, int):
+            v_string = ",".join(str(v) for v in self.values)
+        else:
+            raise ValueError(f"Unknown value type for parameter <{self.label}>")
+        return "=".join((self.label, v_string))
 
     _re_precision = r"\.([0-9]*)"  # decimal positions
 
-    _scan_precision = re.compile(
-        _re_precision, re.VERBOSE | re.DOTALL | re.IGNORECASE
-    )  # no MULTILINE, so that $ is the end of the file FIXME
-
-    def __init__(self, label, values=None, precision=None):
-        self.label = label
-        if values is not None:
-            self.values = values
-        else:
-            self.values = list()
-        if precision is not None:
-            self.precision = precision
-        else:
-            self.precision = 3
-
-    def __str__(self):
-        return self.to_fds()
-
-    @staticmethod
-    def _format(label, values, precision=3):
-        if not values:
-            raise ValueError(f"Empty value for parameter <{label}>")
-        # Check first element of the iterable and choose formatting
-        v0 = values[0]
-        if isinstance(v0, float):
-            v_string = ",".join(f"{v:.{precision}f}" for v in values)
-        elif isinstance(v0, int):
-            v_string = ",".join(str(v) for v in values)
-        elif isinstance(v0, str):
-            v_string = ",".join("'" in v and f'"{v}"' or f"'{v}'" for v in values)
-        elif isinstance(v0, bool):
-            v_string = ",".join(v and "T" or "F" for v in values)
-        else:
-            raise ValueError(f"Unknown value type for parameter <{label}>")
-        return "=".join((label, v_string))
-
-    def to_fds(self):
-        """Export to fds string."""
-        return self._format(
-            label=self.label, values=self.values, precision=self.precision
-        )
+    _scan_precision = re.compile(_re_precision, re.VERBOSE | re.DOTALL | re.IGNORECASE)
 
     def from_fds(self, f90_values):
         """Import from f90_values string, eg. "2.34, 1.23, 3.44"    
@@ -507,78 +455,69 @@ class FDSParam:
 
 
 class FDSNamelist:
-    """Interface between FDS Namelist and its Python representation.
+    """Python datastructure for FDS namelist.
     
     label: namelist group label, string
-    fds_params: list of FDSParam instances
-    max_cols: max columns of formatted output
+    fds_params: list of FDSParam instances.
+        Can contain one and only one list of lists of FDSParam instances
+        to represent multiple params: (("ID=X1", "PBX=1"), ("ID=X2", "PBX=2"), ...)
+    msg: comment msg
+    max_len: max columns of formatted output
     """
 
-    def __init__(self, label, fds_params=None, max_cols=6):
+    def __init__(self, label, fds_params=None, msg=None, max_len=130):
         self.label = label
-        if fds_params is not None:
-            self.fds_params = fds_params
-        else:
-            self.fds_params = list()  # list of FDSParam
-        self.max_cols = max_cols
+        self.fds_params = fds_params or list()
+        self.msg = msg
+        self.max_len = max_len
 
     def __str__(self):
-        return self.to_fds()
-
-    @staticmethod
-    def _format(
-        label, param_strings=None, multiparam_strings=None, msgs=None, max_cols=130
-    ):
-        """Format FDS namelist to string
-
-        label: namelist group label, string
-        param_strings: list of parameter strings, eg. ["ID='Test'", ...]
-        multiparam_strings: list of parameter strings that are repeated, eg. ["ID='T_1' XB=1,2,3,4,5,6", ...]
-        msgs: list of comment msgs, eg. ["Comment 1", "Comment 2", ...]
-        max_cols: max columns of formatted output
-        """
-        lines = list()
-        # Include message lines
-        if msgs:
-            lines.extend((f"! {m}" for m in msgs))
-        # Create nls_chunks
-        nls_chunks = list()
-        if multiparam_strings:
-            for mp in multiparam_strings:
-                chunks = list()
-                chunks.append(mp)
-                chunks.extend(param_strings)
-                nls_chunks.append(chunks)
+        ps, mps, msgs = list(), list(), list((self.msg,))
+        # Select parameters ps, multi parameters mps, messages msgs
+        for p in self.fds_params:
+            if not p:  # protect from None
+                continue
+            elif isinstance(p, FDSParam):
+                ps.append(p)
+                msgs.append(p.msg)
+            elif isinstance(p, tuple) or isinstance(p, list):
+                mps = p
+                msgs.append(p[0][0].msg)  # only first one
+            else:
+                raise ValueError(f"Unrecognized item <{p}>")
+        # Assemble parameters of namelist nls
+        nls = list()
+        ps = list(str(p) for p in ps)  # invariant param strings
+        if mps:
+            if ps and ps[0:3] == "ID=":
+                ps.pop(0)  # remove ID, if available and first
+            for multip in mps:
+                nl = list(str(p) for p in multip if p)  # variant param strings
+                nl.extend(ps)  # invariant
+                nl.append("/")  # end
+                nls.append(nl)
         else:
-            chunks = list()
-            chunks.extend(param_strings)
-            nls_chunks.append(chunks)
-        # Create nls_strings
-        max_len = max_cols - 5  # len("&OBST") == 5
-        for chunks in nls_chunks:
-            cur_nl = ["&", label]
-            cur_len = 5
-            chunks.reverse()  # for efficient pop()
-            while chunks:
-                chunk = chunks.pop()
-                l = 1 + len(chunk)  # separator + chunk
-                if cur_len == 5 or cur_len + l <= max_len:  # first or not too long
-                    cur_nl.extend((" ", chunk))
-                    cur_len += l
-                else:  # next line
-                    cur_nl.extend(("\n      ", chunk))
-                    cur_len = 5 + l
-            cur_nl.append(" /")
-            lines.append("".join(cur_nl))
+            nl = ps  # invariant
+            nl.append("/")  # end
+            nls.append(nl)
+        # Create result string
+        max_len = self.max_len - 5  # because len("&OBST") == 5
+        lines = list(f"! {m}" for m in msgs if m)  # all messages
+        for nl in nls:
+            nl.reverse()  # for efficient pop
+            line = f"&{self.label}"
+            current_len = 5  # because len("&OBST") == 5
+            while nl:
+                p = nl.pop()
+                l = 1 + len(p)  # l = sep + chunk
+                if current_len == 5 or current_len + l <= max_len:
+                    line = " ".join((line, p))
+                    current_len += l
+                else:  # split long line
+                    line = "\n      ".join((line, p))
+                    current_len = 5 + l
+            lines.append(line)
         return "\n".join(lines)
-
-    def to_fds(self):
-        """Export to fds string."""
-        return self._format(
-            label=self.label,
-            param_strings=(p.to_fds() for p in self.fds_params),
-            max_cols=self.max_cols,
-        )
 
     _re_label = r"([A-Z][A-Z0-9_\(\):,]+?)"  # param label w indexes
     _re_space = r"[\s\t]*"  # zero or more spaces
@@ -601,7 +540,7 @@ class FDSNamelist:
 
     _scan = re.compile(
         _re_param, re.VERBOSE | re.DOTALL | re.IGNORECASE
-    )  # no MULTILINE, so that $ is the end of the file FIXME
+    )  # no MULTILINE, so that $ is the end of the file
 
     def from_fds(self, f90_params):
         """Import from f90_params string, eg. "ID='Test' PROP=2.34, 1.23, 3.44"    
@@ -620,16 +559,13 @@ class FDSNamelist:
 
 
 class FDSCase:
-    """Interface between FDS case and its Python representation.
+    """Python datastructure for FDS case.
 
     fds_namelists: list of FDSNamelist instances
     """
 
     def __init__(self, fds_namelists=None):
-        if fds_namelists:
-            self.fds_namelists = fds_namelists
-        else:
-            self.fds_namelists = list()
+        self.fds_namelists = fds_namelists or list()
         self._index = len(self.fds_namelists)
 
     def __iter__(self):
@@ -645,17 +581,13 @@ class FDSCase:
         return FDSCase(self.fds_namelists[i])
 
     def __str__(self):
-        return self.to_fds()
-
-    def to_fds(self):
-        """Export to fds string."""
-        return "\n".join(n.to_fds() for n in self.fds_namelists)
+        return "\n".join(str(n) for n in self.fds_namelists)
 
     _scan = re.compile(
         r"""
         (?:^&)             # & at the beginning
         ([A-Z]+[A-Z0-9]*)  # namelist label
-    """,
+        """,
         re.VERBOSE | re.DOTALL | re.IGNORECASE | re.MULTILINE,
     )  # MULTILINE, so that ^ is the beginning of each line
 

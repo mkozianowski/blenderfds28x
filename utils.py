@@ -77,4 +77,3 @@ def read_from_file(filepath):
         except Exception as err:
             raise IOError(f"File not readable: {err}")
     raise IOError("File not readable, unknown text encoding")
-

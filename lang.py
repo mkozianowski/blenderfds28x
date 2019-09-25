@@ -46,6 +46,8 @@ from .types import (
     BFParamStr,
     BFParamFYI,
     BFParamOther,
+    FDSParam,
+    FDSNamelist,
     FDSCase,
 )
 from .config import default_mas
@@ -386,9 +388,6 @@ class SN_config(BFNamelist):
         col.prop(unit, "length_unit", text="Length")
         # col.prop(unit, "mass_unit", text="Mass")  # Unused
         col.prop(unit, "time_unit", text="Time")
-
-    def to_fds(self, context):
-        return
 
 
 # TIME
@@ -794,9 +793,6 @@ class SP_DUMP_set_frequency(BFParam):
     bpy_prop = BoolProperty
     bpy_default = False
 
-    def to_fds(self, context):
-        return
-
 
 @subscribe
 class SP_DUMP_DT_RESTART(BFParam):
@@ -838,8 +834,7 @@ class SN_DUMP(BFNamelist):
     bf_param_other = SP_DUMP_other
 
 
-# CATF FIXME to_fds, from_fds, check
-# This namelist has an autonomous behaviour
+# CATF
 
 
 @subscribe
@@ -856,23 +851,25 @@ class SP_CATF_check_files(BFParam):
 class SP_CATF_files(BFParamOther):
     label = "Concatenated File Paths"
     description = "Concatenated files (eg. PROP='/drive/test.catf')"
-    fds_label="OTHER_FILES"
+    fds_label = "OTHER_FILES"
     bpy_type = Scene
     bpy_idname = "bf_catf_files"
     bpy_pg = WM_PG_bf_filepaths
     bpy_ul = WM_UL_bf_filepaths_items
 
-    def to_fds(self, context) -> "gen of str":
+    def to_fds_param(self, context):
         el = self.element
-        collection = getattr(self.element, self.bpy_idname)
+        coll = getattr(self.element, self.bpy_idname)
         result = list()
-        for p in collection:
+        for p in coll:
             if p.bf_export and p.name:
-                if el.bf_catf_check_files:
-                    if not utils.is_file(p.name):
-                        raise BFException(self, f"File path <{p.name}> does not exist")
-                result.append(f"OTHER_FILES='{p.name}'")
+                if el.bf_catf_check_files and not utils.is_file(p.name):
+                    raise BFException(self, f"File path <{p.name}> does not exist")
+                result.append(
+                    list((FDSParam(label=f"OTHER_FILES='{p.name}'"),))
+                )  # multi param
         return result
+
 
 @subscribe
 class SN_CATF(BFNamelist):
@@ -882,7 +879,7 @@ class SN_CATF(BFNamelist):
     bpy_type = Scene
     bpy_export = "bf_catf_export"
     bpy_export_default = False
-    # bf_params = (SP_CATF_files,)  # no auto management
+    bf_params = (SP_CATF_files,)
     bf_param_other = None
 
     def draw(self, context, layout):
@@ -890,14 +887,6 @@ class SN_CATF(BFNamelist):
         SP_CATF_check_files(el).draw(context, layout)
         SP_CATF_files(el).draw(context, layout)
 
-    def to_fds(self, context):
-        if not self.exported:
-            return
-        multiparam_strings = SP_CATF_files(self.element).to_fds(context)
-        if multiparam_strings:
-            return "\n".join(f"&CATF {mp} /" for mp in multiparam_strings)
-        else:
-            return "&CATF /"
 
 # Material
 
@@ -922,10 +911,10 @@ class MP_namelist_cls(BFParam):
     }
     bpy_default = "MN_SURF"
 
-    def to_fds(self, context):
+    def to_fds_param(self, context):
         if self.element.name in {"INERT", "HVAC", "MIRROR", "OPEN", "PERIODIC"}:
             return
-        super().to_fds(context)
+        super().to_fds_param(context)
 
 
 @subscribe
@@ -954,10 +943,15 @@ class MP_RGB(BFParam):
     bpy_prop = None  # Do not register
     bpy_idname = "diffuse_color"
 
-    def to_fds(self, context):
+    def to_fds_param(self, context):
         c = self.element.diffuse_color
         rgb = int(c[0] * 255), int(c[1] * 255), int(c[2] * 255)
-        return f"RGB={rgb[0]},{rgb[1]},{rgb[2]} TRANSPARENCY={c[3]:.2f}"
+        return (
+            (
+                FDSParam(label="RGB", values=rgb),
+                FDSParam(label="TRANSPARENCY", values=(c[3],), precision=2),
+            ),
+        )
 
 
 @subscribe
@@ -1246,34 +1240,47 @@ class OP_XB(BFParam):
             OP_XB_center_voxels(ob).draw(context, layout)
             OP_XB_voxel_size(ob).draw(context, layout)
 
-    _format_xb = "XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}"
-    _format_xbs = {
-        "IDI": "ID='{1}_{2}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDX": "ID='{1}_X{0[0]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDY": "ID='{1}_Y{0[2]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDZ": "ID='{1}_Z{0[4]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDXY": "ID='{1}_X{0[0]:+.3f}_Y{0[2]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDXZ": "ID='{1}_X{0[0]:+.3f}_Z{0[4]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDYZ": "ID='{1}_Y{0[2]:+.3f}_Z{0[4]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-        "IDXYZ": "ID='{1}_X{0[0]:+.3f}_Y{0[2]:+.3f}_Z{0[4]:+.3f}' XB={0[0]:.6f},{0[1]:.6f},{0[2]:.6f},{0[3]:.6f},{0[4]:.6f},{0[5]:.6f}",
-    }
-
-    def to_fds(self, context):
+    def to_fds_param(self, context):
         ob = self.element
         if not ob.bf_xb_export:
             return
+        # Compute
         scale_length = context.scene.unit_settings.scale_length
         xbs, msg = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
-        if not xbs:
-            return None, msg
-        elif len(xbs) == 1:
-            return self._format_xb.format(xbs[0]), msg
+        # Single param
+        if len(xbs) == 1:
+            return FDSParam(label="XB", values=xbs[0], precision=6)
+        # Multi param, prepare new ID
+        n = ob.name
+        suffix = self.element.bf_id_suffix
+        if suffix == "IDI":
+            ids = (f"{n}_{i}" for i, _ in enumerate(xbs))
+        elif suffix == "IDX":
+            ids = (f"{n}_x{xb[0]:+.3f}" for xb in xbs)
+        elif suffix == "IDY":
+            ids = (f"{n}_y{xb[2]:+.3f}" for xb in xbs)
+        elif suffix == "IDZ":
+            ids = (f"{n}_z{xb[4]:+.3f}" for xb in xbs)
+        elif suffix == "IDXY":
+            ids = (f"{n}_x{xb[0]:+.3f}_y{xb[2]:+.3f}" for xb in xbs)
+        elif suffix == "IDXZ":
+            ids = (f"{n}_x{xb[0]:+.3f}_z{xb[4]:+.3f}" for xb in xbs)
+        elif suffix == "IDYZ":
+            ids = (f"{n}_y{xb[2]:+.3f}_z{xb[4]:+.3f}" for xb in xbs)
+        elif suffix == "IDXYZ":
+            ids = (f"{n}_x{xb[0]:+.3f}_y{xb[2]:+.3f}_z{xb[4]:+.3f}" for xb in xbs)
         else:
-            name = ob.name
-            format_xbs = self._format_xbs[
-                self.element.bf_id_suffix
-            ]  # choose formatting string
-            return ((format_xbs.format(xb, name, i) for i, xb in enumerate(xbs)), msg)
+            raise Exception("Unknown suffix <{suffix}>")
+        result = tuple(
+            (
+                FDSParam(label="ID", values=(hid,)),
+                FDSParam(label="XB", values=xb, precision=6),
+            )
+            for hid, xb in zip(ids, xbs)
+        )
+        # Send message
+        result[0][0].msg = msg
+        return result
 
 
 def update_bf_xyz(ob, context):
@@ -1317,37 +1324,47 @@ class OP_XYZ(BFParam):
     bpy_other = {"update": update_bf_xyz, "items": update_bf_xyz_items}
     bpy_export = "bf_xyz_export"
 
-    _format_xyz = "XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}"
-    _format_xyzs = {
-        "IDI": "ID='{1}_{2}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDX": "ID='{1}_X{0[0]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDY": "ID='{1}_Y{0[1]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDZ": "ID='{1}_Z{0[2]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDXY": "ID='{1}_X{0[0]:+.3f}_Y{0[1]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDXZ": "ID='{1}_X{0[0]:+.3f}_Z{0[2]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDYZ": "ID='{1}_Y{0[1]:+.3f}_Z{0[2]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-        "IDXYZ": "ID='{1}_X{0[0]:+.3f}_Y{0[1]:+.3f}_Z{0[2]:+.3f}' XYZ={0[0]:.6f},{0[1]:.6f},{0[2]:.6f}",
-    }
-
-    def to_fds(self, context):
+    def to_fds_param(self, context):
         ob = self.element
         if not ob.bf_xyz_export:
             return
+        # Compute
         scale_length = context.scene.unit_settings.scale_length
         xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob, scale_length)
-        if not xyzs:
-            return None, msg
-        elif len(xyzs) == 1:
-            return self._format_xyz.format(xyzs[0]), msg
+        # Single param
+        if len(xyzs) == 1:
+            return FDSParam(label=lxyzs[0])
+        # Multi param, prepare new ID
+        n = ob.name
+        suffix = self.element.bf_id_suffix
+        if suffix == "IDI":
+            ids = (f"{n}_{i}" for i, _ in enumerate(xyzs))
+        elif suffix == "IDX":
+            ids = (f"{n}_x{xyz[0]:+.3f}" for xyz in xyzs)
+        elif suffix == "IDY":
+            ids = (f"{n}_y{xyz[1]:+.3f}" for xyz in xyzs)
+        elif suffix == "IDZ":
+            ids = (f"'{n}_z{xyz[2]:+.3f}" for xyz in xyzs)
+        elif suffix == "IDXY":
+            ids = (f"{n}_x{xyz[0]:+.3f}_y{xyz[1]:+.3f}" for xyz in xyzs)
+        elif suffix == "IDXZ":
+            ids = (f"{n}_x{xyz[0]:+.3f}_z{xyz[2]:+.3f}" for xyz in xyzs)
+        elif suffix == "IDYZ":
+            ids = (f"{n}_y{xyz[1]:+.3f}_z{xyz[2]:+.3f}" for xyz in xyzs)
+        elif suffix == "IDXYZ":
+            ids = (f"{n}_x{xyz[0]:+.3f}_y{xyz[1]:+.3f}_z{xyz[2]:+.3f}" for xyz in xyzs)
         else:
-            name = ob.name
-            format_xyzs = self._format_xyzs[
-                self.element.bf_id_suffix
-            ]  # choose formatting string
-            return (
-                (format_xyzs.format(xyz, name, i) for i, xyz in enumerate(xyzs)),
-                msg,
+            raise Exception("Unknown suffix <{suffix}>")
+        result = tuple(
+            (
+                FDSParam(label="ID", values=(hid,)),
+                FDSParam(label="XYZ", values=xyz, precision=6),
             )
+            for hid, xyz in zip(ids, xyzs)
+        )
+        # Send message
+        result[0][0].msg = msg
+        return result
 
 
 def update_bf_pb(ob, context):
@@ -1384,44 +1401,42 @@ class OP_PB(BFParam):
     bpy_other = {"update": update_bf_pb, "items": update_bf_pb_items}
     bpy_export = "bf_pb_export"
 
-    _format_pb = ("PBX={0:.6f}", "PBY={0:.6f}", "PBZ={0:.6f}")
-    _format_pbs = {
-        "IDI": (
-            "ID='{1}_{2}' PBX={0:.6f}",
-            "ID='{1}_{2}' PBY={0:.6f}",
-            "ID='{1}_{2}' PBZ={0:.6f}",
-        ),
-        "IDXYZ": (
-            "ID='{1}_X{0:+.3f}' PBX={0:.6f}",
-            "ID='{1}_Y{0:+.3f}' PBY={0:.6f}",
-            "ID='{1}_Z{0:+.3f}' PBZ={0:.6f}",
-        ),
-    }
-
-    def to_fds(self, context):
+    def to_fds_param(self, context):
         ob = self.element
         if not ob.bf_pb_export:
             return
-        scale_length = context.scene.unit_settings.scale_length
-        pbs, msg = geometry.to_fds.ob_to_pbs(context, ob, scale_length)
+        # Compute
         # pbs is: (0, 3.5), (0, 4.), (2, .5) ...
         # with 0, 1, 2 perpendicular axis
-        if not pbs:
-            return None, msg
-        elif len(pbs) == 1:
-            pb = pbs[0]
-            return self._format_pb[pb[0]].format(pb[1]), msg
-        else:
-            name = ob.name
-            if self.element.bf_id_suffix == "IDI":  # choose formatting string
-                format_pbs = self._format_pbs["IDI"]
-            else:
-                format_pbs = self._format_pbs["IDXYZ"]
-            return (
-                (format_pbs[pb[0]].format(pb[1], name, i) for i, pb in enumerate(pbs)),
-                msg,
+        scale_length = context.scene.unit_settings.scale_length
+        pbs, msg = geometry.to_fds.ob_to_pbs(context, ob, scale_length)
+        # Prepare labels
+        labels = tuple(f"PB{('X','Y','Z')[axis]}" for axis, _ in pbs)
+        # Single param
+        if len(pbs) == 1:
+            return FDSParam(label=label[0], values=pbs[0][1], precision=6)
+        # Multi param, prepare new ID
+        n = ob.name
+        suffix = self.element.bf_id_suffix
+        if suffix == "IDI":
+            ids = (f"{n}_{i}" for i, _ in enumerate(pbs))
+        elif suffix == "IDXYZ":
+            ids = (
+                (f"{n}_x{pb:+.3f}", f"{n}_y{pb:+.3f}", f"{n}_z{pb:+.3f}")[axis]
+                for axis, pb in pbs
             )
-            # TODO: improve bf_id_suffix choices should change when PB is selected, as for XB!
+        else:
+            raise Exception("Unknown suffix <{suffix}>")
+        result = tuple(
+            (
+                FDSParam(label="ID", values=(hid,)),
+                FDSParam(label=label, values=(pb,), precision=6),
+            )
+            for hid, label, (_, pb) in zip(ids, labels, pbs)
+        )
+        # Send message
+        result[0][0].msg = msg
+        return result
 
 
 def update_bf_id_suffix_items(ob, context):
@@ -1459,9 +1474,6 @@ class OP_ID_suffix(BFParam):
         ):
             layout.prop(ob, "bf_id_suffix")
         return layout
-
-    def to_fds(self, context):
-        return
 
 
 @subscribe
@@ -1525,9 +1537,6 @@ class OP_other_namelist(BFParam):
         if not re.match("^[A-Z0-9_]{4}$", self.element.bf_other_namelist):
             raise BFException(self, "Malformed other namelist label")
 
-    def to_fds(self, context):
-        return
-
 
 @subscribe
 class ON_other(BFNamelist):
@@ -1586,7 +1595,7 @@ class OP_GEOM(BFParam):
     def draw(self, context, layout):
         pass
 
-    def to_fds(self, context):
+    def to_fds_param(self, context):
         # Check is performed while exporting
         # Get surf_idv, verts and faces
         scale_length = context.scene.unit_settings.scale_length
@@ -1609,15 +1618,11 @@ class OP_GEOM(BFParam):
         faces_str = separator2.join(
             ("{0[0]},{0[1]},{0[2]}, {0[3]},".format(f) for f in faces)
         )
-        return (
-            separator1.join(
-                (
-                    "SURF_ID={}".format(surfids_str),
-                    "VERTS={}".format(verts_str),
-                    "FACES={}".format(faces_str),
-                )
+        return FDSParam(
+            label=separator1.join(
+                (f"SURF_ID={surfids_str}", f"VERTS={verts_str}", f"FACES={faces_str}")
             ),
-            msg,
+            msg=msg,
         )
 
 
