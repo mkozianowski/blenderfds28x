@@ -147,8 +147,12 @@ def xbs_to_ob(xbs, context, ob, scale_length, bf_xb="BBOX", ma=None):
 
 def xyzs_to_mesh(xyzs, context, me, scale_length):
     """Import xyzs vertices ((x0,y0,z0,), ...) into existing Blender Mesh."""
-    for i, xyz in enumerate(xyzs):
-        xyzs[i] = tuple(coo / scale_length for coo in xyz)  # FIXME test
+    xyzs = tuple(
+        (
+            (xyz[0] / scale_length, xyz[1] / scale_length, xyz[2] / scale_length)
+            for xyz in xyzs
+        )
+    )
     me.from_pydata(xyzs, tuple(), tuple())  # verts, edges, faces
 
 
@@ -195,7 +199,9 @@ def pbs_to_ob(pbs, context, ob, scale_length, ma=None):
 
 def _set_balanced_center_position(context, ob) -> "None":
     """Set object center position"""
-    bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
-    bpy.ops.object.origin_set(
-        {"selected_objects": (ob,)}, type="ORIGIN_GEOMETRY"
-    )  # override context
+    #    bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
+    #    bpy.ops.object.origin_set(
+    #        {"selected_objects": (ob,)}, type="ORIGIN_GEOMETRY"
+    #    )  # override context
+    pass  # FIXME incorrect context. why?
+

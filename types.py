@@ -137,13 +137,15 @@ class BFParam:
         return getattr(self.element, self.bpy_idname)
 
     def set_value(self, context, value=None):  # FIXME Test
-        """Set value."""
-        # Do not raise BFException here. Check is performed by UI, do not add overhead!
+        """Set value. If value is None, set defaul"""
         if self.bpy_idname:
             if value is not None:
                 setattr(self.element, self.bpy_idname, value)
-            else:
+                return
+            if self.bpy_default:
                 setattr(self.element, self.bpy_idname, self.bpy_default)
+                return
+        raise Exception(f"Error while setting value <{value}>")
 
     @property
     def exported(self) -> "bool":
@@ -176,6 +178,8 @@ class BFParam:
 
     def draw(self, context, layout) -> "layout":
         """Draw self UI on layout."""
+        if not self.bpy_idname:
+            return
         col = layout.column()
         active = bool(self.exported)
         col.active = active
@@ -184,22 +188,15 @@ class BFParam:
                 self.check(context)
             except BFException:
                 col.alert = True
-        if self.bpy_idname:
-            if self.bpy_export:
-                row = col.row()
-                row.prop(self.element, self.bpy_idname, text=self.label)
-                row.prop(self.element, self.bpy_export, text="")
-            else:
-                col.prop(self.element, self.bpy_idname, text=self.label)
+        if self.bpy_export:
+            row = col.row()
+            row.prop(self.element, self.bpy_idname, text=self.label)
+            row.prop(self.element, self.bpy_export, text="")
         else:
-            col.label(
-                text=f"draw() not implemented in class '{self.__class__}'", icon="ERROR"
-            )
+            col.prop(self.element, self.bpy_idname, text=self.label)
         return col
 
-    def to_fds_param(
-        self, context
-    ) -> "None, FDSParam, or ((FDSParam, ...), ...) as multi":
+    def to_fds_param(self, context) -> "None, FDSParam, or ((FDSParam, ...), ...)":
         """Return the FDSParam Python representation."""
         # Get if exported and check
         if not self.exported or not self.fds_label:
@@ -223,12 +220,15 @@ class BFParam:
         fds_param = self.to_fds_param(context)
         return fds_param and str(fds_param)
 
-    def from_fds(self, context, value):  # FIXME test
+    def from_fds(self, context, value):
         """Set parameter value from value in FDS notation, on error raise BFException."""
+        log.debug(f"{self} {value}")
+        if len(value) == 1:  # FIXME FDSParam.values is always a list
+            value = value[0]
         try:
             self.set_value(context, value)
         except Exception as err:
-            raise BFException(self, f"Error importing '{value}' value: {str(err)}")
+            raise BFException(self, f"Error importing <{value}> value, {str(err)}")
         self.set_exported(context, True)
 
 
@@ -246,20 +246,16 @@ class BFNamelist(BFParam):
     # Allowed indexes for specific parameters
     bf_xb_idxs, bf_xyz_idxs, bf_pb_idxs, bf_id_suffix_idxs = None, None, None, None
     # Max column length for formatting
-    max_len = 130
+    max_len = 60
 
-    @classmethod
-    def register(cls, *args, **kwargs):
-        super().register(*args, **kwargs)
-        # Create automatic properties
-        if cls.bf_params:
-            cls.bf_params_by_fds = dict(
-                (p.fds_label, p) for p in cls.bf_params if p.fds_label
-            )
+    def __init__(self, element):
+        self.element = element
+        self.bf_params = tuple(p(element) for p in self.bf_params)  # instantiate
+        if self.bf_param_other:
+            self.bf_param_other = self.bf_param_other(element)  # instantiate
 
     def draw(self, context, layout) -> "layout":
         """Draw self UI on layout."""
-        el = self.element
         col = layout.column()
         try:
             self.check(context)
@@ -267,9 +263,9 @@ class BFNamelist(BFParam):
             col.alert = True
         col.active = self.exported
         for p in self.bf_params:
-            p(el).draw(context, col)
+            p.draw(context, col)
         if self.bf_param_other:
-            self.bf_param_other(el).draw(context, col)
+            self.bf_param_other.draw(context, col)
         return col
 
     @property
@@ -277,17 +273,22 @@ class BFNamelist(BFParam):
         """Get if self is exported."""
         return bool(getattr(self.element, str(self.bpy_export), True))
 
+    def get_bf_param_by_fds(self, fds_label) -> "None or BFParam":
+        """Get my bf_param by FDS label."""
+        for p in self.bf_params:
+            if p.fds_label == fds_label:
+                return p
+
     def to_fds_namelist(self, context) -> "None or FDSNamelist":
         """Return the FDSNamelist Python representation."""
-        el = self.element
         # Get if exported and check
         if not self.exported or not self.fds_label:
             return
         self.check(context)
         # Assemble fds_params from bf_params and bf_param_other
-        fds_params = list(p(el).to_fds_param(context) for p in self.bf_params)
+        fds_params = list(p.to_fds_param(context) for p in self.bf_params)
         if self.bf_param_other:
-            fds_params.extend(self.bf_param_other(el).to_fds_param(context) or tuple())
+            fds_params.extend(self.bf_param_other.to_fds_param(context) or tuple())
         # Return
         return FDSNamelist(
             label=self.fds_label, fds_params=fds_params, max_len=self.max_len
@@ -298,12 +299,17 @@ class BFNamelist(BFParam):
         fds_namelist = self.to_fds_namelist(context)
         return fds_namelist and str(fds_namelist)
 
-    def from_fds(self, context, fds_params):  # FIXME develop
+    def from_fds(self, context, fds_params):
         """Set namelist parameter values from list of FDSParam, on error raise BFException."""
-        # FIXME develop
         for p in fds_params:
-            bf_param = self.bf_params_by_fds.get(p.label, BFParamOther)(self.element)
-            bf_param
+            bf_param = self.get_bf_param_by_fds(p.label)
+            if not bf_param:
+                if self.bf_param_other:
+                    self.bf_param_other.set_value(context, value=str(p))
+                else:
+                    raise BFException(self, f"Value {p} is not managed")
+                continue
+            bf_param.from_fds(context, p.values)
         self.set_exported(context, True)
 
 
@@ -366,9 +372,8 @@ class BFParamOther(BFParam):
             bpy_type=cls.bpy_type, bpy_idname=cls.bpy_idname, ops=cls._ops
         )
 
-    def set_value(self, context, value=None):  # FIXME test
-        el = self.element
-        collection = getattr(el, self.bpy_idname)
+    def set_value(self, context, value):  # FIXME test
+        collection = getattr(self.element, self.bpy_idname)
         item = collection.add()
         item.name, item.bf_export = value, True
 
