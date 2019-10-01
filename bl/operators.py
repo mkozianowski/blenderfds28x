@@ -414,7 +414,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 msgs.append(msg)
                 ob_tmp = geometry.utils.get_tmp_object(context, ob, f"{ob.name}_XB_tmp")
                 geometry.from_fds.xbs_to_ob(
-                    xbs, context, ob_tmp, scale_length, ob.bf_xb
+                    xbs, context, ob_tmp, scale_length, ob.bf_xb, ma=ob.active_material
                 )
         if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.bf_params:  # XYZ
             try:
@@ -428,7 +428,9 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 ob_tmp = geometry.utils.get_tmp_object(
                     context, ob, f"{ob.name}_XYZ_tmp"
                 )
-                geometry.from_fds.xyzs_to_ob(xyzs, context, ob_tmp, scale_length)
+                geometry.from_fds.xyzs_to_ob(
+                    xyzs, context, ob_tmp, scale_length, ma=ob.active_material
+                )
         if ob.bf_pb_export and OP_PB in ob.bf_namelist.bf_params:  # PB
             try:
                 pbs, msg = geometry.to_fds.ob_to_pbs(context, ob, scale_length)
@@ -441,7 +443,9 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 ob_tmp = geometry.utils.get_tmp_object(
                     context, ob, f"{ob.name}_PB*_tmp"
                 )
-                geometry.from_fds.pbs_to_ob(pbs, context, ob_tmp, scale_length)
+                geometry.from_fds.pbs_to_ob(
+                    pbs, context, ob_tmp, scale_length, ma=ob.active_material
+                )
         w.cursor_modal_restore()
         self.report(
             {"INFO"}, "; ".join(msg for msg in msgs if msg) or "Geometry exported."
