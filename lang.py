@@ -42,10 +42,13 @@ from . import geometry
 from .types import (
     BFException,
     BFParam,
-    BFNamelist,
+    BFParamXB,
+    BFParamXYZ,
+    BFParamPB,
     BFParamStr,
     BFParamFYI,
     BFParamOther,
+    BFNamelist,
     FDSParam,
     FDSNamelist,
     FDSCase,
@@ -62,7 +65,7 @@ log = logging.getLogger(__name__)
 bf_namelists = dict()  # dict of all BFNamelists by name
 bf_params = dict()  # dict of all BFParam by name
 
-bf_namelists_by_fds = dict()  # dict of all BFNamelists by fds_label
+bf_namelists_by_fds_label = dict()  # dict of all BFNamelists by fds_label
 
 bl_classes = list()  # list of all Blender classes that need registering
 bf_classes = list()  # list of all BF classes that need registering
@@ -73,7 +76,7 @@ def subscribe(cls):
     if issubclass(cls, BFNamelist):
         bf_namelists[cls.__name__] = cls
         if cls.fds_label:
-            bf_namelists_by_fds[cls.fds_label] = cls
+            bf_namelists_by_fds_label[cls.fds_label] = cls
     elif issubclass(cls, BFParam):
         bf_params[cls.__name__] = cls
     elif issubclass(cls, bpy_struct):
@@ -157,7 +160,6 @@ class SN_HEAD(BFNamelist):
     bpy_export = "bf_head_export"
     bpy_export_default = True
     bf_params = SP_HEAD_CHID, SP_HEAD_TITLE
-    bf_param_other = None
 
 
 # Case Config
@@ -346,7 +348,6 @@ class SN_config(BFNamelist):
     description = "Case configuration"
     enum_id = 3008
     bpy_type = Scene
-    bf_param_other = None
 
     def draw(self, context, layout):
         sc = self.element
@@ -452,8 +453,7 @@ class SN_TIME(BFNamelist):
     bpy_type = Scene
     bpy_export = "bf_time_export"
     bpy_export_default = True
-    bf_params = SP_TIME_T_BEGIN, SP_TIME_T_END
-    bf_param_other = SP_TIME_other
+    bf_params = SP_TIME_T_BEGIN, SP_TIME_T_END, SP_TIME_other
 
     def draw(self, context, layout):
         sc = self.element
@@ -513,8 +513,12 @@ class SN_MISC(BFNamelist):
     bpy_type = Scene
     bpy_export = "bf_misc_export"
     bpy_export_default = False
-    bf_params = (SP_MISC_FYI, SP_MISC_OVERWRITE, SP_MISC_THICKEN_OBSTRUCTIONS)
-    bf_param_other = SP_MISC_other
+    bf_params = (
+        SP_MISC_FYI,
+        SP_MISC_OVERWRITE,
+        SP_MISC_THICKEN_OBSTRUCTIONS,
+        SP_MISC_other,
+    )
 
 
 # REAC
@@ -620,8 +624,8 @@ class SN_REAC(BFNamelist):
         SP_REAC_SOOT_YIELD,
         SP_REAC_HEAT_OF_COMBUSTION,
         SP_REAC_IDEAL,
+        SP_REAC_other,
     )
-    bf_param_other = SP_REAC_other
 
 
 # RADI
@@ -732,8 +736,8 @@ class SN_RADI(BFNamelist):
         SP_RADI_TIME_STEP_INCREMENT,
         SP_RADI_ANGLE_INCREMENT,
         SP_RADI_RADIATION_ITERATIONS,
+        SP_RADI_other,
     )
-    bf_param_other = SP_RADI_other
 
 
 # DUMP
@@ -830,8 +834,8 @@ class SN_DUMP(BFNamelist):
         SP_DUMP_NFRAMES,
         SP_DUMP_set_frequency,
         SP_DUMP_DT_RESTART,
+        SP_DUMP_other,
     )
-    bf_param_other = SP_DUMP_other
 
 
 # CATF
@@ -866,9 +870,9 @@ class SP_CATF_files(BFParamOther):
                 if el.bf_catf_check_files and not utils.is_file(p.name):
                     raise BFException(self, f"File path <{p.name}> does not exist")
                 result.append(
-                    list((FDSParam(label=f"OTHER_FILES='{p.name}'"),))
+                    tuple((FDSParam(label=f"OTHER_FILES='{p.name}'"),))
                 )  # multi param
-        return result
+        return tuple(result)  # multi
 
 
 @subscribe
@@ -880,7 +884,6 @@ class SN_CATF(BFNamelist):
     bpy_export = "bf_catf_export"
     bpy_export_default = False
     bf_params = (SP_CATF_files,)
-    bf_param_other = None
 
     def draw(self, context, layout):
         el = self.element
@@ -951,11 +954,8 @@ class MP_RGB(BFParam):  # exports both RGB and TRANSPARENCY
         c = self.element.diffuse_color
         rs = (int(c[0] * 255), int(c[1] * 255), int(c[2] * 255))
         ts = (c[3],)
-        return (
-            (
-                FDSParam(label="RGB", values=rs),
-                FDSParam(label="TRANSPARENCY", values=ts)
-            )
+        return tuple(
+            FDSParam(label="RGB", values=rs), FDSParam(label="TRANSPARENCY", values=ts)
         )
 
 
@@ -990,10 +990,10 @@ class MP_THICKNESS(BFParam):
     label = "THICKNESS [m]"
     description = "Surface thickness for heat transfer calculation"
     fds_label = "THICKNESS"
+    fds_default = 0.0
     bpy_type = Material
     bpy_idname = "bf_thickness"
     bpy_prop = FloatProperty
-    bpy_default = 0.01
     bpy_other = {"step": 1.0, "precision": 6, "min": 0.000001}
     bpy_export = "bf_thickness_export"
     bpy_export_default = False
@@ -1004,10 +1004,10 @@ class MP_HRRPUA(BFParam):
     label = "HRRPUA [kW/m²]"
     description = "Heat release rate per unit area"
     fds_label = "HRRPUA"
+    fds_default = 0.0
     bpy_type = Material
     bpy_idname = "bf_hrrpua"
     bpy_prop = FloatProperty
-    bpy_default = 0.0
     bpy_other = {"precision": 3, "min": 0.0}
 
 
@@ -1109,8 +1109,8 @@ class MN_SURF(BFNamelist):
         MP_HRRPUA,
         MP_TAU_Q,
         MP_IGNITION_TEMPERATURE,
+        MP_other,
     )
-    bf_param_other = MP_other
 
     @property
     def exported(self) -> "bool":
@@ -1123,19 +1123,20 @@ class MN_SURF_burner(MN_SURF):
     label = "SURF Burner"
     description = "Spec'd rate burner"
     enum_id = 2001
-    bf_params = (MP_ID, MP_FYI, MP_RGB, MP_COLOR, MP_HRRPUA, MP_TAU_Q)
-    bf_param_other = MP_other
+    bf_params = MP_ID, MP_FYI, MP_RGB, MP_COLOR, MP_HRRPUA, MP_TAU_Q, MP_other
 
 
 # Object
 
 
 def update_OP_namelist_cls(ob, context):
-    # When Object namelist cls is updated:
-    ob.bf_xb = update_bf_xb_items(ob, context)[0][0]
-    ob.bf_xyz = update_bf_xyz_items(ob, context)[0][0]
-    ob.bf_pb = update_bf_pb_items(ob, context)[0][0]
-    ob.bf_id_suffix = update_bf_id_suffix_items(ob, context)[0][0]
+    # Remove tmp Objects
+    geometry.utils.rm_tmp_objects(context)
+    # Set a valid choice for XB, XYZ, PB, ID Suffix
+    # the first allowed value
+    ob.bf_xb = get_bf_xb_items(ob, context)[0][0]
+    ob.bf_xyz = get_bf_xyz_items(ob, context)[0][0]
+    ob.bf_pb = get_bf_pb_items(ob, context)[0][0]
     # TODO set default appearance
 
 
@@ -1174,7 +1175,7 @@ class OP_FYI(BFParamFYI):
 
 
 def update_bf_xb(ob, context):
-    pass  # FIXME del tmp
+    geometry.utils.rm_tmp_objects(context)
     if ob.bf_xb in ("VOXELS", "FACES", "PIXELS", "EDGES") and ob.bf_xb_export:
         if ob.bf_xyz == "VERTICES":
             ob.bf_xyz_export = False
@@ -1224,7 +1225,11 @@ class OP_XB_center_voxels(BFParam):
     bpy_other = {"update": update_bf_xb}
 
 
-def update_bf_xb_items(ob, context):
+def get_bf_xb_items(ob, context):
+    try:
+        bf_xb_idxs = ob.bf_namelist.bf_param_xb.bf_xb_idxs
+    except AttributeError:
+        bf_xb_idxs = (0, 1, 2, 3, 4)
     return tuple(
         (
             ("BBOX", "BBox", "Export object bounding box"),
@@ -1233,7 +1238,7 @@ def update_bf_xb_items(ob, context):
             ("PIXELS", "Pixels", "Export pixels from pixelized flat Object"),
             ("EDGES", "Edges", "Export segments, one for each edge"),
         )[i]
-        for i in bf_namelists[ob.bf_namelist_cls].bf_xb_idxs or (0, 1, 2, 3, 4)
+        for i in bf_xb_idxs
     )
 
 
@@ -1249,16 +1254,15 @@ class OP_XB_export(BFParam):
 
 
 # FIXME VECTOR=T and CELL_CENTERED=T are allowed!
-# FIXME beware default values when importing! An INIT with XYZ gets XB=bbox as well
 @subscribe
-class OP_XB(BFParam):
+class OP_XB(BFParamXB):
     label = "XB"
     description = "Export as volumes/faces"
     fds_label = "XB"
     bpy_type = Object
     bpy_idname = "bf_xb"
     bpy_prop = EnumProperty
-    bpy_other = {"update": update_bf_xb, "items": update_bf_xb_items}
+    bpy_other = {"update": update_bf_xb, "items": get_bf_xb_items}
     bpy_export = "bf_xb_export"
 
     def draw(self, context, layout):
@@ -1305,7 +1309,7 @@ class OP_XB(BFParam):
                 FDSParam(label="XB", values=xb, precision=6),
             )
             for hid, xb in zip(ids, xbs)
-        )
+        )  # multi
         # Send message
         result[0][0].msg = msg
         return result
@@ -1325,7 +1329,26 @@ class OP_XB(BFParam):
         self.set_exported(context, True)
 
 
+@subscribe
+class OP_XB_bbox(OP_XB):
+    bpy_prop = None  # do not redefine
+    bf_xb_idxs = (0,)  # BBOX, VOXELS, FACES, PIXELS, EDGES
+
+
+@subscribe
+class OP_XB_solid(OP_XB):
+    bpy_prop = None  # do not redefine
+    bf_xb_idxs = (0, 1, 2, 3)  # BBOX, VOXELS, FACES, PIXELS, EDGES
+
+
+@subscribe
+class OP_XB_flat(OP_XB):
+    bpy_prop = None  # do not redefine
+    bf_xb_idxs = (2, 3)  # BBOX, VOXELS, FACES, PIXELS, EDGES
+
+
 def update_bf_xyz(ob, context):
+    geometry.utils.rm_tmp_objects(context)
     if ob.bf_xyz == "VERTICES" and ob.bf_xyz_export:
         if ob.bf_xb in ("VOXELS", "FACES", "PIXELS", "EDGES"):
             ob.bf_xb_export = False
@@ -1334,13 +1357,17 @@ def update_bf_xyz(ob, context):
         return
 
 
-def update_bf_xyz_items(ob, context):
+def get_bf_xyz_items(ob, context):
+    try:
+        bf_xyz_idxs = ob.bf_namelist.bf_param_xyz.bf_xyz_idxs
+    except AttributeError:
+        bf_xyz_idxs = (0, 1)
     return tuple(
         (
             ("CENTER", "Center", "Point, center point of this object"),
             ("VERTICES", "Vertices", "Points, one for each vertex of this object"),
         )[i]
-        for i in bf_namelists[ob.bf_namelist_cls].bf_xyz_idxs or (0, 1)
+        for i in bf_xyz_idxs
     )
 
 
@@ -1356,14 +1383,14 @@ class OP_XYZ_export(BFParam):
 
 
 @subscribe
-class OP_XYZ(BFParam):
+class OP_XYZ(BFParamXYZ):
     label = "XYZ"
     description = "Export as points"
     fds_label = "XYZ"
     bpy_type = Object
     bpy_idname = "bf_xyz"
     bpy_prop = EnumProperty
-    bpy_other = {"update": update_bf_xyz, "items": update_bf_xyz_items}
+    bpy_other = {"update": update_bf_xyz, "items": get_bf_xyz_items}
     bpy_export = "bf_xyz_export"
 
     def to_fds_param(self, context):
@@ -1403,7 +1430,7 @@ class OP_XYZ(BFParam):
                 FDSParam(label="XYZ", values=xyz, precision=6),
             )
             for hid, xyz in zip(ids, xyzs)
-        )
+        )  # multi
         # Send message
         result[0][0].msg = msg
         return result
@@ -1422,7 +1449,15 @@ class OP_XYZ(BFParam):
         self.set_exported(context, True)
 
 
+@subscribe
+class OP_XYZ_center(OP_XYZ):
+    description = "Export as points (center)"
+    bpy_prop = None  # do not redefine
+    bf_xyz_idxs = (0,)  # CENTER, VERTICES
+
+
 def update_bf_pb(ob, context):
+    geometry.utils.rm_tmp_objects(context)
     if ob.bf_pb == "PLANES" and ob.bf_pb_export:
         if ob.bf_xb in ("VOXELS", "FACES", "PIXELS", "EDGES"):
             ob.bf_xb_export = False
@@ -1431,8 +1466,8 @@ def update_bf_pb(ob, context):
         return
 
 
-def update_bf_pb_items(ob, context):
-    return (("PLANES", "Planes", "Planes, one for each face of this object"),)
+def get_bf_pb_items(ob, context):
+    return tuple((("PLANES", "Planes", "Planes, one for each face of this object"),))
 
 
 @subscribe
@@ -1446,15 +1481,14 @@ class OP_PB_export(BFParam):
     bpy_other = {"update": update_bf_pb}
 
 
-# FIXME does not import PBX, PBY, PBZ
 @subscribe
-class OP_PB(BFParam):
+class OP_PB(BFParamPB):
     label = "PBX, PBY, PBZ"
     description = "Export as planes"
     bpy_type = Object
     bpy_idname = "bf_pb"
     bpy_prop = EnumProperty
-    bpy_other = {"update": update_bf_pb, "items": update_bf_pb_items}
+    bpy_other = {"update": update_bf_pb, "items": get_bf_pb_items}
     bpy_export = "bf_pb_export"
 
     def to_fds_param(self, context):
@@ -1489,7 +1523,7 @@ class OP_PB(BFParam):
                 FDSParam(label=label, values=(pb,), precision=6),
             )
             for hid, label, (_, pb) in zip(ids, labels, pbs)
-        )
+        )  # multi
         # Send message
         result[0][0].msg = msg
         return result
@@ -1508,7 +1542,32 @@ class OP_PB(BFParam):
         self.set_exported(context, True)
 
 
-def update_bf_id_suffix_items(ob, context):
+@subscribe
+class OP_PBX(OP_PB):
+    description = "For importing only"
+    fds_label = "PBX"
+    bpy_prop = None  # already defined
+
+    def draw(self, context, layout):
+        return
+
+    def to_fds_param(self, context):
+        return
+
+
+@subscribe
+class OP_PBY(OP_PBX):
+    description = "For importing only"
+    fds_label = "PBY"
+
+
+@subscribe
+class OP_PBZ(OP_PBX):
+    description = "For importing only"
+    fds_label = "PBZ"
+
+
+def get_bf_id_suffix_items(ob, context):
     return tuple(
         (
             ("IDI", "Index", "Append index number to multiple ID values"),
@@ -1519,9 +1578,7 @@ def update_bf_id_suffix_items(ob, context):
             ("IDXZ", "xz", "Append x,z coordinates to multiple ID values"),
             ("IDYZ", "yz", "Append y,z coordinates to multiple ID values"),
             ("IDXYZ", "xyz", "Append x,y,z coordinates to multiple ID values"),
-        )[i]
-        for i in bf_namelists[ob.bf_namelist_cls].bf_id_suffix_idxs
-        or (0, 1, 2, 3, 4, 5, 6, 7)
+        )
     )
 
 
@@ -1532,7 +1589,7 @@ class OP_ID_suffix(BFParam):
     bpy_type = Object
     bpy_idname = "bf_id_suffix"
     bpy_prop = EnumProperty
-    bpy_other = {"items": update_bf_id_suffix_items}
+    bpy_other = {"items": get_bf_id_suffix_items}
 
     def draw(self, context, layout):
         ob = self.element
@@ -1591,10 +1648,7 @@ class ON_OBST(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
     bpy_export_default = True
-
-    bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB, OP_ID_suffix
-    bf_param_other = OP_other
-    bf_xb_idxs, bf_id_suffix_idxs = (0, 1, 2, 3), None  # Volume or faces
+    bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB_solid, OP_ID_suffix, OP_other
 
 
 # Other
@@ -1631,9 +1685,12 @@ class ON_other(BFNamelist):
         OP_XB,
         OP_XYZ,
         OP_PB,
+        OP_PBX,
+        OP_PBY,
+        OP_PBZ,
         OP_ID_suffix,
+        OP_other,
     )
-    bf_param_other = OP_other
 
     @property
     def fds_label(self):
@@ -1746,8 +1803,8 @@ class ON_GEOM(BFNamelist):
         OP_GEOM_IS_TERRAIN,
         OP_GEOM_EXTEND_TERRAIN,
         OP_GEOM,
+        OP_other,
     )
-    bf_param_other = OP_other
 
 
 # HOLE
@@ -1761,10 +1818,7 @@ class ON_HOLE(BFNamelist):
     fds_label = "HOLE"
     bpy_type = Object
     bpy_export = "bf_export"
-
-    bf_params = OP_ID, OP_FYI, OP_XB, OP_ID_suffix
-    bf_param_other = OP_other
-    bf_xb_idxs, bf_id_suffix_idxs = (0, 1), None  # Volume
+    bf_params = OP_ID, OP_FYI, OP_XB_bbox, OP_other
 
 
 # VENT
@@ -1778,10 +1832,18 @@ class ON_VENT(BFNamelist):
     fds_label = "VENT"
     bpy_type = Object
     bpy_export = "bf_export"
-
-    bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB, OP_ID_suffix
-    bf_param_other = OP_other
-    bf_xb_idxs, bf_id_suffix_idxs = (2, 3), None  # only faces
+    bf_params = (
+        OP_ID,
+        OP_FYI,
+        OP_SURF_ID,
+        OP_XB_flat,
+        OP_PB,
+        OP_PBX,
+        OP_PBY,
+        OP_PBZ,
+        OP_ID_suffix,
+        OP_other,
+    )
 
 
 # DEVC
@@ -1801,11 +1863,10 @@ class OP_DEVC_SETPOINT(BFParam):
     label = "SETPOINT [~]"
     description = "Value of the device at which its state changes"
     fds_label = "SETPOINT"
-
     bpy_type = Object
     bpy_idname = "bf_devc_setpoint"
     bpy_prop = FloatProperty
-    bpy_default = 0.0
+    bpy_default = 0.0  # FIXME?
     bpy_other = {"step": 10.0, "precision": 3}
     bpy_export = "bf_devc_setpoint_export"
     bpy_export_default = False
@@ -1862,8 +1923,8 @@ class ON_DEVC(BFNamelist):
         OP_XB,
         OP_XYZ,
         OP_ID_suffix,
+        OP_other,
     )
-    bf_param_other = OP_other
 
 
 # SLCF
@@ -1914,12 +1975,14 @@ class ON_SLCF(BFNamelist):
         OP_DEVC_QUANTITY,
         OP_SLCF_VECTOR,
         OP_SLCF_CELL_CENTERED,
-        OP_XB,
+        OP_XB_flat,
         OP_PB,
+        OP_PBX,
+        OP_PBY,
+        OP_PBZ,
         OP_ID_suffix,
+        OP_other,
     )
-    bf_param_other = OP_other
-    bf_xb_idxs, bf_id_suffix_idxs = (2,), None  # Faces or planes
 
 
 # PROF
@@ -1934,9 +1997,7 @@ class ON_PROF(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
 
-    bf_params = OP_ID, OP_FYI, OP_DEVC_QUANTITY, OP_XYZ, OP_ID_suffix
-    bf_param_other = OP_other
-    # bf_xyz_idxs, bf_id_suffix_idxs = None, None  # FIXME
+    bf_params = OP_ID, OP_FYI, OP_DEVC_QUANTITY, OP_XYZ, OP_ID_suffix, OP_other
 
 
 # MESH
@@ -1978,10 +2039,7 @@ class ON_MESH(BFNamelist):
     fds_label = "MESH"
     bpy_type = Object
     bpy_export = "bf_export"
-
-    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB
-    bf_param_other = OP_other
-    bf_xb_idxs = (0,)  # Only BBOX
+    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB_bbox, OP_other
 
 
 # INIT
@@ -1995,27 +2053,21 @@ class ON_INIT(BFNamelist):
     fds_label = "INIT"
     bpy_type = Object
     bpy_export = "bf_export"
-
-    bf_params = OP_ID, OP_FYI, OP_XB, OP_XYZ, OP_ID_suffix
-    bf_param_other = OP_other
-    # bf_xb_idxs, bf_id_suffix_idxs = (1,), None  # FIXME
+    bf_params = OP_ID, OP_FYI, OP_XB_solid, OP_XYZ, OP_ID_suffix, OP_other
 
 
 # ZONE
 
 
 @subscribe
-class ON_ZONE(BFNamelist):
+class ON_ZONE(BFNamelist):  # FIXME XYZ?
     label = "ZONE"
     description = "Pressure zone"
     enum_id = 1016
     fds_label = "ZONE"
     bpy_type = Object
     bpy_export = "bf_export"
-
-    bf_params = OP_ID, OP_FYI, OP_XB, OP_ID_suffix
-    bf_param_other = OP_other
-    # bf_xb_idxs, bf_id_suffix_idxs = (1,), None  # FIXME
+    bf_params = OP_ID, OP_FYI, OP_XB_bbox, OP_other
 
 
 # HVAC
@@ -2029,10 +2081,7 @@ class ON_HVAC(BFNamelist):
     fds_label = "HVAC"
     bpy_type = Object
     bpy_export = "bf_export"
-
-    bf_params = OP_ID, OP_FYI, OP_XYZ, OP_ID_suffix
-    bf_param_other = OP_other
-    # bf_xb_idxs, bf_id_suffix_idxs = (1,), None  # FIXME
+    bf_params = OP_ID, OP_FYI, OP_XYZ, OP_ID_suffix, OP_other
 
 
 # Closing
@@ -2081,7 +2130,7 @@ class BFObject:
 
     def from_fds(self, context, fds_namelist):
         # Set bf_namelist_cls
-        bf_namelist = bf_namelists_by_fds.get(fds_namelist.label)
+        bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label)
         self.bf_namelist_cls = bf_namelist.__name__
         # Prevent default geometry (eg. XB=BBOX) FIXME a better way?
         self.bf_xb_export, self.bf_xyz_export, self.bf_pb_export = (
@@ -2185,7 +2234,7 @@ class BFScene:
     def from_fds(self, context, fds_case):  # FIXME
         """Import from FDSCase."""
         for fds_namelist in fds_case:
-            bf_namelist = bf_namelists_by_fds.get(fds_namelist.label, None)
+            bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label, None)
             if not bf_namelist:
                 print("Not managed:", fds_namelist)  # FIXME put in CATF file
                 continue
