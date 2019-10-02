@@ -2270,13 +2270,13 @@ class BFScene:
 
     def from_fds(self, context, fds_case):
         """Import from FDSCase."""
-        catf_case = FDSCase()
+        fds_case_un = FDSCase()
         for fds_namelist in fds_case.fds_namelists:
             # Get namelist class
             bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label, None)
             if not bf_namelist:
-                # Put unmanaged namelists in CATF case
-                catf_case.fds_namelists.append(fds_namelist)
+                # Put unmanaged namelists in fds_case_un
+                fds_case_un.fds_namelists.append(fds_namelist)
                 continue
             # Prepare default name
             hid = f"New {fds_namelist.label}"
@@ -2288,12 +2288,13 @@ class BFScene:
             elif bf_namelist.bpy_type == Material:  # new Material
                 ma = bpy.data.materials.new(hid)
                 ma.from_fds(context, fds_namelist=fds_namelist)
+                ma.use_fake_user = True  # prevent deletion if used by something else (eg. PART)
             elif bf_namelist.bpy_type == Scene:  # current Scene
                 bf_namelist(self).from_fds(context, fds_params=fds_namelist.fds_params)
         # Record unmanaged namelists in CATF file FIXME complete
-        catf_case.fds_namelists[0].msg = "Non geometrical namelists"
+        fds_case_un.fds_namelists[0].msg = "Non geometrical namelists"
         te = bpy.data.texts.new("Imported")
-        te.from_string(str(catf_case))
+        te.from_string(str(fds_case_un))
         self.bf_config_text = te
         # Set imported Scene visible scene and text to imported  # FIXME to operator?
         context.window.scene = self
@@ -2309,6 +2310,7 @@ class BFScene:
                     space.show_margin = True
                     space.margin_column = 130
                     space.show_syntax_highlight = True
+                    # bpy.ops.text.cursor_set(x=0, y=0)  # FIXME context
                     break
 
     def to_ge1(self, context):
