@@ -37,6 +37,7 @@ from bpy.props import (
     PointerProperty,
     EnumProperty,
     CollectionProperty,
+    PointerProperty,
 )
 from . import geometry
 from .types import (
@@ -161,6 +162,20 @@ class SN_HEAD(BFNamelist):
     bpy_export_default = True
     bf_params = SP_HEAD_CHID, SP_HEAD_TITLE
 
+@subscribe
+class SN_TAIL(BFNamelist):  # for importing only
+    label = "TAIL"
+    description = "Case closing"
+    enum_id = 3010
+    fds_label = "TAIL"
+    bpy_type = Scene
+
+    def to_fds_namelist(self, context):
+        pass
+
+    def from_fds(self, context, fds_params):
+        pass
+
 
 # Case Config
 
@@ -170,14 +185,23 @@ class SP_config_directory(BFParam):
     label = "Case Directory"
     description = "Destination directory for exported case"
     bpy_type = Scene
-    bpy_idname = "bf_head_directory"
+    bpy_idname = "bf_config_directory"
     bpy_prop = StringProperty
     bpy_other = {"subtype": "DIR_PATH", "maxlen": 1024}
 
     def check(self, context):
-        value = self.element.bf_head_directory
+        value = self.element.bf_config_directory
         if value and not os.path.exists(bpy.path.abspath(value)):
             raise BFException(self, "Case directory path not existing")
+
+@subscribe
+class SP_config_text(BFParam):
+    label = "Free Text"
+    description = "Internal free text, included verbatim"
+    bpy_type = Scene
+    bpy_idname = "bf_config_text"
+    bpy_prop = PointerProperty
+    bpy_other = {"type": bpy.types.Text}
 
 
 @subscribe
@@ -352,9 +376,36 @@ class SN_config(BFNamelist):
     def draw(self, context, layout):
         sc = self.element
         col = layout.column()
-        col.prop(sc, "bf_head_directory")
+        col.prop(sc, "bf_config_directory")
+        col.prop(sc, "bf_config_text")
 
         col.separator()
+        col.prop(sc, "bf_config_min_edge_length")
+        col.prop(sc, "bf_config_min_face_area")
+        col.prop(sc, "bf_default_voxel_size")
+
+        col.separator()
+        unit = sc.unit_settings
+        col.prop(unit, "system")
+        col = col.column()
+        col.enabled = unit.system != "NONE"
+        col.prop(unit, "scale_length")
+        col.prop(unit, "use_separate")
+        col.prop(unit, "length_unit", text="Length")
+        # col.prop(unit, "mass_unit", text="Mass")  # Unused
+        col.prop(unit, "time_unit", text="Time")
+
+
+@subscribe
+class SN_geoloc(BFNamelist):
+    label = "Geolocation"
+    description = "Geographic location"
+    enum_id = 3011
+    bpy_type = Scene
+
+    def draw(self, context, layout):
+        sc = self.element
+        col = layout.column()
         row = col.row()
         row.prop(sc, "bf_crs", text="Coordinate Ref Sys")
         url = gis.LonLat(lon=sc.bf_lon, lat=sc.bf_lat).to_url()
@@ -373,22 +424,6 @@ class SN_config(BFNamelist):
             sub.prop(sc, "bf_utm_easting", text="Easting")
             sub.prop(sc, "bf_utm_northing", text="Northing")
         sub.prop(sc, "bf_elevation", text="Elevation")
-
-        col.separator()
-        col.prop(sc, "bf_config_min_edge_length")
-        col.prop(sc, "bf_config_min_face_area")
-        col.prop(sc, "bf_default_voxel_size")
-
-        col.separator()
-        unit = sc.unit_settings
-        col.prop(unit, "system")
-        col = col.column()
-        col.enabled = unit.system != "NONE"
-        col.prop(unit, "scale_length")
-        col.prop(unit, "use_separate")
-        col.prop(unit, "length_unit", text="Length")
-        # col.prop(unit, "mass_unit", text="Mass")  # Unused
-        col.prop(unit, "time_unit", text="Time")
 
 
 # TIME
@@ -1118,12 +1153,12 @@ class MN_SURF(BFNamelist):
 
 
 # FIXME useful?
-@subscribe
-class MN_SURF_burner(MN_SURF):
-    label = "SURF Burner"
-    description = "Spec'd rate burner"
-    enum_id = 2001
-    bf_params = MP_ID, MP_FYI, MP_RGB, MP_COLOR, MP_HRRPUA, MP_TAU_Q, MP_other
+# @subscribe
+# class MN_SURF_burner(MN_SURF):
+#     label = "SURF Burner"
+#     description = "Spec'd rate burner"
+#     enum_id = 2001
+#     bf_params = MP_ID, MP_FYI, MP_RGB, MP_COLOR, MP_HRRPUA, MP_TAU_Q, MP_other
 
 
 # Object
@@ -1491,6 +1526,8 @@ class OP_PB(BFParamPB):
     bpy_other = {"update": update_bf_pb, "items": get_bf_pb_items}
     bpy_export = "bf_pb_export"
 
+    axis = None  # axis for importing
+
     def to_fds_param(self, context):
         ob = self.element
         if not ob.bf_pb_export:
@@ -1504,7 +1541,7 @@ class OP_PB(BFParamPB):
         labels = tuple(f"PB{('X','Y','Z')[axis]}" for axis, _ in pbs)
         # Single param
         if len(pbs) == 1:
-            return FDSParam(label=labels[0], values=pbs[0][1], precision=6)
+            return FDSParam(label=labels[0], values=(pbs[0][1],), precision=6)
         # Multi param, prepare new ID
         n = ob.name
         suffix = self.element.bf_id_suffix
@@ -1532,7 +1569,7 @@ class OP_PB(BFParamPB):
         scale_length = context.scene.unit_settings.scale_length
         try:
             geometry.from_fds.pbs_to_ob(
-                pbs=(value,),
+                pbs=((self.axis, value[0]),),
                 context=context,
                 ob=self.element,
                 scale_length=scale_length,
@@ -1547,6 +1584,7 @@ class OP_PBX(OP_PB):
     description = "For importing only"
     fds_label = "PBX"
     bpy_prop = None  # already defined
+    axis = 0  # axis for importing
 
     def draw(self, context, layout):
         return
@@ -1559,12 +1597,14 @@ class OP_PBX(OP_PB):
 class OP_PBY(OP_PBX):
     description = "For importing only"
     fds_label = "PBY"
+    axis = 1  # axis for importing
 
 
 @subscribe
 class OP_PBZ(OP_PBX):
     description = "For importing only"
     fds_label = "PBZ"
+    axis = 2  # axis for importing
 
 
 def get_bf_id_suffix_items(ob, context):
@@ -2133,11 +2173,7 @@ class BFObject:
         bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label)
         self.bf_namelist_cls = bf_namelist.__name__
         # Prevent default geometry (eg. XB=BBOX) FIXME a better way?
-        self.bf_xb_export, self.bf_xyz_export, self.bf_pb_export = (
-            False,
-            False,
-            False,
-        )  # FIXME prevent default BBOX
+        self.bf_xb_export, self.bf_xyz_export, self.bf_pb_export = (False, False, False)
         # Import
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
@@ -2194,12 +2230,13 @@ class BFScene:
 
     name = str()  # sc.name
     bf_head_export = bool()  # sc.bf_head_export
-
+    collection = None  # sc.collection
+    
     @property
     def bf_namelists(self):
         return (n for _, n in bf_namelists.items() if n.bpy_type == Scene)
 
-    def to_fds(self, context, full=False):
+    def to_fds(self, context, full=False):  # FIXME add free text
         # Header
         v = sys.modules[__package__].bl_info["version"]
         blv = bpy.app.version_string
@@ -2231,25 +2268,48 @@ class BFScene:
                 lines.append("\n&TAIL /")
         return "\n".join(line for line in lines if line)  # remove empties
 
-    def from_fds(self, context, fds_case):  # FIXME
+    def from_fds(self, context, fds_case):
         """Import from FDSCase."""
-        for fds_namelist in fds_case:
+        catf_case = FDSCase()
+        for fds_namelist in fds_case.fds_namelists:
+            # Get namelist class
             bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label, None)
             if not bf_namelist:
-                print("Not managed:", fds_namelist)  # FIXME put in CATF file
+                # Put unmanaged namelists in CATF case
+                catf_case.fds_namelists.append(fds_namelist)
                 continue
+            # Prepare default name
             hid = f"New {fds_namelist.label}"
             if bf_namelist.bpy_type == Object:  # new Object
-                co = context.scene.collection
                 me = bpy.data.meshes.new(hid)
                 ob = bpy.data.objects.new(hid, object_data=me)
-                co.objects.link(ob)
+                self.collection.objects.link(ob)
                 ob.from_fds(context, fds_namelist=fds_namelist)
             elif bf_namelist.bpy_type == Material:  # new Material
                 ma = bpy.data.materials.new(hid)
                 ma.from_fds(context, fds_namelist=fds_namelist)
             elif bf_namelist.bpy_type == Scene:  # current Scene
-                print("Managed by Scene", fds_namelist)  # FIXME develop
+                bf_namelist(self).from_fds(context, fds_params=fds_namelist.fds_params)
+        # Record unmanaged namelists in CATF file FIXME complete
+        catf_case.fds_namelists[0].msg = "Non geometrical namelists"
+        te = bpy.data.texts.new("Imported")
+        te.from_string(str(catf_case))
+        self.bf_config_text = te
+        # Set imported Scene visible scene and text to imported  # FIXME to operator?
+        context.window.scene = self
+        # Set imported free text visible  # FIXME to operator?
+        for w in context.window_manager.windows:
+            for area in w.screen.areas:
+                if area.type == 'TEXT_EDITOR':
+                    space = area.spaces[0]
+                    space.text = te
+                    space.show_line_numbers = True
+                    space.show_line_highlight = True
+                    space.show_word_wrap = True
+                    space.show_margin = True
+                    space.margin_column = 130
+                    space.show_syntax_highlight = True
+                    break
 
     def to_ge1(self, context):
         return geometry.to_ge1.scene_to_ge1(context, self)

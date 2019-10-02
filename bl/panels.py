@@ -82,6 +82,11 @@ class SCENE_PT_bf_namelist_HEAD(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_case_config(Panel, SCENE_PT_bf_namelist):
     bf_namelist_cls = "SN_config"
+
+
+@subscribe
+class SCENE_PT_bf_geoloc(Panel, SCENE_PT_bf_namelist):
+    bf_namelist_cls = "SN_geoloc"
     bl_options = {"DEFAULT_CLOSED"}
 
 

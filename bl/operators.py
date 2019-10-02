@@ -193,7 +193,7 @@ class OBJECT_OT_manifold(Operator, _external_tool):
 
     @classmethod
     def _get_exe(self, context):  # to be reloaded
-        prefs = context.preferences.addons[__package__].preferences
+        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
         return prefs.bf_manifold_filepath  # FIXME or predefined with linux...
 
     def _get_cmd(self, context, ob):
@@ -226,7 +226,7 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = context.preferences.addons[__package__].preferences
+        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
         return prefs.bf_quadriflow_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
@@ -262,7 +262,7 @@ class OBJECT_OT_simplify(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = context.preferences.addons[__package__].preferences
+        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
         return prefs.bf_simplify_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
@@ -655,12 +655,12 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
 
 
 class _bf_set_geoloc:
-    bl_label = "Get/Set Geo Location"
+    bl_label = "Set Geolocation"
     # bl_idname = "scene.bf_set_geoloc"
-    bl_description = "Get and set geographic location (WGS84)"
+    bl_description = "Set geographic location (WGS84)"
     bl_options = {"REGISTER", "UNDO"}
 
-    show: BoolProperty(name="Show Geo Location", default=False)
+    show: BoolProperty(name="Show Geolocation", default=False)
 
     bf_lon: FloatProperty(
         name="Longitude",
@@ -737,14 +737,14 @@ class _bf_set_geoloc:
         y = (utm.northing - sc.bf_utm_northing) / scale_length
         z = utm.elevation - sc.bf_elevation  # scale_length self managed
         self._set_loc(context, x, y, z)
-        self.report({"INFO"}, "Geo location set")
+        self.report({"INFO"}, "Geolocation set")
         return {"FINISHED"}
 
     def invoke(self, context, event):
         # Get loc, convert
         x, y, z = self._get_loc(context)
         sc = context.scene
-        scale_length = 1.0  # = sc.unit_settings.scale_length
+        scale_length = 1.0  # = sc.unit_settings.scale_length  # FIXME
         utm = gis.UTM(
             zn=sc.bf_utm_zn,
             ne=sc.bf_utm_ne,
@@ -757,7 +757,7 @@ class _bf_set_geoloc:
         if self.show:
             url = lonlat.to_url()
             bpy.ops.wm.url_open(url=url)
-            self.report({"INFO"}, "Geo location shown")
+            self.report({"INFO"}, "Geolocation shown")
             return {"FINISHED"}
         # Set defaults
         self.bf_lon = lonlat.lon

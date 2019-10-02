@@ -355,7 +355,6 @@ class BFNamelist(BFParam):
         cls._bf_param_pb_idx = None  # ... of type BFParamPB
         cls._bf_param_other_idx = None  # ... of type BFParamOther
         for i, p in enumerate(cls.bf_params):
-            print(i, p)
             if issubclass(p, BFParamXB):
                 cls._bf_param_xb_idx = i
             elif issubclass(p, BFParamXYZ):
@@ -623,19 +622,6 @@ class FDSCase:
 
     def __init__(self, fds_namelists=None):
         self.fds_namelists = fds_namelists or list()
-        self._index = len(self.fds_namelists)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self._index == len(self.fds_namelists) - 1:
-            raise StopIteration
-        self._index += 1
-        return self.fds_namelists[self._index]
-
-    def __getitem__(self, i):
-        return FDSCase(self.fds_namelists[i])
 
     def __str__(self):
         return "\n".join(str(n) for n in self.fds_namelists)

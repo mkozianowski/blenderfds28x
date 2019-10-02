@@ -15,7 +15,7 @@ from bpy.props import (
 log = logging.getLogger(__name__)
 
 # Get preference value like this:
-# prefs = context.preferences.addons[__package__].preferences
+# prefs = context.preferences.addons[__package__.split(".")[0]].preferences
 # prefs.bf_pref_simplify_ui
 
 

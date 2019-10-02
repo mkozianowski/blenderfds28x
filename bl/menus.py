@@ -72,7 +72,7 @@ class ImportFDS(Operator, ImportHelper):
             return {"CANCELLED"}
         # Current or new Scene
         if self.new_scene:
-            sc = bpy.data.scenes.new("imported")
+            sc = bpy.data.scenes.new("Imported")
         else:
             sc = context.scene
         # Import
@@ -181,8 +181,8 @@ def menu_func_export_FDS(self, context):
     basename = os.path.basename(filepath)
     # If the context scene contains path and basename, use them
     sc = context.scene
-    if sc.bf_head_directory:
-        directory = sc.bf_head_directory
+    if sc.bf_config_directory:
+        directory = sc.bf_config_directory
     if sc.name:
         basename = "{0}.fds".format(bpy.path.clean_name(sc.name))
     # Call the exporter operator
