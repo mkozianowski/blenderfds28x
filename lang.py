@@ -76,7 +76,7 @@ def subscribe(cls):
     """Subscribe class to related collection."""
     if issubclass(cls, BFNamelist):
         bf_namelists[cls.__name__] = cls
-        if cls.fds_label:
+        if cls.fds_label and not bf_namelists_by_fds_label.get(cls.fds_label):  # not there
             bf_namelists_by_fds_label[cls.fds_label] = cls
     elif issubclass(cls, BFParam):
         bf_params[cls.__name__] = cls
@@ -983,15 +983,15 @@ class MP_RGB(BFParam):  # exports both RGB and TRANSPARENCY
 
     def set_value(self, context, value):  # for importing
         c = self.element.diffuse_color
-        c[0], c[1], c[2] = value
+        c[0], c[1], c[2] = value[0] / 255., value[1] / 255., value[2] / 255.
 
     def to_fds_param(self, context):
         c = self.element.diffuse_color
         rs = (int(c[0] * 255), int(c[1] * 255), int(c[2] * 255))
         ts = (c[3],)
-        return tuple(
-            FDSParam(label="RGB", values=rs), FDSParam(label="TRANSPARENCY", values=ts)
-        )
+        return tuple((
+            FDSParam(label="RGB", values=rs), FDSParam(label="TRANSPARENCY", values=ts, precision=2)
+        ))
 
 
 @subscribe
@@ -1004,8 +1004,13 @@ class MP_COLOR(BFParam):  # only importing
 
     def set_value(self, context, value):
         c = self.element.diffuse_color
-        c[0], c[1], c[2] = utils.fds_colors[value]
+        rgb = utils.fds_colors.get(value, None)
+        if not rgb:
+            raise BFException(self, f"Error while setting color <{value}>")
+        c[0], c[1], c[2] = rgb[0] / 255., rgb[1] / 255., rgb[2] / 255.
 
+    def to_fds_param(self, context):
+        pass
 
 @subscribe
 class MP_TRANSPARENCY(BFParam):  # only importing
@@ -1018,6 +1023,9 @@ class MP_TRANSPARENCY(BFParam):  # only importing
     def set_value(self, context, value):
         c = self.element.diffuse_color
         c[3] = value
+
+    def to_fds_param(self, context):
+        pass
 
 
 @subscribe
@@ -1152,15 +1160,6 @@ class MN_SURF(BFNamelist):
         return self.element.bf_export and self.element.name not in default_mas
 
 
-# FIXME useful?
-# @subscribe
-# class MN_SURF_burner(MN_SURF):
-#     label = "SURF Burner"
-#     description = "Spec'd rate burner"
-#     enum_id = 2001
-#     bf_params = MP_ID, MP_FYI, MP_RGB, MP_COLOR, MP_HRRPUA, MP_TAU_Q, MP_other
-
-
 # Object
 
 
@@ -1172,7 +1171,8 @@ def update_OP_namelist_cls(ob, context):
     ob.bf_xb = get_bf_xb_items(ob, context)[0][0]
     ob.bf_xyz = get_bf_xyz_items(ob, context)[0][0]
     ob.bf_pb = get_bf_pb_items(ob, context)[0][0]
-    # TODO set default appearance
+    # Set default appearance
+    ob.set_default_appearance(context)
 
 
 @subscribe
@@ -1288,7 +1288,6 @@ class OP_XB_export(BFParam):
     bpy_other = {"update": update_bf_xb}
 
 
-# FIXME VECTOR=T and CELL_CENTERED=T are allowed!
 @subscribe
 class OP_XB(BFParamXB):
     label = "XB"
@@ -1299,6 +1298,7 @@ class OP_XB(BFParamXB):
     bpy_prop = EnumProperty
     bpy_other = {"update": update_bf_xb, "items": get_bf_xb_items}
     bpy_export = "bf_xb_export"
+    bf_xb_from_fds = None  # auto
 
     def draw(self, context, layout):
         super().draw(context, layout)
@@ -1357,7 +1357,7 @@ class OP_XB(BFParamXB):
                 context=context,
                 ob=self.element,
                 scale_length=scale_length,
-                bf_xb="BBOX",
+                bf_xb=self.bf_xb_from_fds  # auto or forced
             )
         except Exception as err:
             raise BFException(self, f"Error importing <{value}> value, {str(err)}")
@@ -1368,19 +1368,26 @@ class OP_XB(BFParamXB):
 class OP_XB_bbox(OP_XB):
     bpy_prop = None  # do not redefine
     bf_xb_idxs = (0,)  # BBOX, VOXELS, FACES, PIXELS, EDGES
-
+    bf_xb_from_fds = "BBOX"
 
 @subscribe
 class OP_XB_solid(OP_XB):
     bpy_prop = None  # do not redefine
     bf_xb_idxs = (0, 1, 2, 3)  # BBOX, VOXELS, FACES, PIXELS, EDGES
-
+    bf_xb_from_fds = None  # auto
 
 @subscribe
 class OP_XB_flat(OP_XB):
     bpy_prop = None  # do not redefine
     bf_xb_idxs = (2, 3)  # BBOX, VOXELS, FACES, PIXELS, EDGES
+    bf_xb_from_fds = "FACES"
 
+
+@subscribe
+class OP_XB_edges(OP_XB):
+    bpy_prop = None  # do not redefine
+    bf_xb_idxs = (4,)  # BBOX, VOXELS, FACES, PIXELS, EDGES
+    bf_xb_from_fds = "EDGES"
 
 def update_bf_xyz(ob, context):
     geometry.utils.rm_tmp_objects(context)
@@ -1689,6 +1696,7 @@ class ON_OBST(BFNamelist):
     bpy_export = "bf_export"
     bpy_export_default = True
     bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB_solid, OP_ID_suffix, OP_other
+    bf_other = {"appearance": "TEXTURED"}
 
 
 # Other
@@ -1716,7 +1724,6 @@ class ON_other(BFNamelist):
     enum_id = 1007
     bpy_type = Object
     bpy_export = "bf_export"
-
     bf_params = (
         OP_other_namelist,
         OP_ID,
@@ -1731,6 +1738,8 @@ class ON_other(BFNamelist):
         OP_ID_suffix,
         OP_other,
     )
+    bf_other = {"appearance": "TEXTURED"}
+
 
     @property
     def fds_label(self):
@@ -1835,7 +1844,6 @@ class ON_GEOM(BFNamelist):
     fds_label = "GEOM"
     bpy_type = Object
     bpy_export = "bf_export"
-
     bf_params = (
         OP_ID,
         OP_FYI,
@@ -1845,6 +1853,8 @@ class ON_GEOM(BFNamelist):
         OP_GEOM,
         OP_other,
     )
+    bf_other = {"appearance": "TEXTURED"}
+
 
 
 # HOLE
@@ -1859,6 +1869,8 @@ class ON_HOLE(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
     bf_params = OP_ID, OP_FYI, OP_XB_bbox, OP_other
+    bf_other = {"appearance": "DUMMY0"}
+
 
 
 # VENT
@@ -1884,6 +1896,7 @@ class ON_VENT(BFNamelist):
         OP_ID_suffix,
         OP_other,
     )
+    bf_other = {"appearance": "TEXTURED"}
 
 
 # DEVC
@@ -1951,7 +1964,6 @@ class ON_DEVC(BFNamelist):
     fds_label = "DEVC"
     bpy_type = Object
     bpy_export = "bf_export"
-
     bf_params = (
         OP_ID,
         OP_FYI,
@@ -1965,6 +1977,7 @@ class ON_DEVC(BFNamelist):
         OP_ID_suffix,
         OP_other,
     )
+    bf_other = {"appearance": "DUMMY1"}
 
 
 # SLCF
@@ -1991,13 +2004,13 @@ class OP_SLCF_CELL_CENTERED(BFParam):
     bpy_prop = BoolProperty
     bpy_idname = "bf_slcf_cell_centered"
 
-    def check(self, context):
-        if (
-            self.element.bf_slcf_cell_centered
-            and self.element.bf_slcf_vector
-            and not self.element.bf_quantity == "VELOCITY"
-        ):
-            raise BFException(self, "Cannot set CELL_CENTERED and VECTOR")
+    # def check(self, context):  # FIXME seems ok
+    #     if (
+    #         self.element.bf_slcf_cell_centered
+    #         and self.element.bf_slcf_vector
+    #         and not self.element.bf_quantity == "VELOCITY"
+    #     ):
+    #         raise BFException(self, "Cannot set CELL_CENTERED and VECTOR")
 
 
 @subscribe
@@ -2008,14 +2021,13 @@ class ON_SLCF(BFNamelist):
     fds_label = "SLCF"
     bpy_type = Object
     bpy_export = "bf_export"
-
     bf_params = (
         OP_ID,
         OP_FYI,
         OP_DEVC_QUANTITY,
         OP_SLCF_VECTOR,
         OP_SLCF_CELL_CENTERED,
-        OP_XB_flat,
+        OP_XB,
         OP_PB,
         OP_PBX,
         OP_PBY,
@@ -2023,6 +2035,7 @@ class ON_SLCF(BFNamelist):
         OP_ID_suffix,
         OP_other,
     )
+    bf_other = {"appearance": "DUMMY1"}
 
 
 # PROF
@@ -2036,8 +2049,9 @@ class ON_PROF(BFNamelist):
     fds_label = "PROF"
     bpy_type = Object
     bpy_export = "bf_export"
-
     bf_params = OP_ID, OP_FYI, OP_DEVC_QUANTITY, OP_XYZ, OP_ID_suffix, OP_other
+    bf_other = {"appearance": "DUMMY1"}
+
 
 
 # MESH
@@ -2053,8 +2067,8 @@ class OP_MESH_IJK(BFParam):
     bpy_prop = IntVectorProperty
     bpy_default = (10, 10, 10)
     bpy_other = {"size": 3, "min": 1}
-    bpy_export = "bf_mesh_ijk_export"  # FIXME remove
-    bpy_export_default = True
+    # bpy_export = "bf_mesh_ijk_export"
+    # bpy_export_default = True
 
 
 @subscribe
@@ -2080,6 +2094,8 @@ class ON_MESH(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
     bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB_bbox, OP_other
+    bf_other = {"appearance": "WIRE"}
+
 
 
 # INIT
@@ -2094,6 +2110,8 @@ class ON_INIT(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
     bf_params = OP_ID, OP_FYI, OP_XB_solid, OP_XYZ, OP_ID_suffix, OP_other
+    bf_other = {"appearance": "DUMMY2"}
+
 
 
 # ZONE
@@ -2108,6 +2126,8 @@ class ON_ZONE(BFNamelist):  # FIXME XYZ?
     bpy_type = Object
     bpy_export = "bf_export"
     bf_params = OP_ID, OP_FYI, OP_XB_bbox, OP_other
+    bf_other = {"appearance": "DUMMY2"}
+
 
 
 # HVAC
@@ -2122,6 +2142,8 @@ class ON_HVAC(BFNamelist):
     bpy_type = Object
     bpy_export = "bf_export"
     bf_params = OP_ID, OP_FYI, OP_XYZ, OP_ID_suffix, OP_other
+    bf_other = {"appearance": "WIRE"}
+
 
 
 # Closing
@@ -2177,14 +2199,42 @@ class BFObject:
         # Import
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
+    def set_default_appearance(self, context): # FIXME clean up, improve names
+        bf_namelist = self.bf_namelist
+        if not bf_namelist:
+            return
+        appearance = bf_namelist.bf_other.get("appearance")
+        dummy0_ma = bpy.data.materials.get("_BlenderFDS_0")
+        dummy1_ma = bpy.data.materials.get("_BlenderFDS_1")
+        dummy2_ma = bpy.data.materials.get("_BlenderFDS_2")
+        if appearance == "TEXTURED":
+            self.show_wire = False
+            self.display_type = "TEXTURED"
+            return
+        self.show_wire = True
+        if appearance == "DUMMY0" and dummy0_ma:
+            self.active_material = dummy0_ma
+            self.display_type = "SOLID"
+        elif appearance == "DUMMY1" and dummy1_ma:
+            self.active_material = dummy1_ma
+            self.display_type = "SOLID"
+        elif appearance == "DUMMY2" and dummy2_ma:
+            self.active_material = dummy2_ma
+            self.display_type = "SOLID"
+        elif appearance == "WIRE":
+            self.display_type = "WIRE"
+
+
     @classmethod
     def register(cls):
         Object.bf_namelist = cls.bf_namelist
         Object.to_fds = cls.to_fds
         Object.from_fds = cls.from_fds
+        Object.set_default_appearance = cls.set_default_appearance
 
     @classmethod
     def unregister(cls):
+        del Object.set_default_appearance
         del Object.from_fds
         del Object.to_fds
         del Object.bf_namelist
@@ -2236,7 +2286,7 @@ class BFScene:
     def bf_namelists(self):
         return (n for _, n in bf_namelists.items() if n.bpy_type == Scene)
 
-    def to_fds(self, context, full=False):  # FIXME add free text
+    def to_fds(self, context, full=False):
         # Header
         v = sys.modules[__package__].bl_info["version"]
         blv = bpy.app.version_string
@@ -2247,11 +2297,17 @@ class BFScene:
         lines = list(
             (
                 f"! Generated by BlenderFDS {v[0]}.{v[1]}.{v[2]} on Blender {blv}",
-                f"! Scene: <{self.name}>  Date: <{now}>  File: <{filepath}>",
+                f"! Scene: <{self.name}>",
+                f"! Date: <{now}>",
+                f"! File: <{filepath}>",
             )
         )
         # My namelists
         lines.extend(n(self).to_fds(context) for n in self.bf_namelists)
+        # Free Text
+        if self.bf_config_text:
+            lines.append(f"\n! --- From <{self.bf_config_text.name}> free text")
+            lines.append(self.bf_config_text.as_string())
         # Extend with Materials and Collections
         if full:
             # Materials
@@ -2285,19 +2341,20 @@ class BFScene:
                 ob = bpy.data.objects.new(hid, object_data=me)
                 self.collection.objects.link(ob)
                 ob.from_fds(context, fds_namelist=fds_namelist)
+                ob.set_default_appearance(context)
             elif bf_namelist.bpy_type == Material:  # new Material
                 ma = bpy.data.materials.new(hid)
                 ma.from_fds(context, fds_namelist=fds_namelist)
                 ma.use_fake_user = True  # prevent deletion if used by something else (eg. PART)
             elif bf_namelist.bpy_type == Scene:  # current Scene
                 bf_namelist(self).from_fds(context, fds_params=fds_namelist.fds_params)
-        # Record unmanaged namelists in CATF file FIXME complete
-        fds_case_un.fds_namelists[0].msg = "Non geometrical namelists"
-        te = bpy.data.texts.new("Imported")
-        te.from_string(str(fds_case_un))
-        self.bf_config_text = te
-        # Set imported Scene visible scene and text to imported  # FIXME to operator?
+        # Set imported Scene visible  # FIXME to operator?
         context.window.scene = self
+        # Record unmanaged namelists in free text
+        te = bpy.data.texts.new(f"Free Text of {self.name}")
+        te.from_string(str(fds_case_un))
+        te.current_line_index = 0
+        self.bf_config_text = te
         # Set imported free text visible  # FIXME to operator?
         for w in context.window_manager.windows:
             for area in w.screen.areas:
@@ -2310,7 +2367,7 @@ class BFScene:
                     space.show_margin = True
                     space.margin_column = 130
                     space.show_syntax_highlight = True
-                    # bpy.ops.text.cursor_set(x=0, y=0)  # FIXME context
+                    # bpy.ops.text.cursor_set(x=0, y=0)  # FIXME wrong context
                     break
 
     def to_ge1(self, context):
@@ -2338,7 +2395,7 @@ class BFCollection:
     objects = list()  # collection.objects
     children = list()  # collection.children
 
-    def to_fds(self, context):  # FIXME messages and structure
+    def to_fds(self, context):
         obs, lines = list(self.objects), list()
         obs.sort(key=lambda k: k.name)  # alphabetic by name
         if obs:
@@ -2380,7 +2437,7 @@ def register():
     )
     Scene.bf_file_version = IntVectorProperty(
         name="BlenderFDS File Version", size=3, default=(5, 0, 0)
-    )  # FIXME
+    )
     # params and namelists
     for _, cls in bf_params.items():
         cls.register()

@@ -137,7 +137,7 @@ class BFParam:
             raise Exception(f"Not implemented in class <{self.__class__}>")
         return getattr(self.element, self.bpy_idname)
 
-    def set_value(self, context, value=None):  # FIXME Test
+    def set_value(self, context, value=None):
         """Set value. If value is None, set defaul"""
         if self.bpy_idname:
             if value is not None:
@@ -146,7 +146,7 @@ class BFParam:
             if self.bpy_default:
                 setattr(self.element, self.bpy_idname, self.bpy_default)
                 return
-        raise Exception(f"Error while setting value <{value}>")
+        raise BFException(self, f"Error while setting value <{value}>")
 
     @property
     def exported(self) -> "bool":
