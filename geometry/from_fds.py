@@ -132,10 +132,18 @@ xbs_to_mesh = {
 }
 
 
-def xbs_to_ob(xbs, context, ob, scale_length, bf_xb="BBOX", ma=None):
+def xbs_to_ob(xbs, context, ob, scale_length, ma=None, bf_xb=None):
     """Import xbs geometry ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Object."""
     log.debug(ob.name)
-    xbs_to_mesh[bf_xb](xbs, context, ob.data, scale_length)
+    if bf_xb:  # force bf_xb
+        xbs_to_mesh[bf_xb](xbs, context, ob.data, scale_length)
+    else:  # auto choose
+        try:
+            bf_xb = "FACES"
+            xbs_to_mesh[bf_xb](xbs, context, ob.data, scale_length)
+        except:
+            bf_xb = "BBOX"
+            xbs_to_mesh[bf_xb](xbs, context, ob.data, scale_length)
     _set_balanced_center_position(context, ob)
     ob.bf_xb_export, ob.bf_xb = True, bf_xb
     if ma:

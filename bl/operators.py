@@ -193,7 +193,7 @@ class OBJECT_OT_manifold(Operator, _external_tool):
 
     @classmethod
     def _get_exe(self, context):  # to be reloaded
-        prefs = context.preferences.addons[__package__].preferences
+        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
         return prefs.bf_manifold_filepath  # FIXME or predefined with linux...
 
     def _get_cmd(self, context, ob):
@@ -226,7 +226,7 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = context.preferences.addons[__package__].preferences
+        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
         return prefs.bf_quadriflow_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
@@ -262,7 +262,7 @@ class OBJECT_OT_simplify(Operator, _external_tool):
 
     @classmethod
     def _get_exe(cls, context):
-        prefs = context.preferences.addons[__package__].preferences
+        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
         return prefs.bf_simplify_filepath  # FIXME or predefined with linux...simplify
 
     def _get_cmd(self, context, ob):
@@ -291,8 +291,8 @@ class _show_fds_code:
             lines = self.lines.split("\n")
         else:
             lines = ("No FDS code is exported",)
-        if len(lines) > 20:
-            lines = lines[:20]
+        if len(lines) > 60:
+            lines = lines[:60]
             lines.append("...")
         layout = self.layout
         for line in lines:
@@ -463,6 +463,44 @@ class OBJECT_OT_bf_hide_fds_geometry(Operator):
         geometry.utils.rm_tmp_objects(context)
         self.report({"INFO"}, "FDS geometry hidden")
         return {"FINISHED"}
+
+
+# Show text in Blender text editor
+
+
+@subscribe
+class SCENE_OT_bf_show_text(Operator):  # FIXME
+    bl_label = "Show"
+    bl_idname = "scene.bf_show_text"
+    bl_description = "Show free text in the editor"
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.bf_config_text
+
+    def execute(self, context):
+        te = context.scene.bf_config_text
+        done = False
+        for w in context.window_manager.windows:
+            for area in w.screen.areas:
+                if area.type == "TEXT_EDITOR":
+                    space = area.spaces[0]
+                    space.text = te
+                    space.show_line_numbers = True
+                    space.show_line_highlight = True
+                    space.show_word_wrap = True
+                    space.show_margin = True
+                    space.margin_column = 130
+                    space.show_syntax_highlight = True
+                    # bpy.ops.text.cursor_set(x=0, y=0)  # FIXME wrong context
+                    done = True
+                    break
+        if done:
+            self.report({"INFO"}, f"See <{te.name}> in Blender text editor")
+            return {"FINISHED"}
+        else:
+            self.report({"WARNING"}, f"Open a Blender text editor first")
+            return {"CANCELLED"}
 
 
 # Dialog box operator
@@ -655,12 +693,12 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
 
 
 class _bf_set_geoloc:
-    bl_label = "Get/Set Geo Location"
+    bl_label = "Set Geolocation"
     # bl_idname = "scene.bf_set_geoloc"
-    bl_description = "Get and set geographic location (WGS84)"
+    bl_description = "Set geographic location (WGS84)"
     bl_options = {"REGISTER", "UNDO"}
 
-    show: BoolProperty(name="Show Geo Location", default=False)
+    show: BoolProperty(name="Show Geolocation", default=False)
 
     bf_lon: FloatProperty(
         name="Longitude",
@@ -737,14 +775,14 @@ class _bf_set_geoloc:
         y = (utm.northing - sc.bf_utm_northing) / scale_length
         z = utm.elevation - sc.bf_elevation  # scale_length self managed
         self._set_loc(context, x, y, z)
-        self.report({"INFO"}, "Geo location set")
+        self.report({"INFO"}, "Geolocation set")
         return {"FINISHED"}
 
     def invoke(self, context, event):
         # Get loc, convert
         x, y, z = self._get_loc(context)
         sc = context.scene
-        scale_length = 1.0  # = sc.unit_settings.scale_length
+        scale_length = 1.0  # = sc.unit_settings.scale_length  # FIXME
         utm = gis.UTM(
             zn=sc.bf_utm_zn,
             ne=sc.bf_utm_ne,
@@ -757,7 +795,7 @@ class _bf_set_geoloc:
         if self.show:
             url = lonlat.to_url()
             bpy.ops.wm.url_open(url=url)
-            self.report({"INFO"}, "Geo location shown")
+            self.report({"INFO"}, "Geolocation shown")
             return {"FINISHED"}
         # Set defaults
         self.bf_lon = lonlat.lon

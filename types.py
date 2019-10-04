@@ -137,7 +137,7 @@ class BFParam:
             raise Exception(f"Not implemented in class <{self.__class__}>")
         return getattr(self.element, self.bpy_idname)
 
-    def set_value(self, context, value=None):  # FIXME Test
+    def set_value(self, context, value=None):
         """Set value. If value is None, set defaul"""
         if self.bpy_idname:
             if value is not None:
@@ -146,7 +146,7 @@ class BFParam:
             if self.bpy_default:
                 setattr(self.element, self.bpy_idname, self.bpy_default)
                 return
-        raise Exception(f"Error while setting value <{value}>")
+        raise BFException(self, f"Error while setting value <{value}>")
 
     @property
     def exported(self) -> "bool":
@@ -165,7 +165,7 @@ class BFParam:
         # Check if bpy_export
         return bool(getattr(self.element, str(self.bpy_export), True))
 
-    def set_exported(self, context, value=None):  # FIXME Test
+    def set_exported(self, context, value=None):
         """Set if self is exported."""
         if self.bpy_export:
             if value is not None:
@@ -224,7 +224,7 @@ class BFParam:
     def from_fds(self, context, value):
         """Set parameter value from value in FDS notation, on error raise BFException."""
         log.debug(f"{self} {value}")
-        if len(value) == 1:  # FIXME FDSParam.values is always a list
+        if len(value) == 1:  # FDSParam.values is always a list
             value = value[0]
         try:
             self.set_value(context, value)
@@ -310,7 +310,7 @@ class BFParamOther(BFParam):
             bpy_type=cls.bpy_type, bpy_idname=cls.bpy_idname, ops=cls._ops
         )
 
-    def set_value(self, context, value):  # FIXME test
+    def set_value(self, context, value):
         collection = getattr(self.element, self.bpy_idname)
         item = collection.add()
         item.name, item.bf_export = value, True
@@ -341,7 +341,7 @@ class BFParamOther(BFParam):
 class BFNamelist(BFParam):
     """Blender representation of an FDS namelist group."""
 
-    max_len = 80  # max columns when exporting FIXME
+    maxlen = 80  # max columns when exporting
 
     def __init__(self, element):
         self.element = element
@@ -355,7 +355,6 @@ class BFNamelist(BFParam):
         cls._bf_param_pb_idx = None  # ... of type BFParamPB
         cls._bf_param_other_idx = None  # ... of type BFParamOther
         for i, p in enumerate(cls.bf_params):
-            print(i, p)
             if issubclass(p, BFParamXB):
                 cls._bf_param_xb_idx = i
             elif issubclass(p, BFParamXYZ):
@@ -418,7 +417,7 @@ class BFNamelist(BFParam):
         return FDSNamelist(
             label=self.fds_label,
             fds_params=list(p.to_fds_param(context) for p in self.bf_params if p),
-            max_len=self.max_len,
+            maxlen=self.maxlen,
         )
 
     def to_fds(self, context) -> "None or str":
@@ -507,6 +506,9 @@ class FDSParam:
                 self.precision = len(match.groups()[0])
 
 
+# FIXME scientific notation in output!
+
+
 class FDSNamelist:
     """Python datastructure for FDS namelist.
     
@@ -515,14 +517,14 @@ class FDSNamelist:
         Can contain one and only one list of lists of FDSParam instances
         to represent multiple params: (("ID=X1", "PBX=1"), ("ID=X2", "PBX=2"), ...)
     msg: comment msg
-    max_len: max columns of formatted output
+    maxlen: max columns of formatted output
     """
 
-    def __init__(self, label, fds_params=None, msg=None, max_len=80):
+    def __init__(self, label, fds_params=None, msg=None, maxlen=80):
         self.label = label
         self.fds_params = fds_params or list()
         self.msg = msg
-        self.max_len = max_len
+        self.maxlen = maxlen
 
     def __str__(self):
         ps, mps, msgs = list(), list(), list((self.msg,))
@@ -551,14 +553,12 @@ class FDSNamelist:
             for multip in mps:
                 nl = list(str(p) for p in multip if p)  # variant param strings
                 nl.extend(ps)  # invariant
-                nl.append("/")  # end
                 nls.append(nl)
         else:
             nl = ps  # invariant
-            nl.append("/")  # end
             nls.append(nl)
         # Create result string
-        max_len = self.max_len - 5  # because len("&OBST") == 5
+        maxlen = self.maxlen - 5  # because len("&OBST") == 5
         lines = list(f"! {m}" for m in msgs if m)  # all messages
         for nl in nls:
             nl.reverse()  # for efficient pop
@@ -567,19 +567,20 @@ class FDSNamelist:
             while nl:
                 p = nl.pop()
                 l = 1 + len(p)  # l = sep + chunk
-                if current_len == 5 or current_len + l <= max_len:
+                if current_len == 5 or current_len + l <= maxlen:
                     line = " ".join((line, p))
                     current_len += l
                 else:  # split long line
                     line = "\n      ".join((line, p))
                     current_len = 5 + l
+            line = "".join((line, " /"))  # close
             lines.append(line)
         return "\n".join(lines)
 
-    _re_label = r"([A-Z][A-Z0-9_\(\):,]+?)"  # param label w indexes
+    _re_label = r"([A-Z][A-Z0-9_\(\):,]*?)"  # param label w indexes
     _re_space = r"[\s\t]*"  # zero or more spaces
     _re_sep = r"[,\s\t]+"  # one or more separators
-    _re_end = r"[,\s\t]*/"
+    _re_end = r"[,\s\t]*/"  # zero or more separators + "/"
     _re_values = (
         r"(.+?)"  # one or more of any char, not greedy
         + r"(?="  # end previous match when
@@ -623,19 +624,6 @@ class FDSCase:
 
     def __init__(self, fds_namelists=None):
         self.fds_namelists = fds_namelists or list()
-        self._index = len(self.fds_namelists)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self._index == len(self.fds_namelists) - 1:
-            raise StopIteration
-        self._index += 1
-        return self.fds_namelists[self._index]
-
-    def __getitem__(self, i):
-        return FDSCase(self.fds_namelists[i])
 
     def __str__(self):
         return "\n".join(str(n) for n in self.fds_namelists)

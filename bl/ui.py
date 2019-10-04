@@ -67,7 +67,7 @@ class PROPERTIES_PT_navigation_bar(Panel):
         view = context.space_data
         layout.scale_x = 1.4
         layout.scale_y = 1.4
-        # layout.prop_tabs_enum(view, "context", icon_only=True)
+        # layout.prop_tabs_enum(view, "context", icon_only=True)  # original
         layout.prop_enum(view, "context", "TOOL", text="", icon="TOOL_SETTINGS")
         layout.prop_enum(view, "context", "SCENE", text="", icon="SCENE_DATA")
         col = layout.column(align=True)
@@ -78,6 +78,7 @@ class PROPERTIES_PT_navigation_bar(Panel):
                 col.prop_enum(
                     view, "context", "MODIFIER", text="", icon="MODIFIER_DATA"
                 )
+                col.prop_enum(view, "context", "DATA", text="", icon="MESH_DATA")
                 col.prop_enum(
                     view, "context", "MATERIAL", text="", icon="MATERIAL_DATA"
                 )
