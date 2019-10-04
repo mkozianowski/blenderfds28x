@@ -29,9 +29,9 @@ import bpy
 
 # FDS default SURFs: name, diffuse_color
 default_mas = {
-    "_BlenderFDS_0": ((1.0, 1.0, 1.0, 0.05),),  # BlenderFDS dummy material (white)
-    "_BlenderFDS_1": ((1.0, 1.0, 0.0, 0.05),),  # BlenderFDS dummy material (yellow)
-    "_BlenderFDS_2": ((1.0, 0.0, 1.0, 0.05),),  # BlenderFDS dummy material (purple)
+    "Dummy White": ((1.0, 1.0, 1.0, 0.05),),  # BlenderFDS dummy material (white)
+    "Dummy Yellow": ((1.0, 1.0, 0.0, 0.05),),  # BlenderFDS dummy material (yellow)
+    "Dummy Purple": ((1.0, 0.0, 1.0, 0.05),),  # BlenderFDS dummy material (purple)
     "INERT": ((0.8, 0.8, 0.2, 1.0),),
     "HVAC": ((0.2, 0.2, 0.8, 0.5),),
     "MIRROR": ((1.0, 0.0, 1.0, 0.2),),

@@ -291,8 +291,8 @@ class _show_fds_code:
             lines = self.lines.split("\n")
         else:
             lines = ("No FDS code is exported",)
-        if len(lines) > 20:
-            lines = lines[:20]
+        if len(lines) > 60:
+            lines = lines[:60]
             lines.append("...")
         layout = self.layout
         for line in lines:
@@ -463,6 +463,44 @@ class OBJECT_OT_bf_hide_fds_geometry(Operator):
         geometry.utils.rm_tmp_objects(context)
         self.report({"INFO"}, "FDS geometry hidden")
         return {"FINISHED"}
+
+
+# Show text in Blender text editor
+
+
+@subscribe
+class SCENE_OT_bf_show_text(Operator):  # FIXME
+    bl_label = "Show"
+    bl_idname = "scene.bf_show_text"
+    bl_description = "Show free text in the editor"
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.bf_config_text
+
+    def execute(self, context):
+        te = context.scene.bf_config_text
+        done = False
+        for w in context.window_manager.windows:
+            for area in w.screen.areas:
+                if area.type == "TEXT_EDITOR":
+                    space = area.spaces[0]
+                    space.text = te
+                    space.show_line_numbers = True
+                    space.show_line_highlight = True
+                    space.show_word_wrap = True
+                    space.show_margin = True
+                    space.margin_column = 130
+                    space.show_syntax_highlight = True
+                    # bpy.ops.text.cursor_set(x=0, y=0)  # FIXME wrong context
+                    done = True
+                    break
+        if done:
+            self.report({"INFO"}, f"See <{te.name}> in Blender text editor")
+            return {"FINISHED"}
+        else:
+            self.report({"WARNING"}, f"Open a Blender text editor first")
+            return {"CANCELLED"}
 
 
 # Dialog box operator
