@@ -575,10 +575,10 @@ class FDSNamelist:
             lines.append(line)
         return "\n".join(lines)
 
-    _re_label = r"([A-Z][A-Z0-9_\(\):,]+?)"  # param label w indexes
+    _re_label = r"([A-Z][A-Z0-9_\(\):,]*?)"  # param label w indexes
     _re_space = r"[\s\t]*"  # zero or more spaces
     _re_sep = r"[,\s\t]+"  # one or more separators
-    _re_end = r"[,\s\t]*/"
+    _re_end = r"[,\s\t]*/"  # zero or more separators + "/"
     _re_values = (
         r"(.+?)"  # one or more of any char, not greedy
         + r"(?="  # end previous match when
