@@ -221,7 +221,8 @@ def _get_bm_intersected_faces(bm, tree, other_tree):
 def check_intersections(context, ob, other_obs=None, protect=True):
     """Check ob self-intersection and intersection with other_obs."""
     log.debug(f"Check intersections in Object <{ob.name}>")
-    bpy.ops.object.mode_set(mode="OBJECT")
+    if context.object:
+        bpy.ops.object.mode_set(mode="OBJECT")
     epsilon_len = context.scene.bf_config_min_edge_length
     bad_faces = list()
     bm, tree = _get_bm_and_tree(context, ob, epsilon_len=epsilon_len)
@@ -273,7 +274,8 @@ def _raise_bad_geometry(
     bm.to_mesh(ob.data)
     bm.free()
     # Select object and go to edit mode
-    bpy.ops.object.mode_set(mode="OBJECT")
+    if context.object:
+        bpy.ops.object.mode_set(mode="OBJECT")
     bpy.ops.object.select_all(action="DESELECT")
     ob.select_set(True)  # Blender 2.80
     context.view_layer.objects.active = ob  # Blender 2.80

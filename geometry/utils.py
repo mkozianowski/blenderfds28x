@@ -10,7 +10,8 @@ from ..types import BFException
 
 def get_object_bmesh(context, ob, world=False) -> "BMesh":
     """Return evaluated object bmesh."""
-    bpy.ops.object.mode_set(mode="OBJECT")  # actualize
+    if context.object:
+        bpy.ops.object.mode_set(mode="OBJECT")  # actualize
     bm = bmesh.new()
     depsgraph = context.evaluated_depsgraph_get()
     bm.from_object(ob, depsgraph=depsgraph, deform=True, cage=False, face_normals=True)
@@ -19,15 +20,13 @@ def get_object_bmesh(context, ob, world=False) -> "BMesh":
     return bm
 
 
-def get_tmp_object(context, ob, name="tmp", me_tmp=None):
+def get_tmp_object(context, ob, name="tmp"):
     """Get a new tmp Object from ob."""
     # Create new tmp Object
     co_tmp = context.collection
-    if not me_tmp:
-        me_tmp = bpy.data.meshes.new(name)
+    me_tmp = bpy.data.meshes.new(name)
     ob_tmp = bpy.data.objects.new(name, me_tmp)
     ob_tmp.bf_is_tmp = True
-    ob_tmp.bf_namelist_cls = ob.bf_namelist_cls  # so XB, XYZ, PB menus are the same
     co_tmp.objects.link(ob_tmp)
     # Set original
     ob.bf_has_tmp = True

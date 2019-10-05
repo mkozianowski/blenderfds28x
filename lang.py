@@ -50,6 +50,9 @@ from .types import (
     BFParamFYI,
     BFParamOther,
     BFNamelist,
+    BFNamelistSc,
+    BFNamelistOb,
+    BFNamelistMa,
     FDSParam,
     FDSNamelist,
     FDSCase,
@@ -76,7 +79,7 @@ def subscribe(cls):
     """Subscribe class to related collection."""
     if issubclass(cls, BFNamelist):
         bf_namelists[cls.__name__] = cls
-        if cls.fds_label and not bf_namelists_by_fds_label.get(cls.fds_label):  # not there
+        if cls.fds_label:
             bf_namelists_by_fds_label[cls.fds_label] = cls
     elif issubclass(cls, BFParam):
         bf_params[cls.__name__] = cls
@@ -152,24 +155,23 @@ class SP_HEAD_TITLE(BFParamFYI):
 
 
 @subscribe
-class SN_HEAD(BFNamelist):
+class SN_HEAD(BFNamelistSc):
     label = "HEAD"
     description = "Case header"
     enum_id = 3001
     fds_label = "HEAD"
-    bpy_type = Scene
     bpy_export = "bf_head_export"
     bpy_export_default = True
     bf_params = SP_HEAD_CHID, SP_HEAD_TITLE
     maxlen = 0
 
+
 @subscribe
-class SN_TAIL(BFNamelist):  # for importing only
+class SN_TAIL(BFNamelistSc):  # for importing only
     label = "TAIL"
     description = "Case closing"
     enum_id = 3010
     fds_label = "TAIL"
-    bpy_type = Scene
 
     def to_fds_namelist(self, context):
         pass
@@ -194,6 +196,7 @@ class SP_config_directory(BFParam):
         value = self.element.bf_config_directory
         if value and not os.path.exists(bpy.path.abspath(value)):
             raise BFException(self, "Case directory path not existing")
+
 
 @subscribe
 class SP_config_text(BFParam):
@@ -368,11 +371,10 @@ class SP_elevation(BFParam):
 
 
 @subscribe
-class SN_config(BFNamelist):
+class SN_config(BFNamelistSc):
     label = "Config"
     description = "Case configuration"
     enum_id = 3008
-    bpy_type = Scene
 
     def draw(self, context, layout):
         sc = self.element
@@ -380,7 +382,7 @@ class SN_config(BFNamelist):
         col.prop(sc, "bf_config_directory")
         row = col.row(align=True)
         row.prop(sc, "bf_config_text")
-        row.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")  # FIXME in BFParam draw()
+        row.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")
 
         col.separator()
         col.prop(sc, "bf_config_min_edge_length")
@@ -400,11 +402,10 @@ class SN_config(BFNamelist):
 
 
 @subscribe
-class SN_geoloc(BFNamelist):
+class SN_geoloc(BFNamelistSc):
     label = "Geolocation"
-    description = "Geographic location"
+    description = "Origin location"
     enum_id = 3011
-    bpy_type = Scene
 
     def draw(self, context, layout):
         sc = self.element
@@ -441,6 +442,10 @@ class SP_TIME_setup_only(BFParam):
     bpy_prop = BoolProperty
     bpy_default = False
 
+    def to_fds_param(self, context):
+        if self.element.bf_time_setup_only:
+            return FDSParam(label="T_END", values=(0.0,), msg="Smokeview setup only", precision=1)
+
 
 @subscribe
 class SP_TIME_T_BEGIN(BFParam):
@@ -473,7 +478,6 @@ class SP_TIME_T_END(BFParam):
     def exported(self):
         return super().exported and not self.element.bf_time_setup_only
 
-
 @subscribe
 class SP_TIME_other(BFParamOther):
     bpy_type = Scene
@@ -483,24 +487,15 @@ class SP_TIME_other(BFParamOther):
 
 
 @subscribe
-class SN_TIME(BFNamelist):
+class SN_TIME(BFNamelistSc):  # FIXME draw panel, export in case of setup only
     label = "TIME"
     description = "Simulation time settings"
     enum_id = 3002
     fds_label = "TIME"
-    bpy_type = Scene
     bpy_export = "bf_time_export"
     bpy_export_default = True
-    bf_params = SP_TIME_T_BEGIN, SP_TIME_T_END, SP_TIME_other
-
-    def draw(self, context, layout):
-        sc = self.element
-        layout.prop(sc, "bf_time_setup_only")
-        sub = layout.column()
-        sub.active = not sc.bf_time_setup_only
-        SP_TIME_T_BEGIN(sc).draw(context, sub)
-        SP_TIME_T_END(sc).draw(context, sub)
-        SP_TIME_other(sc).draw(context, layout)
+    bf_params = SP_TIME_T_BEGIN, SP_TIME_T_END, SP_TIME_setup_only, SP_TIME_other
+    maxlen = 0
 
 
 # MISC
@@ -543,12 +538,11 @@ class SP_MISC_other(BFParamOther):
 
 
 @subscribe
-class SN_MISC(BFNamelist):
+class SN_MISC(BFNamelistSc):
     label = "MISC"
     description = "Miscellaneous parameters"
     enum_id = 3003
     fds_label = "MISC"
-    bpy_type = Scene
     bpy_export = "bf_misc_export"
     bpy_export_default = False
     bf_params = (
@@ -557,6 +551,7 @@ class SN_MISC(BFNamelist):
         SP_MISC_THICKEN_OBSTRUCTIONS,
         SP_MISC_other,
     )
+    maxlen = 0
 
 
 # REAC
@@ -647,12 +642,11 @@ class SP_REAC_other(BFParamOther):
 
 
 @subscribe
-class SN_REAC(BFNamelist):
+class SN_REAC(BFNamelistSc):
     label = "REAC"
     description = "Reaction"
     enum_id = 3004
     fds_label = "REAC"
-    bpy_type = Scene
     bpy_export = "bf_reac_export"
     bf_params = (
         SP_REAC_FUEL,
@@ -664,6 +658,7 @@ class SN_REAC(BFNamelist):
         SP_REAC_IDEAL,
         SP_REAC_other,
     )
+    maxlen = 0
 
 
 # RADI
@@ -758,12 +753,11 @@ class SP_RADI_other(BFParamOther):
 
 
 @subscribe
-class SN_RADI(BFNamelist):
+class SN_RADI(BFNamelistSc):
     label = "RADI"
     description = "Radiation parameters"
     enum_id = 3006
     fds_label = "RADI"
-    bpy_type = Scene
     bpy_export = "bf_radi_export"
     bpy_export_default = False
     bf_params = (
@@ -776,6 +770,7 @@ class SN_RADI(BFNamelist):
         SP_RADI_RADIATION_ITERATIONS,
         SP_RADI_other,
     )
+    maxlen = 0
 
 
 # DUMP
@@ -857,12 +852,11 @@ class SP_DUMP_other(BFParamOther):
 
 
 @subscribe
-class SN_DUMP(BFNamelist):
+class SN_DUMP(BFNamelistSc):
     label = "DUMP"
     description = "Output parameters"
     enum_id = 3005
     fds_label = "DUMP"
-    bpy_type = Scene
     bpy_export = "bf_dump_export"
     bpy_export_default = False
     bf_params = (
@@ -874,6 +868,7 @@ class SN_DUMP(BFNamelist):
         SP_DUMP_DT_RESTART,
         SP_DUMP_other,
     )
+    maxlen = 0
 
 
 # CATF
@@ -886,7 +881,10 @@ class SP_CATF_check_files(BFParam):
     bpy_type = Scene
     bpy_idname = "bf_catf_check_files"
     bpy_prop = BoolProperty
-    bpy_default = True
+    bpy_default = False
+
+    def to_fds_param(self, context):
+        return
 
 
 @subscribe
@@ -914,19 +912,14 @@ class SP_CATF_files(BFParamOther):
 
 
 @subscribe
-class SN_CATF(BFNamelist):
+class SN_CATF(BFNamelistSc):
     label = "CATF"
     description = "Concatenated file paths"
     fds_label = "CATF"
-    bpy_type = Scene
     bpy_export = "bf_catf_export"
     bpy_export_default = False
-    bf_params = (SP_CATF_files,)
-
-    def draw(self, context, layout):
-        el = self.element
-        SP_CATF_check_files(el).draw(context, layout)
-        SP_CATF_files(el).draw(context, layout)
+    bf_params = SP_CATF_check_files, SP_CATF_files
+    maxlen = 0
 
 
 # Material
@@ -984,15 +977,18 @@ class MP_RGB(BFParam):  # exports both RGB and TRANSPARENCY
 
     def set_value(self, context, value):  # for importing
         c = self.element.diffuse_color
-        c[0], c[1], c[2] = value[0] / 255., value[1] / 255., value[2] / 255.
+        c[0], c[1], c[2] = value[0] / 255.0, value[1] / 255.0, value[2] / 255.0
 
     def to_fds_param(self, context):
         c = self.element.diffuse_color
         rs = (int(c[0] * 255), int(c[1] * 255), int(c[2] * 255))
         ts = (c[3],)
-        return tuple((
-            FDSParam(label="RGB", values=rs), FDSParam(label="TRANSPARENCY", values=ts, precision=2)
-        ))
+        return tuple(
+            (
+                FDSParam(label="RGB", values=rs),
+                FDSParam(label="TRANSPARENCY", values=ts, precision=2),
+            )
+        )
 
 
 @subscribe
@@ -1008,10 +1004,11 @@ class MP_COLOR(BFParam):  # only importing
         rgb = utils.fds_colors.get(value, None)
         if not rgb:
             raise BFException(self, f"Error while setting color <{value}>")
-        c[0], c[1], c[2] = rgb[0] / 255., rgb[1] / 255., rgb[2] / 255.
+        c[0], c[1], c[2] = rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0
 
     def to_fds_param(self, context):
         pass
+
 
 @subscribe
 class MP_TRANSPARENCY(BFParam):  # only importing
@@ -1133,13 +1130,12 @@ class MP_other(BFParamOther):
 
 
 @subscribe
-class MN_SURF(BFNamelist):
+class MN_SURF(BFNamelistMa):
     label = "SURF"
     description = "Generic boundary condition"
     enum_id = 2000
-    bpy_type = Material
     fds_label = "SURF"
-    bpy_export = "bf_export"
+    bpy_export = "bf_surf_export"
     bpy_export_default = True
     bf_params = (  # all params for importing
         MP_ID,
@@ -1155,10 +1151,11 @@ class MN_SURF(BFNamelist):
         MP_IGNITION_TEMPERATURE,
         MP_other,
     )
+    maxlen = 0
 
     @property
     def exported(self) -> "bool":
-        return self.element.bf_export and self.element.name not in default_mas
+        return self.element.bf_surf_export and self.element.name not in default_mas
 
 
 # Object
@@ -1167,11 +1164,6 @@ class MN_SURF(BFNamelist):
 def update_OP_namelist_cls(ob, context):
     # Remove tmp Objects
     geometry.utils.rm_tmp_objects(context)
-    # Set a valid choice for XB, XYZ, PB, ID Suffix
-    # the first allowed value
-    ob.bf_xb = get_bf_xb_items(ob, context)[0][0]
-    ob.bf_xyz = get_bf_xyz_items(ob, context)[0][0]
-    ob.bf_pb = get_bf_pb_items(ob, context)[0][0]
     # Set default appearance
     ob.set_default_appearance(context)
 
@@ -1261,23 +1253,6 @@ class OP_XB_center_voxels(BFParam):
     bpy_other = {"update": update_bf_xb}
 
 
-def get_bf_xb_items(ob, context):
-    try:
-        bf_xb_idxs = ob.bf_namelist.bf_param_xb.bf_xb_idxs
-    except AttributeError:
-        bf_xb_idxs = (0, 1, 2, 3, 4)
-    return tuple(
-        (
-            ("BBOX", "BBox", "Export object bounding box"),
-            ("VOXELS", "Voxels", "Export voxels from voxelized solid Object"),
-            ("FACES", "Faces", "Export faces, one for each face"),
-            ("PIXELS", "Pixels", "Export pixels from pixelized flat Object"),
-            ("EDGES", "Edges", "Export segments, one for each edge"),
-        )[i]
-        for i in bf_xb_idxs
-    )
-
-
 @subscribe
 class OP_XB_export(BFParam):
     label = "Export XB"
@@ -1297,8 +1272,17 @@ class OP_XB(BFParamXB):
     bpy_type = Object
     bpy_idname = "bf_xb"
     bpy_prop = EnumProperty
-    bpy_other = {"update": update_bf_xb, "items": get_bf_xb_items}
-    bpy_export = "bf_xb_export"
+    bpy_other = {
+        "update": update_bf_xb,
+        "items": (
+            ("BBOX", "BBox", "Export object bounding box"),
+            ("VOXELS", "Voxels", "Export voxels from voxelized solid Object"),
+            ("FACES", "Faces", "Export faces, one for each face"),
+            ("PIXELS", "Pixels", "Export pixels from pixelized flat Object"),
+            ("EDGES", "Edges", "Export segments, one for each edge"),
+        ),
+    }
+    bpy_export = "bf_xb_export"  # FIXME get resetted!
     bf_xb_from_fds = None  # auto
 
     def draw(self, context, layout):
@@ -1353,42 +1337,20 @@ class OP_XB(BFParamXB):
     def from_fds(self, context, value):
         scale_length = context.scene.unit_settings.scale_length
         try:
-            geometry.from_fds.xbs_to_ob(
+            bf_xb = geometry.from_fds.xbs_to_ob(
                 xbs=(value,),
                 context=context,
                 ob=self.element,
                 scale_length=scale_length,
-                bf_xb=self.bf_xb_from_fds  # auto or forced
+                bf_xb=self.bf_xb_from_fds,  # auto or forced
             )
         except Exception as err:
             raise BFException(self, f"Error importing <{value}> value, {str(err)}")
-        self.set_exported(context, True)
+        else:
+            self.element.bf_xb = bf_xb
+            self.element.bf_xb_export = True
+            self.set_exported(context, True)
 
-
-@subscribe
-class OP_XB_bbox(OP_XB):
-    bpy_prop = None  # do not redefine
-    bf_xb_idxs = (0,)  # BBOX, VOXELS, FACES, PIXELS, EDGES
-    bf_xb_from_fds = "BBOX"
-
-@subscribe
-class OP_XB_solid(OP_XB):
-    bpy_prop = None  # do not redefine
-    bf_xb_idxs = (0, 1, 2, 3)  # BBOX, VOXELS, FACES, PIXELS, EDGES
-    bf_xb_from_fds = None  # auto
-
-@subscribe
-class OP_XB_flat(OP_XB):
-    bpy_prop = None  # do not redefine
-    bf_xb_idxs = (2, 3)  # BBOX, VOXELS, FACES, PIXELS, EDGES
-    bf_xb_from_fds = "FACES"
-
-
-@subscribe
-class OP_XB_edges(OP_XB):
-    bpy_prop = None  # do not redefine
-    bf_xb_idxs = (4,)  # BBOX, VOXELS, FACES, PIXELS, EDGES
-    bf_xb_from_fds = "EDGES"
 
 def update_bf_xyz(ob, context):
     geometry.utils.rm_tmp_objects(context)
@@ -1400,20 +1362,6 @@ def update_bf_xyz(ob, context):
         return
 
 
-def get_bf_xyz_items(ob, context):
-    try:
-        bf_xyz_idxs = ob.bf_namelist.bf_param_xyz.bf_xyz_idxs
-    except AttributeError:
-        bf_xyz_idxs = (0, 1)
-    return tuple(
-        (
-            ("CENTER", "Center", "Point, center point of this object"),
-            ("VERTICES", "Vertices", "Points, one for each vertex of this object"),
-        )[i]
-        for i in bf_xyz_idxs
-    )
-
-
 @subscribe
 class OP_XYZ_export(BFParam):
     label = "Export XYZ"
@@ -1421,7 +1369,7 @@ class OP_XYZ_export(BFParam):
     bpy_type = Object
     bpy_idname = "bf_xyz_export"
     bpy_prop = BoolProperty
-    bpy_default = True
+    bpy_default = False
     bpy_other = {"update": update_bf_xyz}
 
 
@@ -1433,7 +1381,13 @@ class OP_XYZ(BFParamXYZ):
     bpy_type = Object
     bpy_idname = "bf_xyz"
     bpy_prop = EnumProperty
-    bpy_other = {"update": update_bf_xyz, "items": get_bf_xyz_items}
+    bpy_other = {
+        "update": update_bf_xyz,
+        "items": (
+            ("CENTER", "Center", "Point, center point of this object"),
+            ("VERTICES", "Vertices", "Points, one for each vertex of this object"),
+        ),
+    }
     bpy_export = "bf_xyz_export"
 
     def to_fds_param(self, context):
@@ -1481,7 +1435,7 @@ class OP_XYZ(BFParamXYZ):
     def from_fds(self, context, value):
         scale_length = context.scene.unit_settings.scale_length
         try:
-            geometry.from_fds.xyzs_to_ob(
+            bf_xyz = geometry.from_fds.xyzs_to_ob(
                 xyzs=(value,),
                 context=context,
                 ob=self.element,
@@ -1489,7 +1443,10 @@ class OP_XYZ(BFParamXYZ):
             )
         except Exception as err:
             raise BFException(self, f"Error importing <{value}> value, {str(err)}")
-        self.set_exported(context, True)
+        else:
+            self.element.bf_xyz = bf_xyz
+            self.element.bf_xyz_export = True
+            self.set_exported(context, True)
 
 
 @subscribe
@@ -1509,10 +1466,6 @@ def update_bf_pb(ob, context):
         return
 
 
-def get_bf_pb_items(ob, context):
-    return tuple((("PLANES", "Planes", "Planes, one for each face of this object"),))
-
-
 @subscribe
 class OP_PB_export(BFParam):
     label = "Export PBX, PBY, PBZ"
@@ -1520,7 +1473,7 @@ class OP_PB_export(BFParam):
     bpy_type = Object
     bpy_idname = "bf_pb_export"
     bpy_prop = BoolProperty
-    bpy_default = True
+    bpy_default = False
     bpy_other = {"update": update_bf_pb}
 
 
@@ -1531,7 +1484,10 @@ class OP_PB(BFParamPB):
     bpy_type = Object
     bpy_idname = "bf_pb"
     bpy_prop = EnumProperty
-    bpy_other = {"update": update_bf_pb, "items": get_bf_pb_items}
+    bpy_other = {
+        "update": update_bf_pb,
+        "items": (("PLANES", "Planes", "Planes, one for each face of this object"),),
+    }
     bpy_export = "bf_pb_export"
 
     axis = None  # axis for importing
@@ -1576,7 +1532,7 @@ class OP_PB(BFParamPB):
     def from_fds(self, context, value):
         scale_length = context.scene.unit_settings.scale_length
         try:
-            geometry.from_fds.pbs_to_ob(
+            bf_pb = geometry.from_fds.pbs_to_ob(
                 pbs=((self.axis, value[0]),),
                 context=context,
                 ob=self.element,
@@ -1584,7 +1540,10 @@ class OP_PB(BFParamPB):
             )
         except Exception as err:
             raise BFException(self, f"Error importing <{value}> value, {str(err)}")
-        self.set_exported(context, True)
+        else:
+            self.element.bf_pb = bf_pb
+            self.element.bf_pb_export = True
+            self.set_exported(context, True)
 
 
 @subscribe
@@ -1688,15 +1647,12 @@ class OP_other(BFParamOther):
 
 
 @subscribe
-class ON_OBST(BFNamelist):
+class ON_OBST(BFNamelistOb):
     label = "OBST"
     description = "Obstruction"
     enum_id = 1000
     fds_label = "OBST"
-    bpy_type = Object
-    bpy_export = "bf_export"
-    bpy_export_default = True
-    bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB_solid, OP_ID_suffix, OP_other
+    bf_params = OP_ID, OP_FYI, OP_SURF_ID, OP_XB, OP_ID_suffix, OP_other
     bf_other = {"appearance": "TEXTURED"}
 
 
@@ -1719,12 +1675,10 @@ class OP_other_namelist(BFParam):
 
 
 @subscribe
-class ON_other(BFNamelist):
+class ON_other(BFNamelistOb):
     label = "Other"
     description = "Other namelist"
     enum_id = 1007
-    bpy_type = Object
-    bpy_export = "bf_export"
     bf_params = (
         OP_other_namelist,
         OP_ID,
@@ -1740,7 +1694,6 @@ class ON_other(BFNamelist):
         OP_other,
     )
     bf_other = {"appearance": "TEXTURED"}
-
 
     @property
     def fds_label(self):
@@ -1838,13 +1791,11 @@ class OP_GEOM_EXTEND_TERRAIN(BFParam):  # FIXME
 
 
 @subscribe
-class ON_GEOM(BFNamelist):
+class ON_GEOM(BFNamelistOb):
     label = "GEOM"
     description = "Geometry"
     enum_id = 1021
     fds_label = "GEOM"
-    bpy_type = Object
-    bpy_export = "bf_export"
     bf_params = (
         OP_ID,
         OP_FYI,
@@ -1857,39 +1808,33 @@ class ON_GEOM(BFNamelist):
     bf_other = {"appearance": "TEXTURED"}
 
 
-
 # HOLE
 
 
 @subscribe
-class ON_HOLE(BFNamelist):
+class ON_HOLE(BFNamelistOb):
     label = "HOLE"
     description = "Obstruction cutout"
     enum_id = 1009
     fds_label = "HOLE"
-    bpy_type = Object
-    bpy_export = "bf_export"
-    bf_params = OP_ID, OP_FYI, OP_XB_bbox, OP_other
+    bf_params = OP_ID, OP_FYI, OP_XB, OP_other
     bf_other = {"appearance": "DUMMY0"}
-
 
 
 # VENT
 
 
 @subscribe
-class ON_VENT(BFNamelist):
+class ON_VENT(BFNamelistOb):
     label = "VENT"
     description = "Boundary condition patch"
     enum_id = 1010
     fds_label = "VENT"
-    bpy_type = Object
-    bpy_export = "bf_export"
     bf_params = (
         OP_ID,
         OP_FYI,
         OP_SURF_ID,
-        OP_XB_flat,
+        OP_XB,
         OP_PB,
         OP_PBX,
         OP_PBY,
@@ -1958,13 +1903,11 @@ class OP_DEVC_PROP_ID(BFParamStr):
 
 
 @subscribe
-class ON_DEVC(BFNamelist):
+class ON_DEVC(BFNamelistOb):
     label = "DEVC"
     description = "Device"
     enum_id = 1011
     fds_label = "DEVC"
-    bpy_type = Object
-    bpy_export = "bf_export"
     bf_params = (
         OP_ID,
         OP_FYI,
@@ -2015,13 +1958,11 @@ class OP_SLCF_CELL_CENTERED(BFParam):
 
 
 @subscribe
-class ON_SLCF(BFNamelist):
+class ON_SLCF(BFNamelistOb):
     label = "SLCF"
     description = "Slice file"
     enum_id = 1012
     fds_label = "SLCF"
-    bpy_type = Object
-    bpy_export = "bf_export"
     bf_params = (
         OP_ID,
         OP_FYI,
@@ -2043,16 +1984,13 @@ class ON_SLCF(BFNamelist):
 
 
 @subscribe
-class ON_PROF(BFNamelist):
+class ON_PROF(BFNamelistOb):
     label = "PROF"
     description = "Wall profile output"
     enum_id = 1013
     fds_label = "PROF"
-    bpy_type = Object
-    bpy_export = "bf_export"
     bf_params = OP_ID, OP_FYI, OP_DEVC_QUANTITY, OP_XYZ, OP_ID_suffix, OP_other
     bf_other = {"appearance": "DUMMY1"}
-
 
 
 # MESH
@@ -2087,64 +2025,52 @@ class OP_MESH_MPI_PROCESS(BFParam):
 
 
 @subscribe
-class ON_MESH(BFNamelist):
+class ON_MESH(BFNamelistOb):
     label = "MESH"
     description = "Domain of simulation"
     enum_id = 1014
     fds_label = "MESH"
-    bpy_type = Object
-    bpy_export = "bf_export"
-    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB_bbox, OP_other
+    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB, OP_other
     bf_other = {"appearance": "WIRE"}
-
 
 
 # INIT
 
 
 @subscribe
-class ON_INIT(BFNamelist):
+class ON_INIT(BFNamelistOb):
     label = "INIT"
     description = "Initial condition"
     enum_id = 1015
     fds_label = "INIT"
-    bpy_type = Object
-    bpy_export = "bf_export"
-    bf_params = OP_ID, OP_FYI, OP_XB_solid, OP_XYZ, OP_ID_suffix, OP_other
+    bf_params = OP_ID, OP_FYI, OP_XB, OP_XYZ, OP_ID_suffix, OP_other
     bf_other = {"appearance": "DUMMY2"}
-
 
 
 # ZONE
 
 
 @subscribe
-class ON_ZONE(BFNamelist):  # FIXME XYZ?
+class ON_ZONE(BFNamelistOb):  # FIXME XYZ?
     label = "ZONE"
     description = "Pressure zone"
     enum_id = 1016
     fds_label = "ZONE"
-    bpy_type = Object
-    bpy_export = "bf_export"
-    bf_params = OP_ID, OP_FYI, OP_XB_bbox, OP_other
+    bf_params = OP_ID, OP_FYI, OP_XB, OP_other
     bf_other = {"appearance": "DUMMY2"}
-
 
 
 # HVAC
 
 
 @subscribe
-class ON_HVAC(BFNamelist):
+class ON_HVAC(BFNamelistOb):
     label = "HVAC"
     description = "HVAC system definition"
     enum_id = 1017
     fds_label = "HVAC"
-    bpy_type = Object
-    bpy_export = "bf_export"
     bf_params = OP_ID, OP_FYI, OP_XYZ, OP_ID_suffix, OP_other
     bf_other = {"appearance": "WIRE"}
-
 
 
 # Closing
@@ -2200,7 +2126,7 @@ class BFObject:
         # Import
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
-    def set_default_appearance(self, context): # FIXME clean up, improve names
+    def set_default_appearance(self, context):  # FIXME clean up, improve names
         bf_namelist = self.bf_namelist
         if not bf_namelist:
             return
@@ -2224,7 +2150,6 @@ class BFObject:
             self.display_type = "SOLID"
         elif appearance == "WIRE":
             self.display_type = "WIRE"
-
 
     @classmethod
     def register(cls):
@@ -2263,7 +2188,7 @@ class BFMaterial:
         # Import
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
-    def set_default_appearance(self, context): # FIXME
+    def set_default_appearance(self, context):  # FIXME
         pass
 
     @classmethod
@@ -2287,7 +2212,7 @@ class BFScene:
     name = str()  # sc.name
     bf_head_export = bool()  # sc.bf_head_export
     collection = None  # sc.collection
-    
+
     @property
     def bf_namelists(self):
         return (n for _, n in bf_namelists.items() if n.bpy_type == Scene)
@@ -2352,7 +2277,9 @@ class BFScene:
             elif bf_namelist.bpy_type == Material:  # new Material
                 ma = bpy.data.materials.new(hid)
                 ma.from_fds(context, fds_namelist=fds_namelist)
-                ma.use_fake_user = True  # prevent deletion if used by something else (eg. PART)
+                ma.use_fake_user = (
+                    True
+                )  # prevent deletion if used by something else (eg. PART)
                 ma.set_default_appearance(context)
             elif bf_namelist.bpy_type == Scene:  # current Scene
                 bf_namelist(self).from_fds(context, fds_params=fds_namelist.fds_params)
@@ -2369,7 +2296,7 @@ class BFScene:
     def to_ge1(self, context):
         return geometry.to_ge1.scene_to_ge1(context, self)
 
-    def set_default_appearance(self, context): # FIXME
+    def set_default_appearance(self, context):  # FIXME
         pass
 
     @classmethod

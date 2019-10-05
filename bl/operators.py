@@ -72,7 +72,7 @@ class OBJECT_OT_bf_check_intersections(Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.object
+        return context.active_object
 
     def execute(self, context):
         w = context.window_manager.windows[0]
@@ -103,7 +103,7 @@ class SCENE_OT_bf_check_quality(Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.object
+        return context.active_object
 
     def execute(self, context):
         w = context.window_manager.windows[0]
@@ -131,7 +131,7 @@ class _external_tool:
 
     @classmethod
     def poll(cls, context):
-        return cls._get_exe(context) and context.object
+        return cls._get_exe(context) and context.active_object
 
     @classmethod
     def _get_exe(self, context):  # to be reloaded
@@ -144,7 +144,7 @@ class _external_tool:
     def execute(self, context):
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
-        ob = context.object
+        ob = context.active_object
         cmd, input_obj, output_obj = self._get_cmd(context, ob)
         # Export obj
         bpy.ops.export_scene.obj(
@@ -328,10 +328,10 @@ class OBJECT_OT_bf_show_fds_code(_show_fds_code, Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.object
+        return context.active_object
 
     def _get_lines(self, context):
-        return context.object.to_fds(context)
+        return context.active_object.to_fds(context)
 
 
 @subscribe
@@ -373,19 +373,25 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.object
+        return context.active_object
 
     def execute(self, context):
+        ob = context.active_object
+        bf_namelist = ob.bf_namelist
+        scale_length = context.scene.unit_settings.scale_length
+        # Exported
+        if not bf_namelist.exported:
+            self.report({"WARNING"}, "Not exported")
+            return {"CANCELLED"}
+        # Wait
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
-        ob = context.object
-        scale_length = context.scene.unit_settings.scale_length
-        # GEOM
+        # Manage GEOM
         if ob.bf_namelist_cls == "ON_GEOM" and ob.bf_export:
             check = ob.bf_geom_check_quality
             try:
                 fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
-                    context, ob, scale_length, check
+                    context=context, ob=ob, scale_length=scale_length, check=check
                 )
             except BFException as err:
                 self.report({"ERROR"}, str(err))
@@ -395,30 +401,25 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                     context, ob, f"{ob.name}_GEOM_tmp"
                 )
                 geometry.from_fds.geom_to_ob(
-                    fds_surfids, fds_verts, fds_faces, context, ob_tmp, scale_length
+                    fds_surfids=fds_surfids,
+                    fds_verts=fds_verts,
+                    fds_faces=fds_faces,
+                    context=context,
+                    ob=ob_tmp,
+                    scale_length=scale_length,
                 )
                 self.report({"INFO"}, msg)
                 return {"FINISHED"}
             finally:
                 w.cursor_modal_restore()
-        # XB, XYZ, PB*
-        msgs = list()
-        if ob.bf_xb_export and OP_XB in ob.bf_namelist.bf_params:  # XB
+        # Manage XB, XYZ, PB*
+        msgs, ob_tmp = list(), None
+        # XB
+        if ob.bf_xb_export and ob.bf_namelist.bf_param_xb:
             try:
-                xbs, msg = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
-            except BFException as err:
-                w.cursor_modal_restore()
-                self.report({"ERROR"}, str(err))
-                return {"CANCELLED"}
-            else:
-                msgs.append(msg)
-                ob_tmp = geometry.utils.get_tmp_object(context, ob, f"{ob.name}_XB_tmp")
-                geometry.from_fds.xbs_to_ob(
-                    xbs, context, ob_tmp, scale_length, ob.bf_xb, ma=ob.active_material
+                xbs, msg = geometry.to_fds.ob_to_xbs(
+                    context=context, ob=ob, scale_length=scale_length
                 )
-        if ob.bf_xyz_export and OP_XYZ in ob.bf_namelist.bf_params:  # XYZ
-            try:
-                xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob, scale_length)
             except BFException as err:
                 w.cursor_modal_restore()
                 self.report({"ERROR"}, str(err))
@@ -426,14 +427,44 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
             else:
                 msgs.append(msg)
                 ob_tmp = geometry.utils.get_tmp_object(
-                    context, ob, f"{ob.name}_XYZ_tmp"
+                    context=context, ob=ob, name=f"{ob.name}_XB_tmp"
+                )
+                geometry.from_fds.xbs_to_ob(
+                    xbs=xbs,
+                    context=context,
+                    ob=ob_tmp,
+                    scale_length=scale_length,
+                    ma=ob.active_material,
+                    bf_xb=ob.bf_xb,
+                )
+        # XYZ
+        if ob.bf_xyz_export and ob.bf_namelist.bf_param_xyz:
+            try:
+                xyzs, msg = geometry.to_fds.ob_to_xyzs(
+                    context=context, ob=ob, scale_length=scale_length
+                )
+            except BFException as err:
+                w.cursor_modal_restore()
+                self.report({"ERROR"}, str(err))
+                return {"CANCELLED"}
+            else:
+                msgs.append(msg)
+                ob_tmp = geometry.utils.get_tmp_object(
+                    context=context, ob=ob, name=f"{ob.name}_XYZ_tmp"
                 )
                 geometry.from_fds.xyzs_to_ob(
-                    xyzs, context, ob_tmp, scale_length, ma=ob.active_material
+                    xyzs=xyzs,
+                    context=context,
+                    ob=ob_tmp,
+                    scale_length=scale_length,
+                    ma=ob.active_material,
                 )
-        if ob.bf_pb_export and OP_PB in ob.bf_namelist.bf_params:  # PB
+        # PB
+        if ob.bf_pb_export and ob.bf_namelist.bf_param_pb:
             try:
-                pbs, msg = geometry.to_fds.ob_to_pbs(context, ob, scale_length)
+                pbs, msg = geometry.to_fds.ob_to_pbs(
+                    context=context, ob=ob, scale_length=scale_length
+                )
             except BFException as err:
                 w.cursor_modal_restore()
                 self.report({"ERROR"}, str(err))
@@ -441,16 +472,24 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
             else:
                 msgs.append(msg)
                 ob_tmp = geometry.utils.get_tmp_object(
-                    context, ob, f"{ob.name}_PB*_tmp"
+                    context=context, ob=ob, name=f"{ob.name}_PB*_tmp"
                 )
                 geometry.from_fds.pbs_to_ob(
-                    pbs, context, ob_tmp, scale_length, ma=ob.active_material
+                    pbs=pbs,
+                    context=context,
+                    ob=ob_tmp,
+                    scale_length=scale_length,
+                    ma=ob.active_material,
                 )
+        # Close
         w.cursor_modal_restore()
-        self.report(
-            {"INFO"}, "; ".join(msg for msg in msgs if msg) or "Geometry exported."
-        )
-        return {"FINISHED"}
+        msg = "; ".join(msg for msg in msgs if msg)
+        if ob_tmp:
+            self.report({"INFO"}, msg or "Geometry exported.")
+            return {"FINISHED"}
+        else:
+            self.report({"WARNING"}, msg or "No geometry exported.")
+            return {"CANCELLED"}
 
 
 @subscribe
@@ -622,13 +661,16 @@ class OBJECT_OT_bf_copy_FDS_properties_to_sel_obs(Operator):
     bl_description = "Copy current object FDS parameters to selected Objects"
     bl_options = {"REGISTER", "UNDO"}
 
+    @classmethod
+    def poll(cls, context):
+        return context.active_object
+
     def invoke(self, context, event):  # Ask for confirmation
         wm = context.window_manager
         return wm.invoke_confirm(self, event)
 
     def execute(self, context):
-        if context.mode != "OBJECT":
-            bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
+        bpy.ops.object.mode_set(mode="OBJECT")
         # Get source and destination objects
         source_element = context.active_object
         destination_elements = set(
@@ -654,6 +696,12 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
     bl_idname = "material.bf_surf_to_sel_obs"
     bl_description = "Assign current boundary condition to selected Objects"
     bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        source_element = context.active_object
+        active_material = source_element.active_material
+        return source_element and active_material
 
     def invoke(self, context, event):  # Ask for confirmation
         wm = context.window_manager
