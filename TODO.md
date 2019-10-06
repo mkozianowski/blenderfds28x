@@ -20,10 +20,6 @@ geometry cache not working, handler crashing
 
 op mesh
 
-default appearance
-
-from_fds, import
-
 file version management
 
 ## Geography:
@@ -74,6 +70,10 @@ GEOM toolbox
 GEOM geometry mod original object fix, tool panel?
 
 logger
+
+default appearance
+
+from_fds, import
 
 ## Geography
 
