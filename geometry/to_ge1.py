@@ -55,15 +55,15 @@ def scene_to_ge1(context, scene):  # TODO use BMesh
     )
     ma_to_appearance[ma.name] = i
     # Select GE1 objects
+    allowed_nls = ("ON_OBST", "ON_GEOM", "ON_VENT", "ON_HOLE")
     obs = (
         ob
         for ob in context.scene.objects
         if ob.type == "MESH"
-        and not ob.hide_render  # show only exported objects
-        and not ob.bf_is_tmp  # do not show tmp objects
-        and ob.bf_namelist_cls
-        in ("ON_OBST", "ON_GEOM", "ON_VENT", "ON_HOLE")  # show only some namelists
-        and getattr(ob.active_material, "name") != "OPEN"  # do not show open VENTs
+        and not ob.hide_render  # show only exported obs
+        and not ob.bf_is_tmp  # do not show tmp obs
+        and ob.bf_namelist_cls in allowed_nls  # show only allowed namelists
+        and (ob.active_material and ob.active_material.name != "OPEN")  # no OPEN
     )
     # Get GE1 faces from selected objects
     gefaces = list()

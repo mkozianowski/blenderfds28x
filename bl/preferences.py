@@ -42,7 +42,7 @@ class BFPreferences(AddonPreferences):
             ("CRITICAL", "Critical", ""),
         ],
         update=update_loglevel,
-        default="DEBUG",
+        default="DEBUG",  # FIXME
     )
 
     bf_quadriflow_filepath: StringProperty(

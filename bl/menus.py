@@ -181,7 +181,7 @@ def menu_func_export_FDS(self, context):
         basename = "{0}.fds".format(bpy.path.clean_name(sc.name))
     # Call the exporter operator
     filepath = f"{directory}/{basename}"
-    self.layout.operator("export_scene.fds", text="NIST FDS (.fds)")
+    self.layout.operator("export_scene.fds", text="NIST FDS (.fds)").filepath = filepath
 
 
 # Register

@@ -2277,7 +2277,20 @@ class BFScene:
         """Import from FDSCase."""
         self.set_default_appearance(context)  # current scene
         fds_case_un = FDSCase()  # unmanaged namelists
+        # Import SURFs first FIXME improve, repetition!
+        # FIXME if a material is not available, throw an Exception!
         for fds_namelist in fds_case.fds_namelists:
+            if fds_namelist.label != "SURF":
+                continue
+            hid = f"New {fds_namelist.label}"
+            ma = bpy.data.materials.new(hid)
+            ma.from_fds(context, fds_namelist=fds_namelist)
+            ma.use_fake_user = True # prevent del (eg. used by PART)
+            ma.set_default_appearance(context)
+        # Then the rest FIXME improve
+        for fds_namelist in fds_case.fds_namelists:
+            if fds_namelist.label == "SURF":
+                continue
             # Get namelist class
             bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label, None)
             if not bf_namelist:

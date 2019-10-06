@@ -37,7 +37,7 @@ from . import lang
 from .bl import operators, panels, menus, ui, handlers, preferences
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)  # FIXME
 log = logging.getLogger(__name__)
 
 
