@@ -28,7 +28,7 @@ from bpy.props import (
     CollectionProperty,
 )
 
-if __name__ != "__main__":  # FIXME
+if __name__ != "__main__":
     from .bl import custom_uilist
     from .utils import is_iterable
 
@@ -344,11 +344,15 @@ class BFNamelist(BFParam):
     @classmethod
     def register(cls):
         super().register()
+        # Indexes are used to link both the class and the instance
+        cls._bf_param_idx_by_fds_label = dict()  # fds_label: index of param
         cls._bf_param_xb_idx = None  # index of param of type BFParamXB
         cls._bf_param_xyz_idx = None  # ... of type BFParamXYZ
         cls._bf_param_pb_idx = None  # ... of type BFParamPB
         cls._bf_param_other_idx = None  # ... of type BFParamOther
         for i, p in enumerate(cls.bf_params):
+            if p.fds_label:
+                cls._bf_param_idx_by_fds_label[p.fds_label] = i
             if issubclass(p, BFParamXB):
                 cls._bf_param_xb_idx = i
             elif issubclass(p, BFParamXYZ):
@@ -358,23 +362,33 @@ class BFNamelist(BFParam):
             elif issubclass(p, BFParamOther):
                 cls._bf_param_other_idx = i
 
+    def get_bf_param_by_fds_label(self, fds_label) -> "BFParam or None":
+        """Get bf_param (class or instance) by its fds_label."""
+        i = self._bf_param_idx_by_fds_label.get(fds_label)
+        if i is not None:
+            return self.bf_params[i]
+
     @property
     def bf_param_xb(self):
+        """XB bf_param (class or instance)."""
         if self._bf_param_xb_idx is not None:
             return self.bf_params[self._bf_param_xb_idx]
 
     @property
     def bf_param_xyz(self):
+        """XYZ bf_param (class or instance)."""
         if self._bf_param_xyz_idx is not None:
             return self.bf_params[self._bf_param_xyz_idx]
 
     @property
     def bf_param_pb(self):
+        """PB bf_param (class or instance)."""
         if self._bf_param_pb_idx is not None:
             return self.bf_params[self._bf_param_pb_idx]
 
     @property
     def bf_param_other(self):
+        """Other bf_param (class or instance)."""
         if self._bf_param_other_idx is not None:
             return self.bf_params[self._bf_param_other_idx]
 
@@ -399,12 +413,6 @@ class BFNamelist(BFParam):
             return True
         return bool(getattr(self.element, self.bpy_export, True))
 
-    def get_bf_param_by_fds_label(self, fds_label) -> "None or BFParam":
-        """Get my bf_param by FDS label."""
-        for p in self.bf_params:
-            if p.fds_label == fds_label:
-                return p
-
     def to_fds_namelist(self, context) -> "None or FDSNamelist":
         """Return the FDSNamelist Python representation."""
         # Get if exported and check
@@ -426,17 +434,16 @@ class BFNamelist(BFParam):
     def from_fds(self, context, fds_params):
         """Set namelist parameter values from list of FDSParam, on error raise BFException."""
         for p in fds_params:
-            bf_param = self.get_bf_param_by_fds_label(
-                p.label
-            )  # FIXME precomputed dict is faster
-            if not bf_param:
+            bf_param = self.get_bf_param_by_fds_label(p.label)
+            if bf_param is None:
                 bf_param_other = self.bf_param_other
                 if bf_param_other:
                     bf_param_other.set_value(context, value=str(p))
                 else:
                     raise BFException(self, f"Value {p} is not managed")
                 continue
-            bf_param.from_fds(context, p.values)
+            else:
+                bf_param.from_fds(context, p.values)
         self.set_exported(context, True)
 
 

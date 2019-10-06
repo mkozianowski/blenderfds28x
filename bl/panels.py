@@ -17,7 +17,7 @@
 import bpy
 from bpy.types import Panel, UIList, Operator, bpy_struct
 
-from ..lang import bf_namelists
+from .. import lang
 from . import custom_uilist
 from .. import config
 from .. import gis
@@ -54,7 +54,7 @@ class SCENE_PT_bf_namelist:
     def draw_header(self, context):
         sc = context.scene
         # Manage Scene
-        bf_namelist = bf_namelists[self.bf_namelist_cls]
+        bf_namelist = lang.bf_namelists_by_cls[self.bf_namelist_cls]
         if bf_namelist.bpy_export:
             self.layout.prop(sc, bf_namelist.bpy_export, icon_only=True)
         self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
@@ -65,7 +65,7 @@ class SCENE_PT_bf_namelist:
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
         flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
-        bf_namelist = bf_namelists[self.bf_namelist_cls]
+        bf_namelist = lang.bf_namelists_by_cls[self.bf_namelist_cls]
         bf_namelist(sc).draw(context, flow)
 
 

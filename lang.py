@@ -66,23 +66,24 @@ log = logging.getLogger(__name__)
 
 # Collections
 
-bf_namelists = dict()  # dict of all BFNamelists by name
-bf_params = dict()  # dict of all BFParam by name
-
-bf_namelists_by_fds_label = dict()  # dict of all BFNamelists by fds_label
-
+bf_namelists = list()
+bf_params = list()
 bl_classes = list()  # list of all Blender classes that need registering
-bf_classes = list()  # list of all BF classes that need registering
+bf_classes = list()  # list of all BlenderFDS classes that need registering
+
+bf_namelists_by_cls = dict()  # dict of all BFNamelist classes by cls name
+bf_namelists_by_fds_label = dict()  # dict of all BFNamelist classes by fds_label
 
 
 def subscribe(cls):
     """Subscribe class to related collection."""
     if issubclass(cls, BFNamelist):
-        bf_namelists[cls.__name__] = cls
+        bf_namelists.append(cls)
+        bf_namelists_by_cls[cls.__name__] = cls
         if cls.fds_label:
             bf_namelists_by_fds_label[cls.fds_label] = cls
     elif issubclass(cls, BFParam):
-        bf_params[cls.__name__] = cls
+        bf_params.append(cls)
     elif issubclass(cls, bpy_struct):
         bl_classes.append(cls)
     else:
@@ -444,7 +445,9 @@ class SP_TIME_setup_only(BFParam):
 
     def to_fds_param(self, context):
         if self.element.bf_time_setup_only:
-            return FDSParam(label="T_END", values=(0.0,), msg="Smokeview setup only", precision=1)
+            return FDSParam(
+                label="T_END", values=(0.0,), msg="Smokeview setup only", precision=1
+            )
 
 
 @subscribe
@@ -477,6 +480,7 @@ class SP_TIME_T_END(BFParam):
     @property
     def exported(self):
         return super().exported and not self.element.bf_time_setup_only
+
 
 @subscribe
 class SP_TIME_other(BFParamOther):
@@ -975,7 +979,7 @@ class MP_RGB(BFParam):  # exports both RGB and TRANSPARENCY
     bpy_prop = None  # Do not register
     bpy_idname = "diffuse_color"
 
-    def set_value(self, context, value):  # for importing
+    def set_value(self, context, value):
         c = self.element.diffuse_color
         c[0], c[1], c[2] = value[0] / 255.0, value[1] / 255.0, value[2] / 255.0
 
@@ -992,7 +996,7 @@ class MP_RGB(BFParam):  # exports both RGB and TRANSPARENCY
 
 
 @subscribe
-class MP_COLOR(BFParam):  # only importing
+class MP_COLOR(BFParam):  # for importing only
     label = "COLOR"
     description = "Color"
     fds_label = "COLOR"
@@ -1011,7 +1015,7 @@ class MP_COLOR(BFParam):  # only importing
 
 
 @subscribe
-class MP_TRANSPARENCY(BFParam):  # only importing
+class MP_TRANSPARENCY(BFParam):  # for importing only, exported by MP_RGB
     label = "TRANSPARENCY"
     description = "Color values (red, green, blue) and transparency"
     fds_label = "TRANSPARENCY"
@@ -1137,12 +1141,12 @@ class MN_SURF(BFNamelistMa):
     fds_label = "SURF"
     bpy_export = "bf_surf_export"
     bpy_export_default = True
-    bf_params = (  # all params for importing
+    bf_params = (
         MP_ID,
         MP_FYI,
         MP_RGB,
-        MP_COLOR,  # for importing
-        MP_TRANSPARENCY,  # for importing
+        MP_COLOR,
+        MP_TRANSPARENCY,
         MP_MATL_ID,
         MP_THICKNESS,
         MP_BACKING,
@@ -1547,8 +1551,7 @@ class OP_PB(BFParamPB):
 
 
 @subscribe
-class OP_PBX(OP_PB):
-    description = "For importing only"
+class OP_PBX(OP_PB):  # for importing only
     fds_label = "PBX"
     bpy_prop = None  # already defined
     axis = 0  # axis for importing
@@ -1561,32 +1564,15 @@ class OP_PBX(OP_PB):
 
 
 @subscribe
-class OP_PBY(OP_PBX):
-    description = "For importing only"
+class OP_PBY(OP_PBX):  # for importing only
     fds_label = "PBY"
     axis = 1  # axis for importing
 
 
 @subscribe
-class OP_PBZ(OP_PBX):
-    description = "For importing only"
+class OP_PBZ(OP_PBX):  # for importing only
     fds_label = "PBZ"
     axis = 2  # axis for importing
-
-
-def get_bf_id_suffix_items(ob, context):
-    return tuple(
-        (
-            ("IDI", "Index", "Append index number to multiple ID values"),
-            ("IDX", "x", "Append x coordinate to multiple ID values"),
-            ("IDY", "y", "Append y coordinate to multiple ID values"),
-            ("IDZ", "z", "Append z coordinate to multiple ID values"),
-            ("IDXY", "xy", "Append x,y coordinates to multiple ID values"),
-            ("IDXZ", "xz", "Append x,z coordinates to multiple ID values"),
-            ("IDYZ", "yz", "Append y,z coordinates to multiple ID values"),
-            ("IDXYZ", "xyz", "Append x,y,z coordinates to multiple ID values"),
-        )
-    )
 
 
 @subscribe
@@ -1596,7 +1582,18 @@ class OP_ID_suffix(BFParam):
     bpy_type = Object
     bpy_idname = "bf_id_suffix"
     bpy_prop = EnumProperty
-    bpy_other = {"items": get_bf_id_suffix_items}
+    bpy_other = {
+        "items": (
+            ("IDI", "Index", "Append index number to multiple ID values"),
+            ("IDX", "x", "Append x coordinate to multiple ID values"),
+            ("IDY", "y", "Append y coordinate to multiple ID values"),
+            ("IDZ", "z", "Append z coordinate to multiple ID values"),
+            ("IDXY", "xy", "Append x,y coordinates to multiple ID values"),
+            ("IDXZ", "xz", "Append x,z coordinates to multiple ID values"),
+            ("IDYZ", "yz", "Append y,z coordinates to multiple ID values"),
+            ("IDXYZ", "xyz", "Append x,y,z coordinates to multiple ID values"),
+        )
+    }
 
     def draw(self, context, layout):
         ob = self.element
@@ -2079,7 +2076,7 @@ class ON_HVAC(BFNamelistOb):
 
 items = [
     (cls.__name__, cls.label, cls.description, cls.enum_id)
-    for _, cls in bf_namelists.items()
+    for _, cls in bf_namelists_by_cls.items()
     if cls.bpy_type == Object
 ]
 items.sort(key=lambda k: k[1])
@@ -2089,7 +2086,7 @@ OP_namelist_cls.bpy_other["items"] = items
 
 items = [
     (cls.__name__, cls.label, cls.description, cls.enum_id)
-    for _, cls in bf_namelists.items()
+    for _, cls in bf_namelists_by_cls.items()
     if cls.bpy_type == Material
 ]
 items.sort(key=lambda k: k[1])
@@ -2105,7 +2102,7 @@ class BFObject:
     @property
     def bf_namelist(self):
         try:
-            return bf_namelists[self.bf_namelist_cls](self)
+            return bf_namelists_by_cls[self.bf_namelist_cls](self)
         except IndexError:
             raise BFException(
                 self,
@@ -2172,7 +2169,7 @@ class BFMaterial:
     @property
     def bf_namelist(self):
         try:
-            return bf_namelists[self.bf_namelist_cls](self)
+            return bf_namelists_by_cls[self.bf_namelist_cls](self)
         except IndexError:
             raise BFException(
                 self,
@@ -2215,7 +2212,7 @@ class BFScene:
 
     @property
     def bf_namelists(self):
-        return (n for _, n in bf_namelists.items() if n.bpy_type == Scene)
+        return (n for _, n in bf_namelists_by_cls.items() if n.bpy_type == Scene)
 
     def to_fds(self, context, full=False):
         # Header
@@ -2367,9 +2364,9 @@ def register():
         name="BlenderFDS File Version", size=3, default=(5, 0, 0)
     )
     # params and namelists
-    for _, cls in bf_params.items():
+    for cls in bf_params:
         cls.register()
-    for _, cls in bf_namelists.items():
+    for cls in bf_namelists:
         cls.register()
     # Blender Object, Material, and Scene
     BFObject.register()
@@ -2388,9 +2385,9 @@ def unregister():
     BFScene.unregister()
     BFCollection.unregister()
     # params and namelists
-    for _, cls in bf_params.items():
+    for cls in bf_namelists:
         cls.unregister()
-    for _, cls in bf_namelists.items():
+    for cls in bf_params:
         cls.unregister()
     # System parameters for tmp obs and file version
     del Object.bf_is_tmp

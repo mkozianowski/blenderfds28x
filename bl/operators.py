@@ -590,7 +590,7 @@ from .. import lang
 
 def _bf_props_copy(context, source_element, dest_elements):
     """Copy all parameters from source_element to dest_elements"""
-    for _, param in lang.bf_params.items():
+    for param in lang.bf_params:
         # Get value
         if not isinstance(source_element, param.bpy_type):
             continue

@@ -47,9 +47,9 @@ def is_writable(filepath):
     """Check if filepath is writable."""
     try:
         write_to_file(filepath, "! Test")
+        os.remove(filepath)
     except IOError:
         return False
-    # FIXME rm written test file
     return True
 
 
