@@ -1,6 +1,7 @@
 """BlenderFDS, export geometry to ge1 cad file format."""
-# FIXME implement!
+
 import bpy, bmesh
+from . import utils
 
 # GE1 file format:
 
@@ -12,7 +13,7 @@ import bpy, bmesh
 # Burner
 # 1 255 0 0 0.0 0.0 0.5
 #
-# BF_HOLE                   < automatically inserted to render HOLEs
+# Dummy Hole                   < automatically inserted to render HOLEs
 # 2 150 150 150 0.0 0.0 0.5
 #
 # [FACES]       < immutable title
@@ -22,61 +23,59 @@ import bpy, bmesh
 # EOF
 
 
+def _get_appearance(name, i, rgb):
+    return f"{name}\n{i} {rgb[0]} {rgb[1]} {rgb[2]} 0. 0. {rgb[3]:.3f} 0. 0. 0.\n\n"
+
+
 def scene_to_ge1(context, scene):  # TODO use BMesh
     """Export scene geometry in FDS GE1 notation."""
     # Cursor
     w = context.window_manager.windows[0]
     w.cursor_modal_set("WAIT")
     # Get GE1 appearances from materials
-    appearances = list()
-    ma_to_appearance = dict()
-    for index, ma in enumerate(bpy.data.materials):
-        ma_to_appearance[ma.name] = index
+    appearances, ma_to_appearance = list(), dict()
+    for i, ma in enumerate(bpy.data.materials):
         appearances.append(
-            "{desc}\n{i} {r} {g} {b} 0. 0. {alpha:.3f} 0. 0. 0.\n\n".format(
-                desc=ma.name,
-                i=index,
-                r=int(ma.diffuse_color[0] * 255),
-                g=int(ma.diffuse_color[1] * 255),
-                b=int(ma.diffuse_color[2] * 255),
-                alpha=0.0,  # FIXME alpha=ma.alpha,
+            _get_appearance(
+                name=ma.name,
+                i=i,
+                rgb=(
+                    int(ma.diffuse_color[0] * 255),
+                    int(ma.diffuse_color[1] * 255),
+                    int(ma.diffuse_color[2] * 255),
+                    ma.diffuse_color[3],
+                ),
             )
         )
-    # Append dummy material for holes: BF_HOLE
-    ma_to_appearance["BF_HOLE"] = index + 1
+        ma_to_appearance[ma.name] = i
+    # Append dummy material for HOLEs
+    i += 1
     appearances.append(
-        "{desc}\n{i} {r} {g} {b} 0. 0. {alpha:.3f} 0. 0. 0.\n\n".format(
-            desc="BF_HOLE", i=index + 1, r=150, g=150, b=150, alpha=0.5
-        )
+        _get_appearance(name="Dummy Hole", i=i, rgb=(150, 150, 150, 0.5))
     )
+    ma_to_appearance[ma.name] = i
     # Select GE1 objects
     obs = (
         ob
         for ob in context.scene.objects
         if ob.type == "MESH"
-        and not ob.hide_render  # hide some objects if requested
-        and not ob.bf_is_tmp  # do not show temporary objects
-        and ob.bf_export  # show only exported objects
+        and not ob.hide_render  # show only exported objects
+        and not ob.bf_is_tmp  # do not show tmp objects
         and ob.bf_namelist_cls
         in ("ON_OBST", "ON_GEOM", "ON_VENT", "ON_HOLE")  # show only some namelists
-        and getattr(ob.active_material, "name", None)
-        != "OPEN"  # do not show open VENTs
+        and getattr(ob.active_material, "name") != "OPEN"  # do not show open VENTs
     )
     # Get GE1 faces from selected objects
     gefaces = list()
     for ob in obs:
-        # Get the new bmesh from the Object, apply modifiers, set in world coordinates, and triangulate
-        bm = bmesh.new()
-        bm.from_object(
-            ob, context.scene, deform=True, render=False, cage=False, face_normals=True
-        )
-        bm.transform(ob.matrix_world)
+        # Get the bmesh from the Object and triangulate
+        bm = utils.get_object_bmesh(context=context, ob=ob, world=True)
         bmesh.ops.triangulate(bm, faces=bm.faces)
         # Get ob material_slots
         material_slots = ob.material_slots
         # Get default_material_name
         if ob.bf_namelist_cls == "ON_HOLE":
-            default_material_name = "BF_HOLE"
+            default_material_name = "Dummy Hole"
         elif ob.bf_namelist_cls == "ON_GEOM":
             default_material_name = None
         elif ob.active_material:
@@ -88,7 +87,7 @@ def scene_to_ge1(context, scene):  # TODO use BMesh
             # Grab ordered vertices coordinates
             coos = [co for v in f.verts for co in v.co]
             coos.extend((coos[-3], coos[-2], coos[-1]))  # tri to quad
-            items = ["{:.6f}".format(coo * scale_length) for coo in coos]
+            items = [f"{coo * scale_length:.6f}" for coo in coos]
             # Get appearance_index
             if default_material_name:
                 material_name = default_material_name
@@ -100,7 +99,8 @@ def scene_to_ge1(context, scene):  # TODO use BMesh
             gefaces.append(" ".join(items))
 
     # Prepare GE1 file and return
-    ge1_file_a = "[APPEARANCE]\n{}\n{}".format(len(appearances), "".join(appearances))
-    ge1_file_f = "[FACES]\n{}\n{}".format(len(gefaces), "".join(gefaces))
+    ge1_file_a = f"[APPEARANCE]\n{len(appearances)}\n{''.join(appearances)}"
+    ge1_file_f = f"[FACES]\n{len(gefaces)}\n{''.join(gefaces)}"
+    # Close
     w.cursor_modal_restore()
     return "".join((ge1_file_a, ge1_file_f))

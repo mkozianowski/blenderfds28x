@@ -120,53 +120,47 @@ class ExportFDS(Operator, ExportHelper):
         if not filepath.lower().endswith(".fds"):
             filepath += ".fds"
         filepath = bpy.path.abspath(filepath)
-        # Check FDS filepath writable
-        if not utils.is_writable(filepath):
+        log.debug(f"Exporting Blender Scene <{sc.name}> to <{filepath}>...")
+        # Test FDS filepath is writable, before calculations
+        if not utils.write_to_file(filepath):
             w.cursor_modal_restore()
-            self.report({"ERROR"}, "FDS file not writable, cannot export")
+            self.report({"ERROR"}, "Filepath not writable, cannot export")
             return {"CANCELLED"}
         # Prepare FDS file
         try:
             fds_file = sc.to_fds(context=context, full=True)
         except BFException as err:
             w.cursor_modal_restore()
-            self.report({"ERROR"}, str(err))
+            self.report({"ERROR"}, f"Error while assembling FDS file:\n<{str(err)}>")
             return {"CANCELLED"}
-        # Add namelist index # TODO develop
         # Write FDS file
         try:
             utils.write_to_file(filepath, fds_file)
         except IOError:
             w.cursor_modal_restore()
-            self.report({"ERROR"}, "FDS file not writable, cannot export")
+            self.report({"ERROR"}, "FDS case filepath not writable, cannot export")
             return {"CANCELLED"}
         # GE1 description file requested?
         if sc.bf_dump_render_file:
-            print(
-                f"BFDS: Warning: Exporting Blender Scene <{sc.name}> to GE1 file not implemented!"
-            )  # FIXME
-            # # Prepare GE1 filepath
-            # print(f"BFDS: Exporting Blender Scene <{sc.name}> to GE1 file...")
-            # filepath = filepath[:-4] + ".ge1"
-            # if not utils.is_writable(filepath):
-            #     w.cursor_modal_restore()
-            #     self.report({"ERROR"}, "GE1 file not writable, cannot export")
-            #     return {"CANCELLED"}
-            # # Prepare GE1 file
-            # try:
-            #     ge1_file = sc.to_ge1(context=context)
-            # except BFException as err:
-            #     w.cursor_modal_restore()
-            #     self.report({"ERROR"}, str(err))
-            #     return {"CANCELLED"}
-            # # Write GE1 file
-            # if not utils.write_to_file(filepath, ge1_file):
-            #     w.cursor_modal_restore()
-            #     self.report({"ERROR"}, "GE1 file not writable, cannot export")
-            #     return {"CANCELLED"}
-            # print(f"BFDS: GE1 file written.")
+            # Prepare GE1 filepath
+            filepath = filepath[:-4] + ".ge1"
+            # Prepare GE1 file
+            try:
+                ge1_file = sc.to_ge1(context=context)
+            except BFException as err:
+                w.cursor_modal_restore()
+                self.report(
+                    {"ERROR"}, f"Error while assembling GE1 file:\n<{str(err)}>"
+                )
+                return {"CANCELLED"}
+            # Write GE1 file
+            if not utils.write_to_file(filepath, ge1_file):
+                w.cursor_modal_restore()
+                self.report({"ERROR"}, "GE1 filepath not writable, cannot export")
+                return {"CANCELLED"}
         # End
         w.cursor_modal_restore()
+        log.debug(f"Exporting done!")
         self.report({"INFO"}, "FDS case exported")
         return {"FINISHED"}
 

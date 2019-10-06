@@ -36,15 +36,18 @@ import bpy, logging
 from . import lang
 from .bl import operators, panels, menus, ui, handlers, preferences
 
+
+logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
 def register():
+    log.debug("Registering")
     # Preferences
     preferences.register()
     pref = bpy.context.preferences.addons[__package__].preferences
     # Set log level from preferences
-    log.setLevel(logging.getLevelName(pref.bf_loglevel))
+    log.setLevel(pref.bf_loglevel)
     # Register Blender properties, ops, panels, ...
     lang.register()
     operators.register()
@@ -57,6 +60,7 @@ def register():
 
 
 def unregister():
+    log.debug("Unregistering")
     # ui.unregister() # FIXME for now, restart needed
     menus.unregister()
     panels.unregister()

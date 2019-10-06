@@ -63,7 +63,6 @@ from . import utils
 
 log = logging.getLogger(__name__)
 
-
 # Collections
 
 bf_namelists = list()
@@ -127,61 +126,7 @@ class WM_UL_bf_filepaths_items(UIList):
         col.prop(item, "bf_export", text="")
 
 
-# HEAD
-
-
-@subscribe
-class SP_HEAD_CHID(BFParam):
-    label = "CHID"
-    description = "Case identificator"
-    fds_label = "CHID"
-    bf_other = {"copy_protect": True}
-    bpy_type = Scene
-    bpy_idname = "name"
-
-    def check(self, context):
-        value = self.element.name
-        if value and bpy.path.clean_name(value) != value:
-            raise BFException(self, "Illegal characters in case filename")
-
-
-@subscribe
-class SP_HEAD_TITLE(BFParamFYI):
-    label = "TITLE"
-    description = "Case description"
-    fds_label = "TITLE"
-    bpy_type = Scene
-    bpy_idname = "bf_head_title"
-    bpy_other = {"maxlen": 64}
-
-
-@subscribe
-class SN_HEAD(BFNamelistSc):
-    label = "HEAD"
-    description = "Case header"
-    enum_id = 3001
-    fds_label = "HEAD"
-    bpy_export = "bf_head_export"
-    bpy_export_default = True
-    bf_params = SP_HEAD_CHID, SP_HEAD_TITLE
-    maxlen = 0
-
-
-@subscribe
-class SN_TAIL(BFNamelistSc):  # for importing only
-    label = "TAIL"
-    description = "Case closing"
-    enum_id = 3010
-    fds_label = "TAIL"
-
-    def to_fds_namelist(self, context):
-        pass
-
-    def from_fds(self, context, fds_params):
-        pass
-
-
-# Case Config
+# Case config
 
 
 @subscribe
@@ -210,36 +155,20 @@ class SP_config_text(BFParam):
 
 
 @subscribe
-class SP_config_min_edge_length(BFParam):
-    label = "Min Edge Length"
-    description = "Min allowed edge length"
-    bpy_type = Scene
-    bpy_idname = "bf_config_min_edge_length"
-    bpy_prop = FloatProperty
-    bpy_default = 1e-05
-    bpy_other = {"unit": "LENGTH"}
+class SN_config(BFNamelistSc):
+    label = "FDS Case Config"
+
+    def draw(self, context, layout):
+        sc = self.element
+        col = layout.column()
+        col.prop(sc, "name", text="Filename")
+        col.prop(sc, "bf_config_directory")
+        row = col.row(align=True)
+        row.prop(sc, "bf_config_text")
+        row.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")
 
 
-@subscribe
-class SP_config_min_face_area(BFParam):
-    label = "Min Face Area"
-    description = "Min allowed face area"
-    bpy_type = Scene
-    bpy_idname = "bf_config_min_face_area"
-    bpy_prop = FloatProperty
-    bpy_default = 1e-05
-    bpy_other = {"unit": "AREA"}
-
-
-@subscribe
-class SP_config_default_voxel_size(BFParam):
-    label = "Voxel/Pixel Size"
-    description = "Default voxel/pixel resolution"
-    bpy_type = Scene
-    bpy_idname = "bf_default_voxel_size"
-    bpy_prop = FloatProperty
-    bpy_default = 0.1
-    bpy_other = {"unit": "LENGTH", "step": 1.0, "precision": 3}
+# Config origin geolocation
 
 
 @subscribe
@@ -372,41 +301,8 @@ class SP_elevation(BFParam):
 
 
 @subscribe
-class SN_config(BFNamelistSc):
-    label = "Config"
-    description = "Case configuration"
-    enum_id = 3008
-
-    def draw(self, context, layout):
-        sc = self.element
-        col = layout.column()
-        col.prop(sc, "bf_config_directory")
-        row = col.row(align=True)
-        row.prop(sc, "bf_config_text")
-        row.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")
-
-        col.separator()
-        col.prop(sc, "bf_config_min_edge_length")
-        col.prop(sc, "bf_config_min_face_area")
-        col.prop(sc, "bf_default_voxel_size")
-
-        col.separator()
-        unit = sc.unit_settings
-        col.prop(unit, "system")
-        col = col.column()
-        col.enabled = unit.system != "NONE"
-        col.prop(unit, "scale_length")
-        col.prop(unit, "use_separate")
-        col.prop(unit, "length_unit", text="Length")
-        # col.prop(unit, "mass_unit", text="Mass")  # Unused
-        col.prop(unit, "time_unit", text="Time")
-
-
-@subscribe
-class SN_geoloc(BFNamelistSc):
-    label = "Geolocation"
-    description = "Origin location"
-    enum_id = 3011
+class SN_config_geoloc(BFNamelistSc):
+    label = "Origin Geolocation"
 
     def draw(self, context, layout):
         sc = self.element
@@ -429,6 +325,129 @@ class SN_geoloc(BFNamelistSc):
             sub.prop(sc, "bf_utm_easting", text="Easting")
             sub.prop(sc, "bf_utm_northing", text="Northing")
         sub.prop(sc, "bf_elevation", text="Elevation")
+
+
+# Config sizes
+
+
+@subscribe
+class SP_config_min_edge_length(BFParam):
+    label = "Min Edge Length"
+    description = "Min allowed edge length"
+    bpy_type = Scene
+    bpy_idname = "bf_config_min_edge_length"
+    bpy_prop = FloatProperty
+    bpy_default = 1e-05
+    bpy_other = {"unit": "LENGTH"}
+
+
+@subscribe
+class SP_config_min_face_area(BFParam):
+    label = "Min Face Area"
+    description = "Min allowed face area"
+    bpy_type = Scene
+    bpy_idname = "bf_config_min_face_area"
+    bpy_prop = FloatProperty
+    bpy_default = 1e-05
+    bpy_other = {"unit": "AREA"}
+
+
+@subscribe
+class SP_config_default_voxel_size(BFParam):
+    label = "Voxel/Pixel Size"
+    description = "Default voxel/pixel resolution"
+    bpy_type = Scene
+    bpy_idname = "bf_default_voxel_size"
+    bpy_prop = FloatProperty
+    bpy_default = 0.1
+    bpy_other = {"unit": "LENGTH", "step": 1.0, "precision": 3}
+
+
+@subscribe
+class SN_config_sizes(BFNamelistSc):
+    label = "Default sizes"
+
+    def draw(self, context, layout):
+        sc = self.element
+        col = layout.column()
+        col.prop(sc, "bf_default_voxel_size")
+        col.prop(sc, "bf_config_min_edge_length")
+        col.prop(sc, "bf_config_min_face_area")
+
+
+# Config units
+
+
+@subscribe
+class SN_config_units(BFNamelistSc):
+    label = "Units"
+
+    def draw(self, context, layout):
+        sc = self.element
+        unit = sc.unit_settings
+        col = layout.column()
+        col.prop(unit, "system")
+        col = col.column()
+        col.enabled = unit.system != "NONE"
+        col.prop(unit, "scale_length")
+        col.prop(unit, "use_separate")
+        col.prop(unit, "length_unit", text="Length")
+        # col.prop(unit, "mass_unit", text="Mass")  # Unused
+        # col.prop(unit, "time_unit", text="Time")  # Unused
+
+
+# HEAD/TAIL
+
+
+@subscribe
+class SP_HEAD_CHID(BFParam):
+    label = "CHID (Filename)"
+    description = "Case identificator, also used as case filename"
+    fds_label = "CHID"
+    bf_other = {"copy_protect": True}
+    bpy_type = Scene
+    bpy_idname = "name"
+
+    def check(self, context):
+        value = self.element.name
+        if value and bpy.path.clean_name(value) != value:
+            raise BFException(self, "Illegal characters in case filename")
+
+
+@subscribe
+class SP_HEAD_TITLE(BFParamFYI):
+    label = "TITLE"
+    description = "Case description"
+    fds_label = "TITLE"
+    bpy_type = Scene
+    bpy_idname = "bf_head_title"
+    bpy_other = {"maxlen": 64}
+
+
+@subscribe
+class SN_HEAD(BFNamelistSc):
+    label = "HEAD"
+    description = "Case header"
+    enum_id = 3001
+    fds_label = "HEAD"
+    bpy_export = "bf_head_export"
+    bpy_export_default = True
+    bf_params = SP_HEAD_CHID, SP_HEAD_TITLE
+    maxlen = 0
+
+
+@subscribe
+class SN_TAIL(BFNamelistSc):  # for importing only
+    label = "TAIL"
+    description = "Case closing"
+    enum_id = 3010
+    fds_label = "TAIL"
+
+    def to_fds_namelist(self, context):
+        pass
+
+    def from_fds(self, context, fds_params):
+        pass
 
 
 # TIME
@@ -459,7 +478,7 @@ class SP_TIME_T_BEGIN(BFParam):
     bpy_type = Scene
     bpy_idname = "bf_time_t_begin"
     bpy_prop = FloatProperty
-    bpy_other = {"unit": "TIME", "step": 100.0, "precision": 1}
+    bpy_other = {"step": 100.0, "precision": 1}  # "unit": "TIME", not working
 
     @property
     def exported(self):
@@ -475,7 +494,7 @@ class SP_TIME_T_END(BFParam):
     bpy_idname = "bf_time_t_end"
     bpy_prop = FloatProperty
     bpy_default = 1.0
-    bpy_other = {"unit": "TIME", "step": 100.0, "precision": 1}
+    bpy_other = {"step": 100.0, "precision": 1}  # "unit": "TIME", not working
 
     @property
     def exported(self):
@@ -491,7 +510,7 @@ class SP_TIME_other(BFParamOther):
 
 
 @subscribe
-class SN_TIME(BFNamelistSc):  # FIXME draw panel, export in case of setup only
+class SN_TIME(BFNamelistSc):
     label = "TIME"
     description = "Simulation time settings"
     enum_id = 3002
@@ -794,13 +813,15 @@ class SP_DUMP_render_file(BFParam):
     bpy_type = Scene
     bpy_idname = "bf_dump_render_file"
     bpy_prop = BoolProperty
-    bpy_default = True
+    bpy_default = False
 
     @property
     def value(self):
         if self.element.bf_dump_render_file:
             return f"{self.element.name}.ge1"
 
+    def set_value(self, context, value):  # in FDS it is a str!
+        self.element.bf_dump_render_file = bool(value)         
 
 @subscribe
 class SP_DUMP_STATUS_FILES(BFParam):
@@ -837,7 +858,7 @@ class SP_DUMP_set_frequency(BFParam):
 
 @subscribe
 class SP_DUMP_DT_RESTART(BFParam):
-    label = "DT_RESTART"
+    label = "DT_RESTART [s]"
     description = "Time interval between restart files are saved"
     fds_label = "DT_RESTART"
     fds_default = 600
@@ -1065,7 +1086,7 @@ class MP_TAU_Q(BFParam):
     bpy_type = Material
     bpy_idname = "bf_tau_q"
     bpy_prop = FloatProperty
-    bpy_other = {"step": 10.0, "precision": 1, "unit": "TIME"}
+    bpy_other = {"step": 10.0, "precision": 1}
 
 
 @subscribe
@@ -1286,7 +1307,7 @@ class OP_XB(BFParamXB):
             ("EDGES", "Edges", "Export segments, one for each edge"),
         ),
     }
-    bpy_export = "bf_xb_export"  # FIXME get resetted!
+    bpy_export = "bf_xb_export"
     bf_xb_from_fds = None  # auto
 
     def draw(self, context, layout):
@@ -1862,7 +1883,7 @@ class OP_DEVC_SETPOINT(BFParam):
     bpy_type = Object
     bpy_idname = "bf_devc_setpoint"
     bpy_prop = FloatProperty
-    bpy_default = 0.0  # FIXME?
+    bpy_default = 0.0
     bpy_other = {"step": 10.0, "precision": 3}
     bpy_export = "bf_devc_setpoint_export"
     bpy_export_default = False
@@ -1945,7 +1966,7 @@ class OP_SLCF_CELL_CENTERED(BFParam):
     bpy_prop = BoolProperty
     bpy_idname = "bf_slcf_cell_centered"
 
-    # def check(self, context):  # FIXME seems ok
+    # def check(self, context):  # FIXME seems ok, che FDS doc
     #     if (
     #         self.element.bf_slcf_cell_centered
     #         and self.element.bf_slcf_vector
@@ -2185,7 +2206,7 @@ class BFMaterial:
         # Import
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
-    def set_default_appearance(self, context):  # FIXME
+    def set_default_appearance(self, context):
         pass
 
     @classmethod
@@ -2293,7 +2314,7 @@ class BFScene:
     def to_ge1(self, context):
         return geometry.to_ge1.scene_to_ge1(context, self)
 
-    def set_default_appearance(self, context):  # FIXME
+    def set_default_appearance(self, context):
         pass
 
     @classmethod
@@ -2351,7 +2372,7 @@ def register():
         log.debug(f"Registering Blender class <{cls.__name__}>")
         register_class(cls)
     # System parameters for tmp obs and file version
-    log.debug(f"BFDS: registering sys properties")
+    log.debug(f"Registering sys properties: bf_is_tmp, bf_has_tmp, ...")
     Object.bf_is_tmp = BoolProperty(
         name="Is Tmp", description="Set if this Object is tmp", default=False
     )

@@ -29,7 +29,7 @@ class BFPreferences(AddonPreferences):
     )
 
     def update_loglevel(self, context):
-        log.setLevel(logging.getLevelName(self.bf_loglevel))
+        log.setLevel(self.bf_loglevel)
 
     bf_loglevel: EnumProperty(
         name="Log Level",
@@ -42,7 +42,7 @@ class BFPreferences(AddonPreferences):
             ("CRITICAL", "Critical", ""),
         ],
         update=update_loglevel,
-        default="DEBUG",  # FIXME should be INFO
+        default="DEBUG",
     )
 
     bf_quadriflow_filepath: StringProperty(

@@ -63,7 +63,7 @@ class BFParam:
     """Blender representation of an FDS parameter."""
 
     label = "No Label"  # Object label
-    description = "No description"  # Object description
+    description = None  # Object description
     enum_id = None  # Unique integer id for EnumProperty
     bf_other = {}  # Other BlenderFDS parameters, eg: {'draw_type': 'WIRE', ...}
     bf_params = tuple()  # tuple of sub params of type BFParam

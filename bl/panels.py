@@ -57,7 +57,10 @@ class SCENE_PT_bf_namelist:
         bf_namelist = lang.bf_namelists_by_cls[self.bf_namelist_cls]
         if bf_namelist.bpy_export:
             self.layout.prop(sc, bf_namelist.bpy_export, icon_only=True)
-        self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
+        if bf_namelist.description:
+            self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
+        else:
+            self.bl_label = bf_namelist.label
 
     def draw(self, context):
         sc = context.scene
@@ -81,8 +84,23 @@ class SCENE_PT_bf_case_config(Panel, SCENE_PT_bf_namelist):
 
 
 @subscribe
-class SCENE_PT_bf_geoloc(Panel, SCENE_PT_bf_namelist):
-    bf_namelist_cls = "SN_geoloc"
+class SCENE_PT_bf_config_geoloc(Panel, SCENE_PT_bf_namelist):
+    bf_namelist_cls = "SN_config_geoloc"
+    bl_parent_id = "SCENE_PT_bf_case_config"
+    bl_options = {"DEFAULT_CLOSED"}
+
+
+@subscribe
+class SCENE_PT_bf_config_sizes(Panel, SCENE_PT_bf_namelist):
+    bf_namelist_cls = "SN_config_sizes"
+    bl_parent_id = "SCENE_PT_bf_case_config"
+    bl_options = {"DEFAULT_CLOSED"}
+
+
+@subscribe
+class SCENE_PT_bf_config_units(Panel, SCENE_PT_bf_namelist):
+    bf_namelist_cls = "SN_config_units"
+    bl_parent_id = "SCENE_PT_bf_case_config"
     bl_options = {"DEFAULT_CLOSED"}
 
 
