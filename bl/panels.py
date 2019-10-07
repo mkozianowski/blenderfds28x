@@ -17,7 +17,7 @@
 import bpy
 from bpy.types import Panel, UIList, Operator, bpy_struct
 
-from ..lang import bf_namelists
+from .. import lang
 from . import custom_uilist
 from .. import config
 from .. import gis
@@ -47,47 +47,66 @@ class SCENE_PT_bf_namelist:
     bf_namelist_cls = "SN_HEAD"  # example
     layout = None  # example
 
+    @classmethod
+    def poll(cls, context):
+        return context.scene
+
     def draw_header(self, context):
         sc = context.scene
-        bf_namelist = bf_namelists[self.bf_namelist_cls]
+        # Manage Scene
+        bf_namelist = lang.bf_namelists_by_cls[self.bf_namelist_cls]
         if bf_namelist.bpy_export:
             self.layout.prop(sc, bf_namelist.bpy_export, icon_only=True)
-        self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
+        if bf_namelist.description:
+            self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
+        else:
+            self.bl_label = bf_namelist.label
 
-    def draw(self, context):  # FIXME
+    def draw(self, context):
+        sc = context.scene
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
-        flow = layout.grid_flow(
-            row_major=True, columns=0, even_columns=True, even_rows=False, align=False
-        )
-        sc = context.scene
-        bf_namelist = bf_namelists[self.bf_namelist_cls]
-        if bf_namelist.bpy_export:
-            flow.active = getattr(sc, bf_namelist.bpy_export, True)
+        flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
+        bf_namelist = lang.bf_namelists_by_cls[self.bf_namelist_cls]
         bf_namelist(sc).draw(context, flow)
-
-
-@subscribe
-class SCENE_PT_bf_namelist_HEAD(Panel, SCENE_PT_bf_namelist):
-    bf_namelist_cls = "SN_HEAD"
-
-    def draw(self, context):
-        super().draw(context)
-        row = self.layout.row()
-        row.operator("scene.bf_show_fds_code", text="Show FDS Code", icon="HIDE_OFF")
-        row.operator("scene.bf_props_to_scene", text="Copy To Scene", icon="COPYDOWN")
 
 
 @subscribe
 class SCENE_PT_bf_case_config(Panel, SCENE_PT_bf_namelist):
     bf_namelist_cls = "SN_config"
 
+    def draw(self, context):
+        row = self.layout.row(align=True)
+        row.operator("scene.bf_show_fds_code", text="FDS Code", icon="HIDE_OFF")
+        row.operator("scene.bf_props_to_scene", text="Copy To", icon="COPYDOWN")
+        super().draw(context)
+
 
 @subscribe
-class SCENE_PT_bf_geoloc(Panel, SCENE_PT_bf_namelist):
-    bf_namelist_cls = "SN_geoloc"
+class SCENE_PT_bf_config_geoloc(Panel, SCENE_PT_bf_namelist):
+    bf_namelist_cls = "SN_config_geoloc"
+    bl_parent_id = "SCENE_PT_bf_case_config"
     bl_options = {"DEFAULT_CLOSED"}
+
+
+@subscribe
+class SCENE_PT_bf_config_sizes(Panel, SCENE_PT_bf_namelist):
+    bf_namelist_cls = "SN_config_sizes"
+    bl_parent_id = "SCENE_PT_bf_case_config"
+    bl_options = {"DEFAULT_CLOSED"}
+
+
+@subscribe
+class SCENE_PT_bf_config_units(Panel, SCENE_PT_bf_namelist):
+    bf_namelist_cls = "SN_config_units"
+    bl_parent_id = "SCENE_PT_bf_case_config"
+    bl_options = {"DEFAULT_CLOSED"}
+
+
+@subscribe
+class SCENE_PT_bf_namelist_HEAD(Panel, SCENE_PT_bf_namelist):
+    bf_namelist_cls = "SN_HEAD"
 
 
 @subscribe
@@ -136,38 +155,41 @@ class OBJECT_PT_bf_namelist(Panel):
     @classmethod
     def poll(cls, context):
         ob = context.object
-        return ob and ob.type == "MESH" and not ob.bf_is_tmp
+        return ob and ob.type == "MESH"
 
     def draw_header(self, context):
         ob = context.object
-        bf_namelist = bf_namelists[ob.bf_namelist_cls]
+        # Manage tmp Object
+        if ob.bf_is_tmp:
+            self.bl_label = "FDS Temporary Object"
+            return
+        # Manage Object
+        bf_namelist = ob.bf_namelist
         self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
         self.layout.prop(ob, "hide_render", emboss=False, icon_only=True)
 
     def draw(self, context):
+        ob = context.object
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # no animation
-        flow = layout.grid_flow(
-            row_major=True, columns=0, even_columns=True, even_rows=False, align=False
-        )
-        ob = context.object
-        layout.active = not (ob.hide_render)
-        flow.prop(ob, "bf_namelist_cls")
-        # Get the namelist class, instanciate it, and draw its panel
-        bf_namelists[ob.bf_namelist_cls](ob).draw(context, flow)
-        row = layout.row(align=True)
-        if ob.bf_has_tmp:
+        flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
+        # Operators
+        row = flow.row(align=True)
+        if ob.bf_is_tmp:
             row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
+            return
+        if ob.bf_has_tmp:
+            row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON", text="Geometry")
         else:
-            row.operator("object.bf_show_fds_geometry", icon="HIDE_OFF")
-        row.operator("object.bf_show_fds_code", text="Show FDS Code", icon="HIDE_OFF")
-        row = layout.row()
-        row.operator(
-            "object.bf_props_to_sel_obs",
-            text="Copy To Selected Objects",
-            icon="COPYDOWN",
-        )
+            row.operator(
+                "object.bf_show_fds_geometry", icon="HIDE_OFF", text="Geometry"
+            )
+        row.operator("object.bf_show_fds_code", text="FDS Code", icon="HIDE_OFF")
+        row.operator("object.bf_props_to_sel_obs", text="Copy To", icon="COPYDOWN")
+        # Manage Object
+        flow.prop(ob, "bf_namelist_cls")  # draw namelist choice
+        ob.bf_namelist.draw(context, flow)  # draw namelist
 
 
 @subscribe
@@ -184,28 +206,28 @@ class MATERIAL_PT_bf_namelist(Panel):
 
     def draw_header(self, context):
         ma = context.object.active_material
-        if ma.name in config.default_mas:  # Default material
+        # Manage default Material
+        if ma.name in config.default_mas:
             self.bl_label = f"FDS SURF (Predefined Boundary Condition)"
             return
-        bf_namelist = bf_namelists[ma.bf_namelist_cls]
+        # Manage Material
+        bf_namelist = ma.bf_namelist
         self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
-        self.layout.prop(ma, "bf_export", icon_only=True)
+        self.layout.prop(ma, "bf_surf_export", icon_only=True)
 
     def draw(self, context):
+        ma = context.object.active_material
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
-        flow = layout.grid_flow(
-            row_major=True, columns=0, even_columns=True, even_rows=False, align=False
-        )
-        ma = context.object.active_material
-        layout.active = ma.bf_export
-        flow.prop(ma, "bf_namelist_cls")
-        # Get the namelist class, instanciate it, and draw its panel
-        bf_namelists[ma.bf_namelist_cls](ma).draw(context, flow)
-        row = layout.row()
-        row.operator("material.bf_show_fds_code", text="Show FDS Code", icon="HIDE_OFF")
+        flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
+        # Operators
+        row = flow.row(align=True)
+        row.operator("material.bf_show_fds_code", text="FDS Code", icon="HIDE_OFF")
         row.operator("material.bf_surf_to_sel_obs", text="Assign To", icon="COPYDOWN")
+        # Manage Material
+        flow.prop(ma, "bf_namelist_cls")  # draw namelist choice
+        ma.bf_namelist.draw(context, flow)  # draw namelist
 
 
 # Toolbar panels

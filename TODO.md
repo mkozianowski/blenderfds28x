@@ -1,30 +1,24 @@
 # TODO
 
+Check FDS UG for namelists
+
 Automatic path for external tools
+
+Toolbox: MESH, mesh alignment
+
+default blender file
+
+Search: MATL_ID in text, QUANTITY in text
+
+geometry cache not working, handler crashing
+
+file version management
 
 unit testing (WUIFI-21)
 
 automatic developer's doc with doxygen (WUIFI-21)
 
 user doc (WUIFI-21)
-
-MESH toolbox, mesh alignment
-
-default blender file
-
-search MATL_ID in text
-
-search QUANTITY in text
-
-geometry cache not working, handler crashing
-
-op mesh
-
-default appearance
-
-from_fds, import
-
-file version management
 
 ## Geography:
 
@@ -74,6 +68,10 @@ GEOM toolbox
 GEOM geometry mod original object fix, tool panel?
 
 logger
+
+default appearance
+
+from_fds, import
 
 ## Geography
 

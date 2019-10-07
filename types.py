@@ -28,7 +28,7 @@ from bpy.props import (
     CollectionProperty,
 )
 
-if __name__ != "__main__":  # FIXME
+if __name__ != "__main__":
     from .bl import custom_uilist
     from .utils import is_iterable
 
@@ -63,7 +63,7 @@ class BFParam:
     """Blender representation of an FDS parameter."""
 
     label = "No Label"  # Object label
-    description = "No description"  # Object description
+    description = None  # Object description
     enum_id = None  # Unique integer id for EnumProperty
     bf_other = {}  # Other BlenderFDS parameters, eg: {'draw_type': 'WIRE', ...}
     bf_params = tuple()  # tuple of sub params of type BFParam
@@ -93,15 +93,10 @@ class BFParam:
             # ...in bpy_default if not present
             if cls.bpy_default is None:
                 cls.bpy_default = cls.fds_default
-        # Check and create bpy_prop
+        # Create bpy_prop
         if cls.bpy_prop:
             if not cls.bpy_idname or not cls.label or not cls.description:
                 raise Exception(f"No bpy_idname, label or description in class <{cls}>")
-            if hasattr(cls.bpy_type, cls.bpy_idname):
-                log.warning(
-                    f"Cannot redefine bpy_idname <{cls.bpy_idname}> in class <{cls}>"
-                )
-                return
             bpy_other = cls.bpy_other.copy()
             if cls.bpy_default is not None:
                 bpy_other["default"] = cls.bpy_default
@@ -111,7 +106,7 @@ class BFParam:
                 cls.bpy_idname,
                 cls.bpy_prop(name=cls.label, description=cls.description, **bpy_other),
             )
-        # Check and create bpy_export
+        # Create bpy_export
         if cls.bpy_export and not hasattr(cls.bpy_type, cls.bpy_export):
             log.debug(f"Setting <{cls.bpy_export}> Blender property")
             setattr(
@@ -127,26 +122,25 @@ class BFParam:
     @classmethod
     def unregister(cls):
         """Unregister related Blender properties."""
-        if cls.bpy_prop:
-            delattr(cls.bpy_type, cls.bpy_idname)
+        # if cls.bpy_prop and cls.bpy_idname:
+        #     delattr(cls.bpy_type, cls.bpy_idname)
+        # if cls.bpy_export:
+        #     delattr(cls.bpy_type, cls.bpy_export)
+        pass
 
     @property
     def value(self) -> "any":
         """Get value."""
-        if not self.bpy_idname:
-            raise Exception(f"Not implemented in class <{self.__class__}>")
         return getattr(self.element, self.bpy_idname)
 
     def set_value(self, context, value=None):
         """Set value. If value is None, set defaul"""
-        if self.bpy_idname:
-            if value is not None:
-                setattr(self.element, self.bpy_idname, value)
-                return
-            if self.bpy_default:
-                setattr(self.element, self.bpy_idname, self.bpy_default)
-                return
-        raise BFException(self, f"Error while setting value <{value}>")
+        if value is None:
+            setattr(self.element, self.bpy_idname, self.bpy_default)
+            return
+        else:
+            setattr(self.element, self.bpy_idname, value)
+            return
 
     @property
     def exported(self) -> "bool":
@@ -155,7 +149,7 @@ class BFParam:
         value = self.value
         if value is None or value == "":
             return False
-        # Check if default
+        # Check if FDS default
         d = self.fds_default
         if d is not None:
             if isinstance(value, float):  # floats comparison
@@ -168,10 +162,10 @@ class BFParam:
     def set_exported(self, context, value=None):
         """Set if self is exported."""
         if self.bpy_export:
-            if value is not None:
-                setattr(self.element, self.bpy_export, value)
-            else:
+            if value is None:
                 setattr(self.element, self.bpy_export, self.bpy_export_default)
+            else:
+                setattr(self.element, self.bpy_export, value)
 
     def check(self, context):
         """Check self validity."""
@@ -236,19 +230,19 @@ class BFParam:
 class BFParamXB(BFParam):
     """Helper for FDS XB parameter."""
 
-    bf_xb_idxs = (0, 1, 2, 3, 4)  # allowed xb idxs
+    pass
 
 
 class BFParamXYZ(BFParam):
     """Helper for FDS XYZ parameter."""
 
-    bf_xyz_idxs = (0, 1)  # allowed xyz idxs
+    pass
 
 
 class BFParamPB(BFParam):
     """Helper for FDS PB parameter."""
 
-    bf_pb_idxs = (0,)  # allowed pb idxs
+    pass
 
 
 class BFParamStr(BFParam):
@@ -288,7 +282,7 @@ class BFParamOther(BFParam):
 
     label = "Other Parameters"
     description = "Other parameters (eg. PROP='Example')"
-    bpy_type = Object
+    bpy_type = Object  # example
     bpy_idname = "bf_other"
 
     bpy_pg = None  # PropertyGroup, eg. WM_PG_bf_other
@@ -350,11 +344,15 @@ class BFNamelist(BFParam):
     @classmethod
     def register(cls):
         super().register()
+        # Indexes are used to link both the class and the instance
+        cls._bf_param_idx_by_fds_label = dict()  # fds_label: index of param
         cls._bf_param_xb_idx = None  # index of param of type BFParamXB
         cls._bf_param_xyz_idx = None  # ... of type BFParamXYZ
         cls._bf_param_pb_idx = None  # ... of type BFParamPB
         cls._bf_param_other_idx = None  # ... of type BFParamOther
         for i, p in enumerate(cls.bf_params):
+            if p.fds_label:
+                cls._bf_param_idx_by_fds_label[p.fds_label] = i
             if issubclass(p, BFParamXB):
                 cls._bf_param_xb_idx = i
             elif issubclass(p, BFParamXYZ):
@@ -364,34 +362,46 @@ class BFNamelist(BFParam):
             elif issubclass(p, BFParamOther):
                 cls._bf_param_other_idx = i
 
+    def get_bf_param_by_fds_label(self, fds_label) -> "BFParam or None":
+        """Get bf_param (class or instance) by its fds_label."""
+        i = self._bf_param_idx_by_fds_label.get(fds_label)
+        if i is not None:
+            return self.bf_params[i]
+
     @property
     def bf_param_xb(self):
+        """XB bf_param (class or instance)."""
         if self._bf_param_xb_idx is not None:
             return self.bf_params[self._bf_param_xb_idx]
 
     @property
     def bf_param_xyz(self):
+        """XYZ bf_param (class or instance)."""
         if self._bf_param_xyz_idx is not None:
             return self.bf_params[self._bf_param_xyz_idx]
 
     @property
     def bf_param_pb(self):
+        """PB bf_param (class or instance)."""
         if self._bf_param_pb_idx is not None:
             return self.bf_params[self._bf_param_pb_idx]
 
     @property
     def bf_param_other(self):
+        """Other bf_param (class or instance)."""
         if self._bf_param_other_idx is not None:
             return self.bf_params[self._bf_param_other_idx]
 
     def draw(self, context, layout) -> "layout":
         """Draw self UI on layout."""
-        col = layout.column()
+        # Check and active
         try:
             self.check(context)
         except BFException:
-            col.alert = True
-        col.active = self.exported
+            layout.alert = True
+        layout.active = self.exported
+        # Parameters
+        col = layout.column()
         for p in self.bf_params:
             p.draw(context, col)
         return col
@@ -399,13 +409,9 @@ class BFNamelist(BFParam):
     @property
     def exported(self) -> "bool":
         """Get if self is exported."""
-        return bool(getattr(self.element, str(self.bpy_export), True))
-
-    def get_bf_param_by_fds_label(self, fds_label) -> "None or BFParam":
-        """Get my bf_param by FDS label."""
-        for p in self.bf_params:
-            if p.fds_label == fds_label:
-                return p
+        if self.bpy_export is None:
+            return True
+        return bool(getattr(self.element, self.bpy_export, True))
 
     def to_fds_namelist(self, context) -> "None or FDSNamelist":
         """Return the FDSNamelist Python representation."""
@@ -428,18 +434,41 @@ class BFNamelist(BFParam):
     def from_fds(self, context, fds_params):
         """Set namelist parameter values from list of FDSParam, on error raise BFException."""
         for p in fds_params:
-            bf_param = self.get_bf_param_by_fds_label(
-                p.label
-            )  # FIXME precomputed dict is faster
-            if not bf_param:
+            bf_param = self.get_bf_param_by_fds_label(p.label)
+            if bf_param is None:
                 bf_param_other = self.bf_param_other
                 if bf_param_other:
                     bf_param_other.set_value(context, value=str(p))
                 else:
                     raise BFException(self, f"Value {p} is not managed")
                 continue
-            bf_param.from_fds(context, p.values)
+            else:
+                bf_param.from_fds(context, p.values)
         self.set_exported(context, True)
+
+
+class BFNamelistSc(BFNamelist):
+    bpy_type = Scene
+
+
+class BFNamelistOb(BFNamelist):
+    bpy_type = Object
+
+    @property
+    def exported(self) -> "bool":
+        """Get if self is exported."""
+        return not self.element.hide_render
+
+    def set_exported(self, context, value=None):
+        """Set if self is exported."""
+        if value is None:
+            self.element.hide_render = not self.bpy_export_default
+        else:
+            self.element.hide_render = not bool(value)
+
+
+class BFNamelistMa(BFNamelist):
+    bpy_type = Material
 
 
 # Python representations of FDS entities
@@ -454,10 +483,11 @@ class FDSParam:
     msg: comment msg
     """
 
-    def __init__(self, label, values=None, precision=3, msg=None):
+    def __init__(self, label, values=None, precision=3, exponential=False, msg=None):
         self.label = label
         self.values = values or list()
         self.precision = precision
+        self.exponential = exponential
         self.msg = msg
 
     def __str__(self):
@@ -466,7 +496,10 @@ class FDSParam:
         # Check first element of the iterable and choose formatting
         v0 = self.values[0]
         if isinstance(v0, float):
-            v_string = ",".join(f"{v:.{self.precision}f}" for v in self.values)
+            if self.exponential:
+                v_string = ",".join(f"{v:.{self.precision}E}" for v in self.values)
+            else:
+                v_string = ",".join(f"{v:.{self.precision}f}" for v in self.values)
         elif isinstance(v0, str):
             v_string = ",".join("'" in v and f'"{v}"' or f"'{v}'" for v in self.values)
         elif isinstance(v0, bool):  # always before int
@@ -477,9 +510,13 @@ class FDSParam:
             raise ValueError(f"Unknown value type for parameter <{self.label}>")
         return "=".join((self.label, v_string))
 
-    _re_precision = r"\.([0-9]*)"  # decimal positions
+    _re_decimal = r"\.([0-9]+)"  # decimal positions
 
-    _scan_precision = re.compile(_re_precision, re.VERBOSE | re.DOTALL | re.IGNORECASE)
+    _scan_decimal = re.compile(_re_decimal, re.VERBOSE | re.DOTALL | re.IGNORECASE)
+
+    _re_integer = r"([0-9]*)\.?[0-9]*[eE]"  # integer postions of exp notation
+
+    _scan_integer = re.compile(_re_integer, re.VERBOSE | re.DOTALL | re.IGNORECASE)
 
     def from_fds(self, f90_values):
         """Import from f90_values string, eg. "2.34, 1.23, 3.44"    
@@ -501,12 +538,16 @@ class FDSParam:
             )
         # Get precision from the first f90 float value
         if isinstance(self.values[0], float):
-            match = re.search(self._re_precision, f90_values)
+            match = re.findall(self._re_decimal, f90_values)
             if match:
-                self.precision = len(match.groups()[0])
-
-
-# FIXME scientific notation in output!
+                self.precision = max(len(m) for m in match)
+            else:
+                self.precision = 1
+            # Exp notation?
+            match = re.findall(self._re_integer, f90_values)
+            if match:
+                self.exponential = True
+                self.precision += max(len(m) for m in match) - 1
 
 
 class FDSNamelist:

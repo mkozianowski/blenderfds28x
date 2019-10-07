@@ -43,23 +43,15 @@ def is_file(filepath):
     return os.path.exists(filepath) and os.path.isfile(filepath)
 
 
-def is_writable(filepath):
-    """Check if filepath is writable."""
+def write_to_file(filepath, text=None):
+    """Write text_file to filepath"""
     try:
-        write_to_file(filepath, "! Test")
+        with open(filepath, "w", encoding="utf8", errors="ignore") as f:
+            f.write(text or str())
     except IOError:
         return False
-    # FIXME rm written test file
-    return True
-
-
-def write_to_file(filepath, text):
-    """Write text_file to filepath"""
-    if text is None:
-        text = str()
-    with open(filepath, "w", encoding="utf8", errors="ignore") as f:
-        f.write(text)
-
+    else:
+        return True
 
 def read_from_file(filepath):
     encodings = [

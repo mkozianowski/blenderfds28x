@@ -18,12 +18,12 @@ def _load_post(self):  # Beware: self is None
     for k, v in config.default_mas.items():
         if not bpy.data.materials.get(k):  # check existance
             ma = bpy.data.materials.new(k)
-            ma.bf_export = True
+            ma.bf_surf_export = True
             ma.diffuse_color = v[0]
             ma.use_fake_user = True
-    # if not fds.surf.has_predefined(): bpy.ops.material.bf_set_predefined()
     # Set default scene appearance
-    # for scene in bpy.data.scenes: scene.set_default_appearance(context=None)
+    for sc in bpy.data.scenes:
+        sc.set_default_appearance(context=None)
 
 
 @persistent

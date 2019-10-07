@@ -52,7 +52,8 @@ classes_rm = (
     "MATERIAL_PT_custom_props",
 )
 
-# Simplifying Blender UI
+# Simplifying Blender UI, by rewiring existing classes
+# 2.80/scripts/startup/bl_ui/space_topbar.py
 
 
 @subscribe
@@ -84,6 +85,30 @@ class PROPERTIES_PT_navigation_bar(Panel):
                 )
         # if ob.mode == "OBJECT": # FIXME crashes in new scenes, why? I do not know
         #     pass  # layout.prop_enum(view, "context", "TEXTURE", text="", icon="TEXTURE_DATA")
+
+
+# @subscribe
+# class TOPBAR_MT_file_defaults(Menu):
+#     bl_label = "Defaults"
+
+#     def draw(self, context):
+#         layout = self.layout
+#         prefs = context.preferences
+
+#         layout.operator_context = "INVOKE_AREA"
+
+#         if any(bpy.utils.app_template_paths()):
+#             app_template = prefs.app_template
+#         else:
+#             app_template = None
+
+#         if app_template:
+#             layout.label(text=bpy.path.display_name(app_template, has_ext=False))
+
+#         layout.operator("wm.save_homefile")
+#         props = layout.operator("wm.read_factory_settings")
+#         if app_template:
+#             props.app_template = app_template
 
 
 @subscribe
