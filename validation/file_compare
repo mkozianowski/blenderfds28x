@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+
+def compare_fds_files( filea, fileb ):
+
+   import difflib, os
+
+   if ( os.path.isfile( filea ) ):
+      text1 = open( filea ).readlines()
+   else:
+      return [ False, "Missing file: " + filea ]
+
+   if ( os.path.isfile( fileb ) ):
+      text2 = open( fileb ).readlines()
+   else:
+      return [ False, "Missing file: " + fileb ]
+
+   text1.pop( 0)
+   text1.pop( 0)
+   text2.pop( 0)
+   text2.pop( 0)
+
+   fds_equals = True
+   string     = ""
+
+   for line in difflib.unified_diff(text1, text2, n=0):
+       if ( line[:3] == "---" ):
+          continue
+
+       if ( line[:3] == "+++" ):
+          continue
+
+       if ( line[:3] == "@@ " ):
+          continue
+
+       if ( not line.endswith('\n') ):
+          line = line + ' NEW_LINE_MISSING\n'
+
+       string = string + line 
+       fds_equals = False
+
+   return [fds_equals, string]
+
+[equals, difference] = compare_fds_files( "BLN2FDS-cube/cube.fds", "BLN2FDS-cube/cube.mod.fda")
+
+print( equals )
+print( difference)
