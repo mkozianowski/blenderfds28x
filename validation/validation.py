@@ -27,6 +27,7 @@ def get_filepath(path, ext):
 
 #==================================================================
 
+#TODO Path deve diventare parametrico
 PATH_TO_PROJECT = '/home/carlo/.config/blender/2.80/scripts/addons/blenderfds28x/' # NB: Da modificare!!!!!!!
 
 for dirname in next(os.walk(os.path.join(PATH_TO_PROJECT, 'validation')))[1]:
@@ -34,6 +35,15 @@ for dirname in next(os.walk(os.path.join(PATH_TO_PROJECT, 'validation')))[1]:
     print("\n\n" + dirname)
     print("----------------------------")
     dirpath = os.path.join(PATH_TO_PROJECT, 'validation', dirname)
+
+    #TODO Dentro ogni singola cartella del caso c'è un file text.xml
+    #   se blnfds = TRUE ==> blend To Fds 
+    #                             file blend nella cartella Blender_Input_Files
+    #                             file fds   nella cartella FDS_Input_Files
+    #   se fdsfds = TRUE ==> Fds To Fds 
+    #                             file fds   nella cartella FDS_Input_Files
+
+    # N.B. La funzione  compare_fds_files ritorna già se il test è OK o meno e le righe delle note
 
     # BLEND TO FDS
     #-----------------------------------
@@ -58,5 +68,12 @@ for dirname in next(os.walk(os.path.join(PATH_TO_PROJECT, 'validation')))[1]:
             except Exception as e:
                 print(e)
 
-
-
+    #Export dei risultati
+    # Aggiungere al file results.xml un nuovo <Results>. Per ogni test bisogna indicare:
+    #     <Name> Nome della cartella
+    #     <Type> Tipo di test (blnfds oppure fdsfds)
+    #     <Result> OK, ERROR, EXCEPTION a seconda se:
+    #               OK -> tutto apposto e file uguali (ritorna TRUE la funzione compare_fds_files)
+    #               ERROR -> se i file FDS sono diversi (ritorna FALSE la funzione compare_fds_files)
+    #               EXCEPTION -> eccezione che va catturata
+    #     <Note> Vi è la stringa che ritorna la funzione compare_fds_files o il testo dell'eccezione

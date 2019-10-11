@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+!/usr/bin/env python3
 
 def compare_fds_files( filea, fileb ):
 
@@ -40,7 +40,27 @@ def compare_fds_files( filea, fileb ):
 
    return [fds_equals, string]
 
-[equals, difference] = compare_fds_files( "BLN2FDS-cube/cube.fds", "BLN2FDS-cube/cube.mod.fda")
+[equals, difference] = compare_fds_files( "BLN2FDS-cube/cube.fds", "BLN2FDS-cube/cube.mod.fds")
 
 print( equals )
 print( difference)
+
+
+#################################################
+# PARSER FILE XML
+from xml.dom import minidom   #for xml parsing
+
+
+mydoc = minidom.parse( path + 'test.xml')
+
+#cattura di un elemento
+element = mydoc.getElementsByTagName("n_cycle")[0];
+
+
+#se ci sono più elementi allora ritorna un array
+array_element = mydoc.getElementsByTagName("steel")
+
+for element in array_element
+   example = element.getElementsByTagName("property")[0]
+
+
