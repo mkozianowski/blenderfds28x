@@ -37,7 +37,6 @@ from bpy.props import (
     PointerProperty,
     EnumProperty,
     CollectionProperty,
-    PointerProperty,
 )
 from . import geometry
 from .types import (
@@ -576,23 +575,30 @@ class SN_MISC(BFNamelistSc):
     )
     maxlen = 0
 
+# FIXME MOVE namelist
 
 # REAC
 
-
 @subscribe
-class SP_REAC_FUEL(BFParamStr):
-    label = "FUEL"
-    description = "Identificator of fuel species"
-    fds_label = "FUEL"
+class SP_REAC_ID(BFParamStr):
+    label = "ID"
+    description = "Identificator of the reaction"
+    fds_label = "ID"
     bpy_type = Scene
-    bpy_idname = "bf_reac_fuel"
-
+    bpy_idname = "bf_reac_id"
 
 @subscribe
 class SP_REAC_FYI(BFParamFYI):
     bpy_type = Scene
     bpy_idname = "bf_reac_fyi"
+
+@subscribe
+class SP_REAC_FUEL(BFParamStr):  # FIXME from table
+    label = "FUEL"
+    description = "Identificator of fuel species"
+    fds_label = "FUEL"
+    bpy_type = Scene
+    bpy_idname = "bf_reac_fuel"
 
 
 @subscribe
@@ -602,8 +608,6 @@ class SP_REAC_FORMULA(BFParamStr):
     fds_label = "FORMULA"
     bpy_type = Scene
     bpy_idname = "bf_reac_formula"
-    bpy_export = "bf_reac_formula_export"
-    bpy_export_default = True
 
 
 @subscribe
@@ -616,8 +620,6 @@ class SP_REAC_CO_YIELD(BFParam):
     bpy_prop = FloatProperty
     bpy_idname = "bf_reac_co_yield"
     bpy_other = {"step": 1.0, "precision": 3, "min": 0.0, "max": 1.0}
-    bpy_export = "bf_reac_co_yield_export"
-    bpy_export_default = False
 
 
 @subscribe
@@ -627,8 +629,6 @@ class SP_REAC_SOOT_YIELD(SP_REAC_CO_YIELD):
     fds_label = "SOOT_YIELD"
     bpy_type = Scene
     bpy_idname = "bf_reac_soot_yield"
-    bpy_export = "bf_reac_soot_yield_export"
-    bpy_export_default = False
 
 
 @subscribe
@@ -641,8 +641,6 @@ class SP_REAC_HEAT_OF_COMBUSTION(BFParam):
     bpy_idname = "bf_reac_heat_of_combustion"
     bpy_prop = FloatProperty
     bpy_other = {"precision": 1, "min": 0.0}
-    bpy_export = "bf_reac_heat_of_combustion_export"
-    bpy_export_default = False
 
 
 @subscribe
@@ -655,6 +653,19 @@ class SP_REAC_IDEAL(BFParam):
     bpy_prop = BoolProperty
     bpy_idname = "bf_reac_ideal"
 
+@subscribe
+class SP_REAC_RADIATIVE_FRACTION(BFParam):
+    label = "RADIATIVE_FRACTION"
+    description = (
+        "Fraction of the total combustion energy that is released "
+        "in the form of thermal radiation"
+    )
+    fds_label = "RADIATIVE_FRACTION"
+    fds_default = 0.35
+    bpy_type = Scene
+    bpy_idname = "bf_reac_radiative_fraction"
+    bpy_prop = FloatProperty
+    bpy_other = {"precision": 2, "min": 0.0, "max": 1.0}
 
 @subscribe
 class SP_REAC_other(BFParamOther):
@@ -672,6 +683,7 @@ class SN_REAC(BFNamelistSc):
     fds_label = "REAC"
     bpy_export = "bf_reac_export"
     bf_params = (
+        SP_REAC_ID,
         SP_REAC_FUEL,
         SP_REAC_FYI,
         SP_REAC_FORMULA,
@@ -679,6 +691,7 @@ class SN_REAC(BFNamelistSc):
         SP_REAC_SOOT_YIELD,
         SP_REAC_HEAT_OF_COMBUSTION,
         SP_REAC_IDEAL,
+        SP_REAC_RADIATIVE_FRACTION,  # moved from RADI
         SP_REAC_other,
     )
     maxlen = 0
@@ -702,21 +715,6 @@ class SP_RADI_RADIATION(BFParam):
     bpy_type = Scene
     bpy_prop = BoolProperty
     bpy_idname = "bf_radi_radiation"
-
-
-@subscribe
-class SP_RADI_RADIATIVE_FRACTION(BFParam):
-    label = "RADIATIVE_FRACTION"
-    description = (
-        "Fraction of the total combustion energy that is released "
-        "in the form of thermal radiation"
-    )
-    fds_label = "RADIATIVE_FRACTION"
-    fds_default = 0.35
-    bpy_type = Scene
-    bpy_idname = "bf_radi_radiative_fraction"
-    bpy_prop = FloatProperty
-    bpy_other = {"precision": 2, "min": 0.0, "max": 1.0}
 
 
 @subscribe
@@ -786,7 +784,6 @@ class SN_RADI(BFNamelistSc):
     bf_params = (
         SP_RADI_FYI,
         SP_RADI_RADIATION,
-        SP_RADI_RADIATIVE_FRACTION,
         SP_RADI_NUMBER_RADIATION_ANGLES,
         SP_RADI_TIME_STEP_INCREMENT,
         SP_RADI_ANGLE_INCREMENT,
@@ -935,6 +932,14 @@ class SP_CATF_files(BFParamOther):
                 )  # multi param
         return tuple(result)  # multi
 
+    def from_fds(self, context, value):  # FIXME test
+        if not value:
+            self.set_value(context, None)
+        elif isinstance(value, str):  # str
+            self.set_value(context, value)
+        else:  # tuple of str
+            for v in value:
+                self.set_value(context, v)
 
 @subscribe
 class SN_CATF(BFNamelistSc):
@@ -1643,12 +1648,15 @@ class OP_SURF_ID(BFParam):
             return self.element.active_material.name
 
     def set_value(self, context, value):
-        try:
-            ma = bpy.data.materials.get(value)
-        except IndexError:
-            raise BFException(self, f"Blender Material <{value}> does not exists")
+        if value is None:
+            self.element.active_material = None
         else:
-            self.element.active_material = ma
+            try:
+                ma = bpy.data.materials.get(value)
+            except IndexError:
+                raise BFException(self, f"Blender Material <{value}> does not exists")
+            else:
+                self.element.active_material = ma
 
     @property
     def exported(self):
@@ -1841,6 +1849,31 @@ class ON_HOLE(BFNamelistOb):
 
 # VENT
 
+@subscribe
+class OP_VENT_OBST_ID(BFParam):  # FIXME test
+    label = "OBST_ID"
+    description = "Specify OBST on which projecting the condition"
+    fds_label = "OBST_ID"
+    bpy_type = Object
+    bpy_prop = PointerProperty
+    bpy_idname = "bf_vent_obst_id"
+    bpy_other = {"type": Object}
+
+    @property
+    def value(self):  # FIXME to str
+        if self.element.bf_vent_obst_id:
+            return self.element.bf_vent_obst_id.name
+
+    def set_value(self, context, value):
+        if value:
+            ob = bpy.data.objects.get(value)
+            if ob:
+                self.element.bf_vent_obst_id = ob
+            else:
+                raise BFException(self, f"Object <{value}> not found")
+        else:
+            self.element.bf_vent_obst_id = None
+
 
 @subscribe
 class ON_VENT(BFNamelistOb):
@@ -1852,8 +1885,10 @@ class ON_VENT(BFNamelistOb):
         OP_ID,
         OP_FYI,
         OP_SURF_ID,
+        OP_VENT_OBST_ID,
         OP_XB,
         OP_PB,
+        OP_XYZ,
         OP_PBX,
         OP_PBY,
         OP_PBZ,
@@ -1966,14 +2001,6 @@ class OP_SLCF_CELL_CENTERED(BFParam):
     bpy_prop = BoolProperty
     bpy_idname = "bf_slcf_cell_centered"
 
-    # def check(self, context):  # FIXME seems ok, che FDS doc
-    #     if (
-    #         self.element.bf_slcf_cell_centered
-    #         and self.element.bf_slcf_vector
-    #         and not self.element.bf_quantity == "VELOCITY"
-    #     ):
-    #         raise BFException(self, "Cannot set CELL_CENTERED and VECTOR")
-
 
 @subscribe
 class ON_SLCF(BFNamelistOb):
@@ -2069,12 +2096,12 @@ class ON_INIT(BFNamelistOb):
 
 
 @subscribe
-class ON_ZONE(BFNamelistOb):  # FIXME XYZ?
+class ON_ZONE(BFNamelistOb):
     label = "ZONE"
     description = "Pressure zone"
     enum_id = 1016
     fds_label = "ZONE"
-    bf_params = OP_ID, OP_FYI, OP_XB, OP_other
+    bf_params = OP_ID, OP_FYI, OP_XB, OP_XYZ, OP_other
     bf_other = {"appearance": "DUMMY2"}
 
 
@@ -2233,7 +2260,7 @@ class BFScene:
 
     @property
     def bf_namelists(self):
-        return (n for _, n in bf_namelists_by_cls.items() if n.bpy_type == Scene)
+        return (n(self) for _, n in bf_namelists_by_cls.items() if n.bpy_type == Scene)
 
     def to_fds(self, context, full=False):
         # Header
@@ -2252,7 +2279,7 @@ class BFScene:
             )
         )
         # My namelists
-        lines.extend(n(self).to_fds(context) for n in self.bf_namelists)
+        lines.extend(n.to_fds(context) for n in self.bf_namelists)
         # Free Text
         if self.bf_config_text:
             lines.append(f"\n! --- From <{self.bf_config_text.name}> free text")
