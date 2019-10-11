@@ -1,6 +1,7 @@
 import os
 import bpy
 from pprint import pprint
+import difflib, os
 
 
 def load_blend(filepath):
@@ -24,6 +25,44 @@ def get_filepath(path, ext):
     for filename in next(os.walk(path))[2]:
         if filename.endswith('.' + ext):
             return os.path.join(path, filename)
+
+def compare_fds_files( filea, fileb ):
+
+   if ( os.path.isfile( filea ) ):
+      text1 = open( filea ).readlines()
+   else:
+      return [ False, "Missing file: " + filea ]
+
+   if ( os.path.isfile( fileb ) ):
+      text2 = open( fileb ).readlines()
+   else:
+      return [ False, "Missing file: " + fileb ]
+
+   text1.pop( 0)
+   text1.pop( 0)
+   text2.pop( 0)
+   text2.pop( 0)
+
+   fds_equals = True
+   string     = ""
+
+   for line in difflib.unified_diff(text1, text2, n=0):
+       if ( line[:3] == "---" ):
+          continue
+
+       if ( line[:3] == "+++" ):
+          continue
+
+       if ( line[:3] == "@@ " ):
+          continue
+
+       if ( not line.endswith('\n') ):
+          line = line + ' NEW_LINE_MISSING\n'
+
+       string = string + line 
+       fds_equals = False
+
+   return [fds_equals, string]
 
 #==================================================================
 
@@ -77,3 +116,22 @@ for dirname in next(os.walk(os.path.join(PATH_TO_PROJECT, 'validation')))[1]:
     #               ERROR -> se i file FDS sono diversi (ritorna FALSE la funzione compare_fds_files)
     #               EXCEPTION -> eccezione che va catturata
     #     <Note> Vi è la stringa che ritorna la funzione compare_fds_files o il testo dell'eccezione
+
+
+# METTO QUI SUGGERIMENTI PER IL PARSER XML
+#################################################
+# PARSER FILE XML
+#from xml.dom import minidom   #for xml parsing
+#
+#
+#mydoc = minidom.parse( path + 'test.xml')
+#
+##cattura di un elemento
+#element = mydoc.getElementsByTagName("n_cycle")[0];
+#
+#
+##se ci sono più elementi allora ritorna un array
+#array_element = mydoc.getElementsByTagName("steel")
+#
+#for element in array_element
+#   example = element.getElementsByTagName("property")[0]
