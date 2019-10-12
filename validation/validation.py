@@ -1,7 +1,10 @@
 import os
+import sys
 import bpy
+import difflib
+
 from pprint import pprint
-import difflib, os
+from xml.dom import minidom   #for xml parsing
 
 
 def load_blend(filepath):
@@ -12,14 +15,9 @@ def load_fds(filepath):
     #print(">> Import")
     bpy.ops.import_scene.fds(filepath=filepath)
 
-def export_fds(path, file_name):
+def export_fds(filepath):
     #print(">> Export")
-    context = bpy.context
-    sc = context.scene
-    #pprint(type(context))
-    #pprint(dir(context.scene))
-    #pprint(dir(bpy.ops.export_scene.fds))
-    bpy.ops.export_scene.fds(filepath=os.path.join(path, 'validation', file_name))
+    bpy.ops.export_scene.fds(filepath=filepath)
 
 def get_filepath(path, ext):
     for filename in next(os.walk(path))[2]:
@@ -66,46 +64,71 @@ def compare_fds_files( filea, fileb ):
 
 #==================================================================
 
-#TODO Path deve diventare parametrico
-PATH_TO_PROJECT = '/home/carlo/.config/blender/2.80/scripts/addons/blenderfds28x/' # NB: Da modificare!!!!!!!
+try:
+    print("\n\n")
+    print("####################################")
+    print("UNIT TEST START")
+    print("####################################")
+    print("\n\n")
 
-for dirname in next(os.walk(os.path.join(PATH_TO_PROJECT, 'validation')))[1]:
+    #TODO Path deve diventare parametrico
+    #NB: Da modificare!!!!!!!
+    PATH_TO_PROJECT = '/home/carlo/.config/blender/2.80/scripts/addons/blenderfds28x/'
+    PATH_TO_EXPORT  = os.path.join(PATH_TO_PROJECT, 'validation/export.fds')
 
-    print("\n\n" + dirname)
-    print("----------------------------")
-    dirpath = os.path.join(PATH_TO_PROJECT, 'validation', dirname)
+    for dirname in next(os.walk(os.path.join(PATH_TO_PROJECT, 'validation')))[1]:
 
-    #TODO Dentro ogni singola cartella del caso c'è un file text.xml
-    #   se blnfds = TRUE ==> blend To Fds 
-    #                             file blend nella cartella Blender_Input_Files
-    #                             file fds   nella cartella FDS_Input_Files
-    #   se fdsfds = TRUE ==> Fds To Fds 
-    #                             file fds   nella cartella FDS_Input_Files
+        print("\n\n" + dirname)
+        print("----------------------------")
+        dirpath = os.path.join(PATH_TO_PROJECT, 'validation', dirname)
 
-    # N.B. La funzione  compare_fds_files ritorna già se il test è OK o meno e le righe delle note
+        testXml = minidom.parse(os.path.join(dirpath, 'test.xml'))
+        blnfds = testXml.getElementsByTagName("blnfds")[0].firstChild.nodeValue == 'true'
+        fdsfds = testXml.getElementsByTagName("fdsfds")[0].firstChild.nodeValue == 'true'
 
-    # BLEND TO FDS
-    #-----------------------------------
-    if dirname.startswith('BLN2FDS'):
-        filepath_blend = get_filepath(dirpath, 'blend')
-        filepath_fds   = get_filepath(dirpath, 'fds')
-        if filepath_blend != None and filepath_fds != None:
-            try:
-                load_blend(filepath_blend)
-                #export_fds(PATH_TO_PROJECT, 'test1.fds')
-            except Exception as e:
-                print(e)
+        #TODO Dentro ogni singola cartella del caso c'è un file text.xml
+        #   se blnfds = TRUE ==> blend To Fds 
+        #                             file blend nella cartella Blender_Input_Files
+        #                             file fds   nella cartella FDS_Input_Files
+        #   se fdsfds = TRUE ==> Fds To Fds 
+        #                             file fds   nella cartella FDS_Input_Files
 
-    # FDS TO FDS
-    #-----------------------------------
-    elif dirname.startswith('FDS2FDS'):
-        filepath_fds   = get_filepath(dirpath, 'fds')
-        if filepath_fds != None:
-            try:
-                load_fds(filepath_fds)
-                #export_fds(PATH_TO_PROJECT, 'test1.fds')
-            except Exception as e:
-                print(e)
+        # N.B. La funzione  compare_fds_files ritorna già se il test è OK o meno e le righe delle note
+
+        # BLEND TO FDS
+        #-----------------------------------
+        if blnfds:
+            print("> Test: blend to fds")
+            filepath_blend = get_filepath(os.path.join(dirpath, 'Blender_Input_Files'), 'blend')
+            filepath_fds   = get_filepath(os.path.join(dirpath, 'FDS_Input_Files'), 'fds')
+            if filepath_blend != None and filepath_fds != None:
+                try:
+                    load_blend(filepath_blend)
+                    export_fds(PATH_TO_EXPORT)
+                    print(compare_fds_files(filepath_fds, PATH_TO_EXPORT))
+                except Exception as e:
+                    print("> Error!!")
+
+        # FDS TO FDS
+        #-----------------------------------
+        if fdsfds:
+            print("> Test: fds to fds")
+            filepath_fds = get_filepath(os.path.join(dirpath, 'FDS_Input_Files'), 'fds')
+            if filepath_fds != None:
+                try:
+                    load_fds(filepath_fds)
+                    export_fds(PATH_TO_EXPORT)
+                    print(compare_fds_files(filepath_fds, PATH_TO_EXPORT))
+                except Exception as e:
+                    print("> Error!!")
+        
+finally:
+    print("\n\n")
+    print("####################################")
+    print("UNIT TEST END")
+    print("####################################")
+    print("\n\n")
+        
 
     #Export dei risultati
     # Aggiungere al file results.xml un nuovo <Results>. Per ogni test bisogna indicare:
