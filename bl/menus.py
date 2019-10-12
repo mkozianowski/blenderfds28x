@@ -39,7 +39,7 @@ def subscribe(cls):
     return cls
 
 
-# Import menu
+# Import menus
 
 
 @subscribe
@@ -89,7 +89,15 @@ class ImportFDS(Operator, ImportHelper):
 
 
 def menu_func_import_FDS(self, context):
-    self.layout.operator("import_scene.fds", text="NIST FDS (.fds)")
+    self.layout.operator(
+        "import_scene.fds", text="NIST FDS (.fds) into New Scene"
+    ).new_scene = False
+
+
+def menu_func_import_snippet_FDS(self, context):
+    self.layout.operator(
+        "import_scene.fds", text="NIST FDS (.fds) into Current Scene"
+    ).new_scene = False
 
 
 # Export menu
@@ -169,19 +177,25 @@ class ExportFDS(Operator, ExportHelper):
 
 
 def menu_func_export_FDS(self, context):
-    # Prepare default filepath
-    filepath = "{0}.fds".format(os.path.splitext(bpy.data.filepath)[0])
-    directory = os.path.dirname(filepath)
-    basename = os.path.basename(filepath)
-    # If the context scene contains path and basename, use them
+    # Init
     sc = context.scene
+    basename = "{0}.fds".format(bpy.path.clean_name(sc.name))
+    directory = ""
+    # Prepare default filepath
+    if bpy.data.filepath:
+        directory = os.path.dirname(bpy.data.filepath)
+    # If the context scene contains path and basename, use them
     if sc.bf_config_directory:
         directory = sc.bf_config_directory
-    if sc.name:
-        basename = "{0}.fds".format(bpy.path.clean_name(sc.name))
     # Call the exporter operator
-    filepath = f"{directory}/{basename}"
-    self.layout.operator("export_scene.fds", text="NIST FDS (.fds)").filepath = filepath
+    if directory:
+        self.layout.operator(
+            "export_scene.fds", text="NIST FDS (.fds)"
+        ).filepath = f"{directory}/{basename}"
+    else:
+        self.layout.operator(
+            "export_scene.fds", text="NIST FDS (.fds)"
+        ).filepath = basename
 
 
 # Register
@@ -193,6 +207,7 @@ def register():
     for cls in bl_classes:
         register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import_FDS)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import_snippet_FDS)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export_FDS)
 
 
@@ -202,4 +217,5 @@ def unregister():
     for cls in reversed(bl_classes):
         unregister_class(cls)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_FDS)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_snippet_FDS)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_FDS)

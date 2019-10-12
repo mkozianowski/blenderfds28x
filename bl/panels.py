@@ -180,10 +180,12 @@ class OBJECT_PT_bf_namelist(Panel):
             row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
             return
         if ob.bf_has_tmp:
-            row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON", text="Geometry")
+            row.operator(
+                "object.bf_hide_fds_geometry", icon="HIDE_ON", text="Hide Geometry"
+            )
         else:
             row.operator(
-                "object.bf_show_fds_geometry", icon="HIDE_OFF", text="Geometry"
+                "object.bf_show_fds_geometry", icon="HIDE_OFF", text="Show Geometry"
             )
         row.operator("object.bf_show_fds_code", text="FDS Code", icon="HIDE_OFF")
         row.operator("object.bf_props_to_sel_obs", text="Copy To", icon="COPYDOWN")
