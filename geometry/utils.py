@@ -10,8 +10,8 @@ from ..types import BFException
 
 def get_object_bmesh(context, ob, world=False) -> "BMesh":
     """Return evaluated object bmesh."""
-    if context.object:
-        bpy.ops.object.mode_set(mode="OBJECT")  # actualize
+    #if context.object:
+    #    bpy.ops.object.mode_set(mode="OBJECT")  # actualize
     bm = bmesh.new()
     depsgraph = context.evaluated_depsgraph_get()
     bm.from_object(ob, depsgraph=depsgraph, deform=True, cage=False, face_normals=True)
