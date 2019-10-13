@@ -4,25 +4,10 @@ import bpy
 import difflib
 
 from pprint import pprint
-from xml.dom import minidom   #for xml parsing
+from xml.dom import minidom
+from datetime import datetime
+from xml.sax.saxutils import escape
 
-
-def load_blend(filepath):
-    #print(">> Import")
-    bpy.ops.wm.open_mainfile(filepath=filepath)
-    
-def load_fds(filepath):
-    #print(">> Import")
-    bpy.ops.import_scene.fds(filepath=filepath)
-
-def export_fds(filepath):
-    #print(">> Export")
-    bpy.ops.export_scene.fds(filepath=filepath)
-
-def get_filepath(path, ext):
-    for filename in next(os.walk(path))[2]:
-        if filename.endswith('.' + ext):
-            return os.path.join(path, filename)
 
 def compare_fds_files( filea, fileb ):
 
@@ -62,7 +47,76 @@ def compare_fds_files( filea, fileb ):
 
    return [fds_equals, string]
 
+def do_check(checkType, dirpath, pathToExport):
+
+    def get_filepath(path, ext):
+        for filename in next(os.walk(path))[2]:
+            if filename.endswith('.' + ext):
+                return os.path.join(path, filename)
+
+    result = None
+    note   = None
+
+    try:
+        filepath_fds = get_filepath(os.path.join(dirpath, 'FDS_Input_Files'), 'fds')
+
+        if checkType == "blnfds":
+            filepath_blend = get_filepath(os.path.join(dirpath, 'Blender_Input_Files'), 'blend')
+            bpy.ops.wm.open_mainfile(filepath=filepath_blend)
+            
+        elif checkType == "fdsfds":
+            bpy.ops.import_scene.fds(filepath=filepath_fds)
+        
+        else:
+            raise ValueError("Invalid check type")
+
+        bpy.ops.export_scene.fds(filepath=pathToExport)
+        compare = compare_fds_files(filepath_fds, pathToExport)
+        result = "OK" if compare[0] else "ERROR"
+        note   = compare[1]
+    
+    except Exception as e:
+        result = "EXCEPTION"
+        note   = str(e)
+    
+    return [result, note]
+
+def append_case(xml, results, contentName, contentType, contentResult, contentNote):
+
+    def escape_text(text):
+        return escape(text.encode("unicode_escape").decode("utf-8"))
+    
+    nodeName = xml.createElement("Name")
+    nodeText = xml.createTextNode(escape_text(contentName))
+    nodeName.appendChild(nodeText)
+
+    nodeType = xml.createElement("Name")
+    nodeText = xml.createTextNode(escape_text(contentType))
+    nodeType.appendChild(nodeText)
+
+    nodeResult = xml.createElement("Result")
+    nodeText   = xml.createTextNode(escape_text(contentResult))
+    nodeResult.appendChild(nodeText)
+
+    nodeNote = xml.createElement("Note")
+    nodeText = xml.createTextNode(escape_text(contentNote))
+    nodeNote.appendChild(nodeText)
+
+    nodeCase = xml.createElement('Case')
+    nodeCase.appendChild(nodeName)
+    nodeCase.appendChild(nodeType)
+    nodeCase.appendChild(nodeResult)
+    nodeCase.appendChild(nodeNote)
+    results.appendChild(nodeCase)
+
 #==================================================================
+
+#TODO PATH_TO_PROJECT deve diventare parametrico
+PATH_TO_PROJECT = '/home/carlo/.config/blender/2.80/scripts/addons/blenderfds28x/'
+PATH_TO_EXPORT  = os.path.join(PATH_TO_PROJECT, 'validation/export.fds')
+PATH_TO_RESULTS = os.path.join(PATH_TO_PROJECT, 'validation/results.xml')
+
+RESULT_EMPTY = """<?xml version="1.0"?><testResults></testResults>"""
 
 try:
     print("\n\n")
@@ -71,90 +125,50 @@ try:
     print("####################################")
     print("\n\n")
 
-    #TODO Path deve diventare parametrico
-    #NB: Da modificare!!!!!!!
-    PATH_TO_PROJECT = '/home/carlo/.config/blender/2.80/scripts/addons/blenderfds28x/'
-    PATH_TO_EXPORT  = os.path.join(PATH_TO_PROJECT, 'validation/export.fds')
+    try:
+        xml = minidom.parse(PATH_TO_RESULTS)
+    except:
+        xml = minidom.parseString(RESULT_EMPTY)
+    
+    root = xml.getElementsByTagName('testResults')[0]
+
+    results = xml.createElement('Results')
+    results.setAttribute('date', datetime.today().strftime('%d-%m-%Y %H.%M'))
+    root.appendChild(results)
 
     for dirname in next(os.walk(os.path.join(PATH_TO_PROJECT, 'validation')))[1]:
 
         print("\n\n" + dirname)
         print("----------------------------")
-        dirpath = os.path.join(PATH_TO_PROJECT, 'validation', dirname)
 
+        dirpath = os.path.join(PATH_TO_PROJECT, 'validation', dirname)
         testXml = minidom.parse(os.path.join(dirpath, 'test.xml'))
         blnfds = testXml.getElementsByTagName("blnfds")[0].firstChild.nodeValue == 'true'
         fdsfds = testXml.getElementsByTagName("fdsfds")[0].firstChild.nodeValue == 'true'
 
-        #TODO Dentro ogni singola cartella del caso c'è un file text.xml
-        #   se blnfds = TRUE ==> blend To Fds 
-        #                             file blend nella cartella Blender_Input_Files
-        #                             file fds   nella cartella FDS_Input_Files
-        #   se fdsfds = TRUE ==> Fds To Fds 
-        #                             file fds   nella cartella FDS_Input_Files
-
-        # N.B. La funzione  compare_fds_files ritorna già se il test è OK o meno e le righe delle note
-
-        # BLEND TO FDS
-        #-----------------------------------
+        # blnfds
         if blnfds:
             print("> Test: blend to fds")
-            filepath_blend = get_filepath(os.path.join(dirpath, 'Blender_Input_Files'), 'blend')
-            filepath_fds   = get_filepath(os.path.join(dirpath, 'FDS_Input_Files'), 'fds')
-            if filepath_blend != None and filepath_fds != None:
-                try:
-                    load_blend(filepath_blend)
-                    export_fds(PATH_TO_EXPORT)
-                    print(compare_fds_files(filepath_fds, PATH_TO_EXPORT))
-                except Exception as e:
-                    print("> Error!!")
+            check = do_check("blnfds", dirpath, PATH_TO_EXPORT)
+            append_case(xml, results, dirname, "blnfds", check[0], check[1])
 
-        # FDS TO FDS
-        #-----------------------------------
+        # fdsfds
         if fdsfds:
             print("> Test: fds to fds")
-            filepath_fds = get_filepath(os.path.join(dirpath, 'FDS_Input_Files'), 'fds')
-            if filepath_fds != None:
-                try:
-                    load_fds(filepath_fds)
-                    export_fds(PATH_TO_EXPORT)
-                    print(compare_fds_files(filepath_fds, PATH_TO_EXPORT))
-                except Exception as e:
-                    print("> Error!!")
+            check = do_check("fdsfds", dirpath, PATH_TO_EXPORT)
+            append_case(xml, results, dirname, "fdsfds", check[0], check[1])
         
 finally:
+    if xml != None:
+        with open(PATH_TO_RESULTS, "w") as xmlFile:
+            reparsed = minidom.parseString(xml.toprettyxml())
+            string   = '\n'.join([line for line in reparsed.toprettyxml(indent='\t').split('\n') if line.strip()])
+            xmlFile.write(string)
+            xml.unlink()
+    
     print("\n\n")
     print("####################################")
     print("UNIT TEST END")
     print("####################################")
     print("\n\n")
-        
 
-    #Export dei risultati
-    # Aggiungere al file results.xml un nuovo <Results>. Per ogni test bisogna indicare:
-    #     <Name> Nome della cartella
-    #     <Type> Tipo di test (blnfds oppure fdsfds)
-    #     <Result> OK, ERROR, EXCEPTION a seconda se:
-    #               OK -> tutto apposto e file uguali (ritorna TRUE la funzione compare_fds_files)
-    #               ERROR -> se i file FDS sono diversi (ritorna FALSE la funzione compare_fds_files)
-    #               EXCEPTION -> eccezione che va catturata
-    #     <Note> Vi è la stringa che ritorna la funzione compare_fds_files o il testo dell'eccezione
-
-
-# METTO QUI SUGGERIMENTI PER IL PARSER XML
-#################################################
-# PARSER FILE XML
-#from xml.dom import minidom   #for xml parsing
-#
-#
-#mydoc = minidom.parse( path + 'test.xml')
-#
-##cattura di un elemento
-#element = mydoc.getElementsByTagName("n_cycle")[0];
-#
-#
-##se ci sono più elementi allora ritorna un array
-#array_element = mydoc.getElementsByTagName("steel")
-#
-#for element in array_element
-#   example = element.getElementsByTagName("property")[0]
