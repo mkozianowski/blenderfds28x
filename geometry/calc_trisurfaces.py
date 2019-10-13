@@ -49,7 +49,7 @@ def _get_prepared_bmesh(context, ob):
     """Prepare ob into a triangulated bmesh in world coordinates."""
     # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
-        raise BFException(ob, "Object can not be converted to mesh")
+        raise BFException(ob, "Object cannnot be converted into mesh")
     if not ob.data.vertices:
         raise BFException(ob, "Empty object!")
     # Get evaluated bmesh from ob
@@ -74,7 +74,7 @@ def _get_materials(context, ob):
             raise BFException(
                 ob, "No referenced SURF, fill empty slot with at least one Material"
             )
-        if not ma.bf_export:
+        if not ma.bf_surf_export:
             raise BFException(ob, f"Referenced SURF <{ma.name}> is not exported")
         mas.append(ma.name)
     return mas
@@ -271,6 +271,7 @@ def _raise_bad_geometry(
         for b in bad_verts:
             b.select = True
     ob.modifiers.clear()
+    ob.matrix_world = mathutils.Matrix()  # already world!
     bm.to_mesh(ob.data)
     bm.free()
     # Select object and go to edit mode

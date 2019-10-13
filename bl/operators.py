@@ -194,7 +194,9 @@ class OBJECT_OT_manifold(Operator, _external_tool):
     @classmethod
     def _get_exe(self, context):  # to be reloaded
         prefs = context.preferences.addons[__package__.split(".")[0]].preferences
-        return prefs.bf_manifold_filepath  # FIXME or predefined with linux...
+        return bpy.path.abspath(
+            prefs.bf_manifold_filepath
+        )  # FIXME or predefined with linux...  # FIXME check
 
     def _get_cmd(self, context, ob):
         tempdir = bpy.app.tempdir
@@ -387,7 +389,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
         # Manage GEOM
-        if ob.bf_namelist_cls == "ON_GEOM" and ob.bf_export:
+        if ob.bf_namelist_cls == "ON_GEOM" and not ob.hide_render:  # was bf_export
             check = ob.bf_geom_check_quality
             try:
                 fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
@@ -531,7 +533,6 @@ class SCENE_OT_bf_show_text(Operator):  # FIXME
                     space.show_margin = True
                     space.margin_column = 130
                     space.show_syntax_highlight = True
-                    # bpy.ops.text.cursor_set(x=0, y=0)  # FIXME wrong context
                     done = True
                     break
         if done:
@@ -731,7 +732,7 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
             ob.active_material = active_material
             log.debug(f"Assign Material <{active_material.name}> -> <{ob.name}>")
         # Set myself as exported
-        active_material.bf_export = True
+        active_material.bf_surf_export = True
         # Return
         self.report({"INFO"}, "Assigned to selected Objects")
         return {"FINISHED"}
@@ -830,14 +831,14 @@ class _bf_set_geoloc:
         # Get loc, convert
         x, y, z = self._get_loc(context)
         sc = context.scene
-        scale_length = 1.0  # = sc.unit_settings.scale_length  # FIXME
+        scale_length = sc.unit_settings.scale_length  # FIXME test
         utm = gis.UTM(
             zn=sc.bf_utm_zn,
             ne=sc.bf_utm_ne,
             easting=sc.bf_utm_easting + x * scale_length,
             northing=sc.bf_utm_northing + y * scale_length,
             elevation=sc.bf_elevation + z,  # scale_length self managed
-        )  # FIXME scale
+        )
         lonlat = utm.to_LonLat()
         # Show
         if self.show:

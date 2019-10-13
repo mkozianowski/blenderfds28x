@@ -218,7 +218,9 @@ class BFParam:
     def from_fds(self, context, value):
         """Set parameter value from value in FDS notation, on error raise BFException."""
         log.debug(f"{self} {value}")
-        if len(value) == 1:  # FDSParam.values is always a list
+        if (
+            value is not None and len(value) == 1
+        ):  # FDSParam.values is always a list, value can be None
             value = value[0]
         try:
             self.set_value(context, value)
@@ -250,10 +252,16 @@ class BFParamStr(BFParam):
 
     bpy_prop = StringProperty
 
-    def check(self, context):
-        value = self.value
-        if value and not re.match(r"^[\w\-. ]+$", value):
-            raise BFException(self, "Special characters not allowed in string")
+    # _re_str = r"[\"\'\/]+" # FIXME which chars?
+
+    # _scan = re.compile(
+    #     _re_str, re.VERBOSE | re.DOTALL | re.IGNORECASE
+    # )  # no MULTILINE, so that $ is the end of the file
+
+    # def check(self, context):
+    #     value = self.value
+    #     if value and re.match(self._scan, value):
+    #         raise BFException(self, "Characters not allowed in string")
 
 
 class BFParamFYI(BFParamStr):
@@ -306,8 +314,11 @@ class BFParamOther(BFParam):
 
     def set_value(self, context, value):
         collection = getattr(self.element, self.bpy_idname)
-        item = collection.add()
-        item.name, item.bf_export = value, True
+        if value is None:
+            collection.clear()
+        else:
+            item = collection.add()
+            item.name, item.bf_export = value, True
 
     def draw(self, context, layout):
         custom_uilist.draw_collection(
@@ -650,7 +661,7 @@ class FDSNamelist:
             try:
                 p.from_fds(f90_values=f90_values)
             except SyntaxError as err:
-                log.warning(f"<{label}> <{err}>")  # FIXME error msg
+                log.warning(f"<{label}> <{err}>")  # FIXME error msg, Exception?
             else:
                 self.fds_params.append(p)
             if following_label is None:
