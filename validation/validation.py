@@ -111,10 +111,9 @@ def append_case(xml, results, contentName, contentType, contentResult, contentNo
 
 #==================================================================
 
-#TODO PATH_TO_PROJECT deve diventare parametrico
-PATH_TO_PROJECT = '/home/carlo/.config/blender/2.80/scripts/addons/blenderfds28x/'
-PATH_TO_EXPORT  = os.path.join(PATH_TO_PROJECT, 'validation/export.fds')
-PATH_TO_RESULTS = os.path.join(PATH_TO_PROJECT, 'validation/results.xml')
+PATH_TO_VALIDATION = os.path.dirname(os.path.realpath(__file__))
+PATH_TO_EXPORT     = os.path.join(PATH_TO_VALIDATION, 'export.fds')
+PATH_TO_RESULTS    = os.path.join(PATH_TO_VALIDATION, 'results.xml')
 
 RESULT_EMPTY = """<?xml version="1.0"?><testResults></testResults>"""
 
@@ -136,12 +135,12 @@ try:
     results.setAttribute('date', datetime.today().strftime('%d-%m-%Y %H.%M'))
     root.appendChild(results)
 
-    for dirname in next(os.walk(os.path.join(PATH_TO_PROJECT, 'validation')))[1]:
+    for dirname in next(os.walk(PATH_TO_VALIDATION))[1]:
 
         print("\n\n" + dirname)
         print("----------------------------")
 
-        dirpath = os.path.join(PATH_TO_PROJECT, 'validation', dirname)
+        dirpath = os.path.join(PATH_TO_VALIDATION, dirname)
         testXml = minidom.parse(os.path.join(dirpath, 'test.xml'))
         blnfds = testXml.getElementsByTagName("blnfds")[0].firstChild.nodeValue == 'true'
         fdsfds = testXml.getElementsByTagName("fdsfds")[0].firstChild.nodeValue == 'true'
