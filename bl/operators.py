@@ -634,7 +634,7 @@ class WM_OT_bf_dialog(Operator):
             descriptions = self.description.splitlines()
             for description in descriptions:
                 row = col.row()
-                row.label(description)
+                row.label(text=description)
 
 
 # Copy FDS parameters between Blender elements

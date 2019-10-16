@@ -61,7 +61,7 @@ def register():
 
 def unregister():
     log.debug("Unregistering")
-    # ui.unregister() # FIXME for now, restart needed
+    # ui.unregister() # restart needed
     menus.unregister()
     panels.unregister()
     operators.unregister()

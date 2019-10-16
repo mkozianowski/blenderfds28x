@@ -26,6 +26,9 @@ import bpy
 # mod = addon_utils.addons_fake_modules.get(PKG)
 # mod.bl_info['show_expanded'] = True
 
+# Supported file version
+
+supported_file_version = 5, 0, 0
 
 # FDS default SURFs: name, diffuse_color
 default_mas = {

@@ -291,8 +291,8 @@ class BF_Remesh_Toolbar:
             row_major=True, columns=0, even_columns=True, even_rows=False, align=False
         )
         flow.label(text=f"Verts: {len(me.vertices)} | Faces: {len(me.polygons)}")
+        flow.menu("VIEW3D_MT_edit_mesh_select_by_trait")
         flow.menu("VIEW3D_MT_edit_mesh_clean")
-        flow.operator("mesh.quads_convert_to_tris")
         flow.separator()
         flow.operator("object.manifold")
         flow.operator("object.quadriflow")

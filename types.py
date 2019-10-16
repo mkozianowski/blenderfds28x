@@ -252,16 +252,20 @@ class BFParamStr(BFParam):
 
     bpy_prop = StringProperty
 
-    # _re_str = r"[\"\'\/]+" # FIXME which chars?
-
-    # _scan = re.compile(
-    #     _re_str, re.VERBOSE | re.DOTALL | re.IGNORECASE
-    # )  # no MULTILINE, so that $ is the end of the file
-
-    # def check(self, context):
-    #     value = self.value
-    #     if value and re.match(self._scan, value):
-    #         raise BFException(self, "Characters not allowed in string")
+    def check(self, context):
+        value = self.value
+        if "&" in value or "/" in value or "#" in value:
+            raise BFException(self, "<&>, </>, and <#> characters not allowed")
+        # if (
+        #     "'" in value
+        #     or '"' in value
+        #     or "`" in value
+        #     or "“" in value
+        #     or "”" in value
+        #     or "‘" in value
+        #     or "’‌" in value
+        # ):
+        #     raise BFException(self, "Quote characters not allowed")
 
 
 class BFParamFYI(BFParamStr):
@@ -543,9 +547,10 @@ class FDSParam:
         # Python evaluation of F90 value
         try:
             self.values = eval(f90_values)
-        except Exception:
-            raise SyntaxError(
-                f"Parsing error in parameter <{self.label}={f90_values} ... />"
+        except Exception as err:
+            raise BFException(
+                self,
+                f"Parsing error in parameter <{self.label}={f90_values} ... />\n{err}",
             )
         # Get precision from the first f90 float value
         if isinstance(self.values[0], float):
@@ -658,12 +663,8 @@ class FDSNamelist:
         for match in re.finditer(self._scan, f90_params):
             label, f90_values, following_label = match.groups()
             p = FDSParam(label=label)
-            try:
-                p.from_fds(f90_values=f90_values)
-            except SyntaxError as err:
-                log.warning(f"<{label}> <{err}>")  # FIXME error msg, Exception?
-            else:
-                self.fds_params.append(p)
+            p.from_fds(f90_values=f90_values)
+            self.fds_params.append(p)
             if following_label is None:
                 break
 
