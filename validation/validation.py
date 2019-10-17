@@ -39,6 +39,14 @@ def compare_fds_files( filea, fileb ):
        if ( line[:3] == "@@ " ):
           continue
 
+       #Removing old comment lines
+       if ( line[:3] == "-! " ):
+          continue
+
+       #Removing new comment lines
+       if ( line[:3] == "+! " ):
+          continue
+
        if ( not line.endswith('\n') ):
           line = line + ' NEW_LINE_MISSING\n'
 
@@ -82,6 +90,8 @@ def do_check(checkType, dirpath, pathToExport):
     return [result, note]
 
 def append_case(xml, results, contentName, contentType, contentResult, contentNote):
+
+    print (contentNote)
 
     def escape_text(text):
         return escape(text.encode("unicode_escape").decode("utf-8"))
