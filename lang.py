@@ -2178,14 +2178,23 @@ class BFObject:
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
     def set_default_appearance(self, context):
+        # Check preferences and namelist
+        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
+        if not prefs.bf_pref_appearance:
+            return
         bf_namelist = self.bf_namelist
         if not bf_namelist:
             return
+        # Init
         appearance = bf_namelist.bf_other.get("appearance")
-        ma_dummy0 = bpy.data.materials.get("Dummy White")
-        ma_dummy1 = bpy.data.materials.get("Dummy Yellow")
-        ma_dummy2 = bpy.data.materials.get("Dummy Purple")
-        if appearance == "TEXTURED":
+        ma_inert = bpy.data.materials.get("INERT")
+        ma_dummy0 = bpy.data.materials.get("Dummy Color1")  # HOLE
+        ma_dummy1 = bpy.data.materials.get("Dummy Color2")  # DEVC, SLCF, PROF, ...
+        ma_dummy2 = bpy.data.materials.get("Dummy Color3")  # INIT, ZONE
+        # WIRE: MESH, HVAC
+        # Set
+        if appearance == "TEXTURED" and ma_inert:
+            self.active_material = ma_inert
             self.show_wire = False
             self.display_type = "TEXTURED"
             return
@@ -2239,7 +2248,10 @@ class BFMaterial:
         # Import
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
-    def set_default_appearance(self, context):
+    def set_default_appearance(self, context):  # TODO
+        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
+        if not prefs.bf_pref_appearance:
+            return
         pass
 
     @classmethod
@@ -2360,7 +2372,10 @@ class BFScene:
     def to_ge1(self, context):
         return geometry.to_ge1.scene_to_ge1(context, self)
 
-    def set_default_appearance(self, context):
+    def set_default_appearance(self, context):  # TODO
+        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
+        if not prefs.bf_pref_appearance:
+            return
         pass
 
     @classmethod

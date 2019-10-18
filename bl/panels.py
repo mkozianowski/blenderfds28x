@@ -210,7 +210,7 @@ class MATERIAL_PT_bf_namelist(Panel):
         ma = context.object.active_material
         # Manage default Material
         if ma.name in config.default_mas:
-            self.bl_label = f"FDS SURF (Predefined Boundary Condition)"
+            self.bl_label = f"FDS Predefined {ma.name}"
             return
         # Manage Material
         bf_namelist = ma.bf_namelist

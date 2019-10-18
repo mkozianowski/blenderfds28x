@@ -38,6 +38,12 @@ class BFPreferences(AddonPreferences):
         default=True,
     )
 
+    bf_pref_appearance: BoolProperty(
+        name="Set Default Appearance",
+        description="Automatically set default appearance to Blender Scenes, Objects, Materials,\ndepending on FDS namelist and parameters",
+        default=True,
+    )
+
     def update_loglevel(self, context):
         log.setLevel(self.bf_loglevel)
 
@@ -83,6 +89,7 @@ class BFPreferences(AddonPreferences):
         box.label(text="User Interface")
         box.operator("wm.bf_load_blenderfds_settings")
         box.prop(self, "bf_pref_simplify_ui")
+        box.prop(self, "bf_pref_appearance")
         box.prop(paths, "use_load_ui")
         box.prop(paths, "use_relative_paths")
         box.prop(self, "bf_loglevel")
