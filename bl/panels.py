@@ -223,6 +223,10 @@ class MATERIAL_PT_bf_namelist(Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
         flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
+        # Manage default Material
+        if ma.name in config.default_mas:
+            flow.prop(ma, "diffuse_color")
+            return
         # Operators
         row = flow.row(align=True)
         row.operator("material.bf_show_fds_code", text="FDS Code", icon="HIDE_OFF")

@@ -163,7 +163,7 @@ class SN_config(BFNamelistSc):
         col.prop(sc, "bf_config_directory")
         row = col.row(align=True)
         row.prop(sc, "bf_config_text")
-        row.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")
+        row.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")  # TODO port to draw_operators
 
 
 # Config origin geolocation
@@ -372,6 +372,7 @@ class SN_config_sizes(BFNamelistSc):
         col.prop(sc, "bf_config_min_edge_length")
         col.prop(sc, "bf_config_min_face_area")
 
+# FIXME cache geometry
 
 # Config units
 
@@ -931,7 +932,7 @@ class SP_CATF_files(BFParamOther):
                 )  # multi param
         return tuple(result)  # multi
 
-    def from_fds(self, context, value):  # FIXME test
+    def from_fds(self, context, value):
         if not value:
             self.set_value(context, None)
         elif isinstance(value, str):  # str
@@ -1102,6 +1103,9 @@ class MP_MATL_ID(BFParamStr):
     bpy_idname = "bf_matl_id"
     bpy_export = "bf_matl_id_export"
     bpy_export_default = False
+
+    def draw_operators(self, context, layout):
+        layout.operator("material.bf_choose_matl_id", icon="VIEWZOOM", text="")
 
 
 @subscribe
@@ -1952,6 +1956,9 @@ class OP_DEVC_PROP_ID(BFParamStr):
     fds_label = "PROP_ID"
     bpy_type = Object
     bpy_idname = "bf_devc_prop_id"
+
+    def draw_operators(self, context, layout):
+        layout.operator("object.bf_choose_devc_prop_id", icon="VIEWZOOM", text="")
 
 
 @subscribe

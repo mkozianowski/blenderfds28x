@@ -38,11 +38,11 @@ from bpy.props import (
     CollectionProperty,
 )
 
-from ..types import BFException
+from ..types import BFException, FDSCase
 from .. import config
 from .. import geometry
 from ..lang import OP_XB, OP_XYZ, OP_PB
-from .. import gis
+from .. import gis, utils
 
 log = logging.getLogger(__name__)
 
@@ -228,6 +228,7 @@ class OBJECT_OT_manifold(Operator, _external_tool):
         description="Detect and perserve the sharp edges",
         default=True,
     )
+
     def draw(self, context):
         self.layout.prop(self, "resolution")
         self.layout.prop(self, "sharp")
@@ -789,6 +790,106 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
         # Return
         self.report({"INFO"}, "Assigned to selected Objects")
         return {"FINISHED"}
+
+
+# Search MATL, PROP items in free text and CATF files
+
+def _get_namelist_items(self, context, label) -> "items":
+    """Get namelist IDs available in Free Text and CATF files"""
+    fds_case = FDSCase()
+    sc = context.scene
+    # Get namelists from Free Text
+    if sc.bf_config_text:
+        f90_namelists = sc.bf_config_text.as_string()
+        fds_case.from_fds(f90_namelists, reset=False)
+    # Get namelists from available CATF files
+    if sc.bf_catf_export:
+        for filepath in tuple(item.name for item in sc.bf_catf_files if item.bf_export):
+            try:
+                f90_namelists = utils.read_from_file(filepath)
+            except IOError:
+                pass
+            else:
+                fds_case.from_fds(f90_namelists, reset=False)
+    # Prepare list of IDs
+    items = list()
+    for n in fds_case.get_fds_namelists_by_label(label):
+        fds_param = n.get_fds_param_by_label("ID")
+        if fds_param:
+            hid = fds_param.values[0]
+            items.append((hid, hid, ""))
+    items.sort(key=lambda k: k[0])
+    return items
+
+
+def _get_matl_items(self, context):
+    return _get_namelist_items(self, context, "MATL")
+
+
+@subscribe
+class MATERIAL_OT_bf_choose_matl_id(Operator):
+    bl_label = "Choose MATL_ID"
+    bl_idname = "material.bf_choose_matl_id"
+    bl_description = "Choose MATL_ID from MATLs available in Free Text and CATF files"
+
+    bf_matl_id = EnumProperty(
+        name="MATL_ID",
+        description="MATL_ID parameter",
+        items=_get_matl_items,  # Updating function
+    )
+
+    def execute(self, context):
+        ma = context.active_object.active_material
+        ma.bf_matl_id = self.bf_matl_id
+        self.report({"INFO"}, "MATL_ID parameter set")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        ma = context.active_object.active_material
+        try:
+            self.bf_matl_id = ma.bf_matl_id
+        except TypeError:
+            pass
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=300)
+
+    def draw(self, context):
+        self.layout.prop(self, "bf_matl_id", text="")
+
+
+def _get_prop_items(self, context):
+    return _get_namelist_items(self, context, "PROP")
+
+
+@subscribe
+class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
+    bl_label = "Choose PROP_ID"
+    bl_idname = "object.bf_choose_devc_prop_id"
+    bl_description = "Choose PROP_ID from PROPs available in Free Text and CATF files"
+
+    bf_devc_prop_id = EnumProperty(
+        name="PROP_ID",
+        description="PROP_ID parameter",
+        items=_get_prop_items,  # Updating function
+    )
+
+    def execute(self, context):
+        ob = context.active_object
+        ob.bf_devc_prop_id = self.bf_devc_prop_id
+        self.report({"INFO"}, "PROP_ID parameter set")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        ob = context.active_object
+        try:
+            self.bf_devc_prop_id = ob.bf_devc_prop_id
+        except TypeError:
+            pass
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=300)
+
+    def draw(self, context):
+        self.layout.prop(self, "bf_devc_prop_id", text="")
 
 
 # GIS
