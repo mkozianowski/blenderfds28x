@@ -20,7 +20,7 @@ def get_trisurface(
     log.debug(ob.name)
     mas = _get_materials(context, ob)
     bm = utils.get_object_bmesh(
-        context=context, ob=ob, world=True, triangulate=True, lookup=false
+        context=context, ob=ob, world=True, triangulate=True, lookup=False
     )
     if check:
         _check_bm_quality(context, ob, bm, protect=True)
