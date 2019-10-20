@@ -126,6 +126,7 @@ PATH_TO_EXPORT     = os.path.join(PATH_TO_VALIDATION, 'export.fds')
 PATH_TO_RESULTS    = os.path.join(PATH_TO_VALIDATION, 'results.xml')
 
 RESULT_EMPTY = """<?xml version="1.0"?><testResults></testResults>"""
+DATE_FORMAT = "%d-%m-%Y %H.%M"
 
 try:
     print("\n\n")
@@ -141,8 +142,16 @@ try:
     
     root = xml.getElementsByTagName('testResults')[0]
 
+    while xml.getElementsByTagName('Results').length >= 10:
+        elements = xml.getElementsByTagName('Results')
+        element_to_remove = None
+        for element in elements:
+            element_date = datetime.strptime(element.getAttribute("date"), DATE_FORMAT)
+            element_to_remove = element if element_to_remove == None or element_date < datetime.strptime(element_to_remove.getAttribute("date"), DATE_FORMAT) else element_to_remove
+        root.removeChild(element_to_remove)
+    
     results = xml.createElement('Results')
-    results.setAttribute('date', datetime.today().strftime('%d-%m-%Y %H.%M'))
+    results.setAttribute('date', datetime.today().strftime(DATE_FORMAT))
     root.appendChild(results)
 
     for dirname in next(os.walk(PATH_TO_VALIDATION))[1]:
