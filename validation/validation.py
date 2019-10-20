@@ -88,19 +88,10 @@ def do_check(checkType, dirpath):
         except Exception as e:
             result = "EXCEPTION"
             note   = str(e)
-        
-        finally:
-            print("-------------------------------------------------------------------------")
-            print(temporaryFile.name + " - " + result + " - " + note)
-            print("-------------------------------------------------------------------------")
-            #temporaryFile.close()
     
     return [result, note]
     
-
 def append_case(xml, results, contentName, contentType, contentResult, contentNote):
-
-    print (contentNote)
 
     def escape_text(text):
         return escape(text.encode("unicode_escape").decode("utf-8"))
@@ -109,7 +100,7 @@ def append_case(xml, results, contentName, contentType, contentResult, contentNo
     nodeText = xml.createTextNode(escape_text(contentName))
     nodeName.appendChild(nodeText)
 
-    nodeType = xml.createElement("Name")
+    nodeType = xml.createElement("Type")
     nodeText = xml.createTextNode(escape_text(contentType))
     nodeType.appendChild(nodeText)
 
@@ -166,25 +157,32 @@ try:
 
     for dirname in next(os.walk(PATH_TO_VALIDATION))[1]:
 
-        print("\n\n" + dirname)
-        print("----------------------------")
+        try:
+            print("\n\n" + dirname)
+            print("----------------------------")
 
-        dirpath = os.path.join(PATH_TO_VALIDATION, dirname)
-        testXml = minidom.parse(os.path.join(dirpath, 'test.xml'))
-        blnfds = testXml.getElementsByTagName("blnfds")[0].firstChild.nodeValue == 'true'
-        fdsfds = testXml.getElementsByTagName("fdsfds")[0].firstChild.nodeValue == 'true'
+            dirpath = os.path.join(PATH_TO_VALIDATION, dirname)
+            testXml = minidom.parse(os.path.join(dirpath, 'test.xml'))
+            blnfds = testXml.getElementsByTagName("blnfds")[0].firstChild.nodeValue == 'true'
+            fdsfds = testXml.getElementsByTagName("fdsfds")[0].firstChild.nodeValue == 'true'
 
-        # blnfds
-        if blnfds:
-            print("> Test: blend to fds")
-            check = do_check("blnfds", dirpath)
-            append_case(xml, results, dirname, "blnfds", check[0], check[1])
+            # blnfds
+            if blnfds:
+                print("> Test: blend to fds")
+                check = do_check("blnfds", dirpath)
+                append_case(xml, results, dirname, "blnfds", check[0], check[1])
 
-        # fdsfds
-        if fdsfds:
-            print("> Test: fds to fds")
-            check = do_check("fdsfds", dirpath)
-            append_case(xml, results, dirname, "fdsfds", check[0], check[1])
+            # fdsfds
+            if fdsfds:
+                print("> Test: fds to fds")
+                check = do_check("fdsfds", dirpath)
+                append_case(xml, results, dirname, "fdsfds", check[0], check[1])
+        
+        except Exception as e:
+            contentType = ""
+            contentResult = "EXCEPTION"
+            contentNote = str(e)
+            append_case(xml, results, dirname, "", "EXCEPTION", str(e))
         
 finally:
     if xml != None:
