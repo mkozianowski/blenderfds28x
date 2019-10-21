@@ -2,6 +2,7 @@ import os
 import sys
 import bpy
 import difflib
+import tempfile
 
 from pprint import pprint
 from xml.dom import minidom
@@ -41,6 +42,14 @@ def compare_fds_files( filea, fileb ):
        if ( line[:3] == "@@ " ):
           continue
 
+       #Removing old comment lines
+       if ( line[:3] == "-! " ):
+          continue
+
+       #Removing new comment lines
+       if ( line[:3] == "+! " ):
+          continue
+
        if ( not line.endswith('\n') ):
           line = line + ' NEW_LINE_MISSING\n'
 
@@ -49,7 +58,7 @@ def compare_fds_files( filea, fileb ):
 
    return [fds_equals, string]
 
-def do_check(checkType, dirpath, pathToExport):
+def do_check(checkType, dirpath):
 
     def get_filepath(path, ext):
         for filename in next(os.walk(path))[2]:
@@ -59,30 +68,31 @@ def do_check(checkType, dirpath, pathToExport):
     result = None
     note   = None
 
-    try:
-        filepath_fds = get_filepath(os.path.join(dirpath, 'FDS_Input_Files'), 'fds')
+    with tempfile.NamedTemporaryFile(suffix='.fds', delete=True) as temporaryFile:
+        try:
+            filepath_fds = get_filepath(os.path.join(dirpath, 'FDS_Input_Files'), 'fds')
 
-        if checkType == "blnfds":
-            filepath_blend = get_filepath(os.path.join(dirpath, 'Blender_Input_Files'), 'blend')
-            bpy.ops.wm.open_mainfile(filepath=filepath_blend)
+            if checkType == "blnfds":
+                filepath_blend = get_filepath(os.path.join(dirpath, 'Blender_Input_Files'), 'blend')
+                bpy.ops.wm.open_mainfile(filepath=filepath_blend)
+                
+            elif checkType == "fdsfds":
+                bpy.ops.import_scene.fds(filepath=filepath_fds)
             
-        elif checkType == "fdsfds":
-            bpy.ops.import_scene.fds(filepath=filepath_fds)
-        
-        else:
-            raise ValueError("Invalid check type")
+            else:
+                raise ValueError("Invalid check type")
 
-        bpy.ops.export_scene.fds(filepath=pathToExport)
-        compare = compare_fds_files(filepath_fds, pathToExport)
-        result = "OK" if compare[0] else "ERROR"
-        note   = compare[1]
-    
-    except Exception as e:
-        result = "EXCEPTION"
-        note   = str(e)
+            bpy.ops.export_scene.fds(filepath=temporaryFile.name)
+            compare = compare_fds_files(filepath_fds, temporaryFile.name)
+            result = "OK" if compare[0] else "ERROR"
+            note   = compare[1]
+        
+        except Exception as e:
+            result = "EXCEPTION"
+            note   = str(e)
     
     return [result, note]
-
+    
 def append_case(xml, results, contentName, contentType, contentResult, contentNote):
 
     def escape_text(text):
@@ -92,7 +102,7 @@ def append_case(xml, results, contentName, contentType, contentResult, contentNo
     nodeText = xml.createTextNode(escape_text(contentName))
     nodeName.appendChild(nodeText)
 
-    nodeType = xml.createElement("Name")
+    nodeType = xml.createElement("Type")
     nodeText = xml.createTextNode(escape_text(contentType))
     nodeType.appendChild(nodeText)
 
@@ -114,10 +124,12 @@ def append_case(xml, results, contentName, contentType, contentResult, contentNo
 #==================================================================
 
 PATH_TO_VALIDATION = os.path.dirname(os.path.realpath(__file__))
-PATH_TO_EXPORT     = os.path.join(PATH_TO_VALIDATION, 'export.fds')
 PATH_TO_RESULTS    = os.path.join(PATH_TO_VALIDATION, 'results.xml')
 
 RESULT_EMPTY = """<?xml version="1.0"?><testResults></testResults>"""
+DATE_FORMAT = "%d-%m-%Y %H.%M"
+
+xml = None
 
 try:
     print("\n\n")
@@ -133,31 +145,46 @@ try:
     
     root = xml.getElementsByTagName('testResults')[0]
 
+    while xml.getElementsByTagName('Results').length >= 10:
+        elements = xml.getElementsByTagName('Results')
+        element_to_remove = None
+        for element in elements:
+            element_date = datetime.strptime(element.getAttribute("date"), DATE_FORMAT)
+            element_to_remove = element if element_to_remove == None or element_date < datetime.strptime(element_to_remove.getAttribute("date"), DATE_FORMAT) else element_to_remove
+        root.removeChild(element_to_remove)
+    
     results = xml.createElement('Results')
-    results.setAttribute('date', datetime.today().strftime('%d-%m-%Y %H.%M'))
+    results.setAttribute('date', datetime.today().strftime(DATE_FORMAT))
     root.appendChild(results)
 
     for dirname in next(os.walk(PATH_TO_VALIDATION))[1]:
 
-        print("\n\n" + dirname)
-        print("----------------------------")
+        try:
+            print("\n\n" + dirname)
+            print("----------------------------")
 
-        dirpath = os.path.join(PATH_TO_VALIDATION, dirname)
-        testXml = minidom.parse(os.path.join(dirpath, 'test.xml'))
-        blnfds = testXml.getElementsByTagName("blnfds")[0].firstChild.nodeValue == 'true'
-        fdsfds = testXml.getElementsByTagName("fdsfds")[0].firstChild.nodeValue == 'true'
+            dirpath = os.path.join(PATH_TO_VALIDATION, dirname)
+            testXml = minidom.parse(os.path.join(dirpath, 'test.xml'))
+            blnfds = testXml.getElementsByTagName("blnfds")[0].firstChild.nodeValue == 'true'
+            fdsfds = testXml.getElementsByTagName("fdsfds")[0].firstChild.nodeValue == 'true'
 
-        # blnfds
-        if blnfds:
-            print("> Test: blend to fds")
-            check = do_check("blnfds", dirpath, PATH_TO_EXPORT)
-            append_case(xml, results, dirname, "blnfds", check[0], check[1])
+            # blnfds
+            if blnfds:
+                print("> Test: blend to fds")
+                check = do_check("blnfds", dirpath)
+                append_case(xml, results, dirname, "blnfds", check[0], check[1])
 
-        # fdsfds
-        if fdsfds:
-            print("> Test: fds to fds")
-            check = do_check("fdsfds", dirpath, PATH_TO_EXPORT)
-            append_case(xml, results, dirname, "fdsfds", check[0], check[1])
+            # fdsfds
+            if fdsfds:
+                print("> Test: fds to fds")
+                check = do_check("fdsfds", dirpath)
+                append_case(xml, results, dirname, "fdsfds", check[0], check[1])
+        
+        except Exception as e:
+            contentType = ""
+            contentResult = "EXCEPTION"
+            contentNote = str(e)
+            append_case(xml, results, dirname, "", "EXCEPTION", str(e))
         
 finally:
     if xml != None:
