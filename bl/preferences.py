@@ -1,6 +1,6 @@
 """BlenderFDS, preferences panel"""
 
-import bpy
+import bpy, os, sys, platform
 import logging
 
 from bpy.types import AddonPreferences
@@ -18,6 +18,16 @@ log = logging.getLogger(__name__)
 # prefs = context.preferences.addons[__package__.split(".")[0]].preferences
 # prefs.bf_pref_simplify_ui
 
+# Get default paths
+
+binpath = os.path.dirname(sys.modules[__package__.split(".")[0]].__file__) + "/bin/"
+system = platform.system()
+if system == "Windows":
+    system = "Windows.exe"
+
+
+# Preferences
+
 
 class BFPreferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
@@ -25,6 +35,12 @@ class BFPreferences(AddonPreferences):
     bf_pref_simplify_ui: BoolProperty(
         name="Simplify UI [Blender restart required]",
         description="Simplify BlenderFDS user interface, Blender restart required",
+        default=True,
+    )
+
+    bf_pref_appearance: BoolProperty(
+        name="Set Default Appearance",
+        description="Automatically set default appearance to Blender Scenes, Objects, Materials,\ndepending on FDS namelist and parameters",
         default=True,
     )
 
@@ -42,25 +58,28 @@ class BFPreferences(AddonPreferences):
             ("CRITICAL", "Critical", ""),
         ],
         update=update_loglevel,
-        default="DEBUG",  # FIXME
+        default="INFO",
     )
 
     bf_quadriflow_filepath: StringProperty(
         name="Quadriflow",
         description="Quadriflow executable filepath (see: github.com/hjwdzh)",
         subtype="FILE_PATH",
+        default=system and binpath + "quadriflow/quadriflow_" + system,
     )
 
     bf_manifold_filepath: StringProperty(
         name="Manifold",
         description="Manifold executable filepath (see: github.com/hjwdzh)",
         subtype="FILE_PATH",
+        default=system and binpath + "quadriflow/manifold_" + system,
     )
 
     bf_simplify_filepath: StringProperty(
         name="Simplify",
         description="Simplify executable filepath (see: github.com/hjwdzh)",
         subtype="FILE_PATH",
+        default=system and binpath + "quadriflow/simplify_" + system,
     )
 
     def draw(self, context):
@@ -68,13 +87,14 @@ class BFPreferences(AddonPreferences):
         layout = self.layout
         box = layout.box()
         box.label(text="User Interface")
-        # layout.operator("wm.bf_load_blenderfds_settings") # FIXME BF default settings
+        box.operator("wm.bf_load_blenderfds_settings")
         box.prop(self, "bf_pref_simplify_ui")
+        box.prop(self, "bf_pref_appearance")
         box.prop(paths, "use_load_ui")
         box.prop(paths, "use_relative_paths")
         box.prop(self, "bf_loglevel")
         box = layout.box()
-        box.label(text="External Tools filepaths")
+        box.label(text="Filepaths of External Tools")
         box.prop(self, "bf_manifold_filepath")
         box.prop(self, "bf_quadriflow_filepath")
         box.prop(self, "bf_simplify_filepath")

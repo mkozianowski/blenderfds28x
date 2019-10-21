@@ -4,7 +4,8 @@ import bpy, logging
 from time import time
 
 log = logging.getLogger(__name__)
-epsilon = 1e-5  # FIXME
+
+epsilon = 1e-5  # TODO unify epsilon mgmt
 
 # From GEOM
 

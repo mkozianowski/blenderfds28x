@@ -210,7 +210,7 @@ class MATERIAL_PT_bf_namelist(Panel):
         ma = context.object.active_material
         # Manage default Material
         if ma.name in config.default_mas:
-            self.bl_label = f"FDS SURF (Predefined Boundary Condition)"
+            self.bl_label = f"FDS Predefined {ma.name}"
             return
         # Manage Material
         bf_namelist = ma.bf_namelist
@@ -223,6 +223,10 @@ class MATERIAL_PT_bf_namelist(Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
         flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
+        # Manage default Material
+        if ma.name in config.default_mas:
+            flow.prop(ma, "diffuse_color")
+            return
         # Operators
         row = flow.row(align=True)
         row.operator("material.bf_show_fds_code", text="FDS Code", icon="HIDE_OFF")
@@ -291,8 +295,8 @@ class BF_Remesh_Toolbar:
             row_major=True, columns=0, even_columns=True, even_rows=False, align=False
         )
         flow.label(text=f"Verts: {len(me.vertices)} | Faces: {len(me.polygons)}")
+        flow.menu("VIEW3D_MT_edit_mesh_select_by_trait")
         flow.menu("VIEW3D_MT_edit_mesh_clean")
-        flow.operator("mesh.quads_convert_to_tris")
         flow.separator()
         flow.operator("object.manifold")
         flow.operator("object.quadriflow")

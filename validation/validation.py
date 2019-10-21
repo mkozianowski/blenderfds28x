@@ -8,7 +8,9 @@ from xml.dom import minidom
 from datetime import datetime
 from xml.sax.saxutils import escape
 
-
+#Routine to compare two files .FDS
+#Returns: TRUE/FALSE [are the two files equals?]
+#         string     [diff of the two files]
 def compare_fds_files( filea, fileb ):
 
    if ( os.path.isfile( filea ) ):

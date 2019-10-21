@@ -213,7 +213,7 @@ def _epsg_to_zn_ne(epsg):
     return zn, ne
 
 
-def _lonlat_to_epsg(lon, lat):  # FIXME useful?
+def _lonlat_to_epsg(lon, lat):
     zn = _lonlat_to_zn(lon=lon, lat=lat)
     if _lat_to_ne(lat):
         return "EPSG:326" + str(zn).zfill(2)
@@ -221,11 +221,11 @@ def _lonlat_to_epsg(lon, lat):  # FIXME useful?
         return "EPSG:327" + str(zn).zfill(2)
 
 
-# Helper functions: WebMerc <> LonLat  # FIXME useful?
+# Helper functions: WebMerc <> LonLat
 
 
-class Ellps:
-    """ellipsoid"""
+class Ellipsoid:
+    """Ellipsoid"""
 
     def __init__(self, a, b):
         self.a = a  # equatorial radius in meters
@@ -234,7 +234,7 @@ class Ellps:
         self.perimeter = 2 * math.pi * self.a  # perimeter at equator
 
 
-GRS80 = Ellps(6378137, 6356752.314245)
+GRS80 = Ellipsoid(6378137, 6356752.314245)
 
 
 def webMercToLonLat(x, y):
@@ -312,9 +312,9 @@ class UTM:  # WGS84
 class LonLat:  # WGS84
     def __init__(self, lon=0.0, lat=0.0, elevation=0.0):
         if not -180.0 <= lon <= 180.0:
-            raise ValueError(f"Longitude {lon} out of range")
+            raise ValueError(f"Longitude <{lon}> out of range")
         if not -90.0 <= lat <= 90.0:
-            raise ValueError(f"Latitude {lat} out of range")
+            raise ValueError(f"Latitude <{lat}> out of range")
         self.lon, self.lat, self.elevation = lon, lat, elevation
 
     def __str__(self):
