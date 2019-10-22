@@ -1651,15 +1651,18 @@ class OP_SURF_ID(BFParam):
             return self.element.active_material.name
 
     def set_value(self, context, value):
+        print("SURF_ID:",value)
         if value is None:
             self.element.active_material = None
         else:
             try:
                 ma = bpy.data.materials.get(value)
+                print("SURF_ID:",ma)
             except IndexError:
                 raise BFException(self, f"Blender Material <{value}> does not exists")
             else:
                 self.element.active_material = ma
+                print("SURF_ID: set")
 
     @property
     def exported(self):
@@ -2194,7 +2197,7 @@ class BFObject:
         # WIRE: MESH, HVAC
         # Set
         if appearance == "TEXTURED" and ma_inert:
-            self.active_material = ma_inert
+            # self.active_material = ma_inert  # FIXME
             self.show_wire = False
             self.display_type = "TEXTURED"
             return
