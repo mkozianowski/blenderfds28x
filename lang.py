@@ -2179,7 +2179,7 @@ class BFObject:
 
     def set_default_appearance(self, context):
         # Check preferences and namelist
-        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
+        prefs = context.preferences.addons[__package__].preferences
         if not prefs.bf_pref_appearance:
             return
         bf_namelist = self.bf_namelist
@@ -2249,7 +2249,7 @@ class BFMaterial:
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
     def set_default_appearance(self, context):  # TODO
-        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
+        prefs = context.preferences.addons[__package__].preferences
         if not prefs.bf_pref_appearance:
             return
         pass
@@ -2373,7 +2373,7 @@ class BFScene:
         return geometry.to_ge1.scene_to_ge1(context, self)
 
     def set_default_appearance(self, context):  # TODO
-        prefs = context.preferences.addons[__package__.split(".")[0]].preferences
+        prefs = context.preferences.addons[__package__].preferences
         if not prefs.bf_pref_appearance:
             return
         pass

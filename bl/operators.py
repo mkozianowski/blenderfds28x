@@ -832,7 +832,7 @@ class MATERIAL_OT_bf_choose_matl_id(Operator):
     bl_idname = "material.bf_choose_matl_id"
     bl_description = "Choose MATL_ID from MATLs available in Free Text and CATF files"
 
-    bf_matl_id = EnumProperty(
+    bf_matl_id: EnumProperty(
         name="MATL_ID",
         description="MATL_ID parameter",
         items=_get_matl_items,  # Updating function
@@ -867,7 +867,7 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
     bl_idname = "object.bf_choose_devc_prop_id"
     bl_description = "Choose PROP_ID from PROPs available in Free Text and CATF files"
 
-    bf_devc_prop_id = EnumProperty(
+    bf_devc_prop_id: EnumProperty(
         name="PROP_ID",
         description="PROP_ID parameter",
         items=_get_prop_items,  # Updating function
