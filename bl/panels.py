@@ -41,7 +41,7 @@ def subscribe(cls):
 class SCENE_PT_bf_namelist:
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
-    bl_label = "FDS Namelist"
+    bl_label = "FDS Panel"
     bl_context = "scene"
 
     bf_namelist_cls = "SN_HEAD"  # example
@@ -150,7 +150,7 @@ class OBJECT_PT_bf_namelist(Panel):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"
-    bl_label = "FDS Namelist"
+    bl_label = "FDS Panel"
 
     @classmethod
     def poll(cls, context):
@@ -199,7 +199,7 @@ class MATERIAL_PT_bf_namelist(Panel):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "material"
-    bl_label = "FDS SURF Namelist"
+    bl_label = "FDS Panel"
 
     @classmethod
     def poll(cls, context):
