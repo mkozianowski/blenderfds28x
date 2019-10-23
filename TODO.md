@@ -12,6 +12,8 @@ automatic developer's doc with doxygen (WUIFI-21)
 
 user doc (WUIFI-21)
 
+## TODO Geography
+
 import geotiff, srtm, osm buildings, trees, landcover (WUIFI-21)
 
 GEOM terrain new quality checks (WUIFI-21)
@@ -73,7 +75,7 @@ default appearance
 
 from_fds, import
 
-## Geography
+## DONE Geography
 
 lon, lat, elevation of scene world origin and relative transformations
 
