@@ -15,9 +15,8 @@ def get_object_bmesh(
     # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
         raise BFException(ob, "Object cannnot be converted into mesh")
-    #TODO commented by CFD FEA SERVICE
-    #if context.object:
-    #    bpy.ops.object.mode_set(mode="OBJECT")  # actualize
+    if context.object:
+        bpy.ops.object.mode_set(mode="OBJECT")  # actualize
     # Get evaluated bmesh from ob
     bm = bmesh.new()
     depsgraph = context.evaluated_depsgraph_get()
