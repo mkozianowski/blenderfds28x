@@ -2,4 +2,5 @@
 <testType>
    <blnfds>true</blnfds>
    <fdsfds>false</fdsfds>
+   <python>false</python>
 </testType>
