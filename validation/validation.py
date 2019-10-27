@@ -58,20 +58,28 @@ def compare_fds_files( filea, fileb ):
 
    return [fds_equals, string]
 
+#Routine to execute the check of a .blend or .fds file
+#Input  : dirpath    [path to the directory with "Blender_Input_Files" and "FDS_Input_Files" folders within]
+#         filename   [name of the .blend or .fds file to be tested]
+#Returns: string     [the test result]
+#         string     [the note of the test]
 def do_check(dirpath, filename):
 
     result = None
     note   = None
 
     with tempfile.NamedTemporaryFile(suffix=".fds", delete=True) as temporaryFile:
+
         try:
             filepath_fds = None
 
+            # .blend input
             if filename.endswith(".blend"):
                 filepath_bln = os.path.join(dirpath, DIR_NAME_BLN2FDS, filename)
                 filepath_fds = os.path.join(dirpath, DIR_NAME_FDS2FDS, filename.replace(".blend", ".fds"))
                 bpy.ops.wm.open_mainfile(filepath=filepath_bln)
                 
+            # .fds input
             elif filename.endswith(".fds"):
                 filepath_fds = os.path.join(dirpath, DIR_NAME_FDS2FDS, filename)
                 bpy.ops.import_scene.fds(filepath=filepath_fds)
@@ -79,6 +87,7 @@ def do_check(dirpath, filename):
             else:
                 raise ValueError("Invalid check type")
 
+            # test
             bpy.ops.export_scene.fds(filepath=temporaryFile.name)
             compare = compare_fds_files(filepath_fds, temporaryFile.name)
             result = "OK" if compare[0] else "ERROR"
@@ -89,7 +98,15 @@ def do_check(dirpath, filename):
             note   = str(e)
     
     return [result, note]
-    
+
+#Routine to append a new Case tag with a test results
+#Input  : xml             [results.xml root tag]
+#         results         [Results tag to be modified]
+#         contentName     [Name tag content]
+#         contentType     [Type tag content]
+#         contentInput    [Input tag content]
+#         contentResult   [Result tag content]
+#         contentNote     [Note tag content]
 def append_case(xml, results, contentName, contentType, contentInput, contentResult, contentNote):
 
     def escape_text(text):
@@ -125,6 +142,7 @@ def append_case(xml, results, contentName, contentType, contentInput, contentRes
 
 #==================================================================
 
+# parameters
 PATH_TO_VALIDATION = os.path.dirname(os.path.realpath(__file__))
 PATH_TO_RESULTS    = os.path.join(PATH_TO_VALIDATION, "results.xml")
 
@@ -134,6 +152,8 @@ DIR_NAME_FDS2FDS = "FDS_Input_Files"
 RESULT_EMPTY = """<?xml version="1.0"?><testResults></testResults>"""
 DATE_FORMAT = "%d-%m-%Y %H.%M"
 
+
+# start of the validation script
 xml = None
 
 try:
@@ -142,6 +162,7 @@ try:
     print("UNIT TEST START")
     print("####################################")
 
+    # opening the file results.xml if it exists, otherwise its initialization
     try:
         xml = minidom.parse(PATH_TO_RESULTS)
     except:
@@ -149,6 +170,7 @@ try:
     
     root = xml.getElementsByTagName("testResults")[0]
 
+    # removing any Results tags
     while xml.getElementsByTagName("Results").length >= 10:
         elements = xml.getElementsByTagName("Results")
         element_to_remove = None
@@ -161,6 +183,7 @@ try:
     results.setAttribute("date", datetime.today().strftime(DATE_FORMAT))
     root.appendChild(results)
 
+    # looping through the folders to be tested
     for dirname in next(os.walk(PATH_TO_VALIDATION))[1]:
 
         try:
@@ -172,7 +195,7 @@ try:
             blnfds = testXml.getElementsByTagName("blnfds")[0].firstChild.nodeValue == "true"
             fdsfds = testXml.getElementsByTagName("fdsfds")[0].firstChild.nodeValue == "true"
 
-            # blnfds
+            # blend to fds test
             if blnfds:
                 for filename in os.listdir(os.path.join(dirpath, DIR_NAME_BLN2FDS)):
                     if filename.endswith(".blend"):
@@ -182,7 +205,7 @@ try:
                         append_case(xml, results, dirname, "blnfds", filename, check[0], check[1])
                         print("")
 
-            # fdsfds
+            # fds to fds test
             if fdsfds:
                 for filename in os.listdir(os.path.join(dirpath, DIR_NAME_FDS2FDS)):
                     if filename.endswith(".fds"):
@@ -197,9 +220,11 @@ try:
             contentResult = "EXCEPTION"
             contentNote = str(e)
             append_case(xml, results, dirname, "", "", "EXCEPTION", str(e))
-        
+
 finally:
     if xml != None:
+
+        # editing the results.xml file
         with open(PATH_TO_RESULTS, "w") as xmlFile:
             reparsed = minidom.parseString(xml.toprettyxml())
             string   = "\n".join([line for line in reparsed.toprettyxml(indent="\t").split("\n") if line.strip()])
