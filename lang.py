@@ -160,11 +160,10 @@ class SN_config(BFNamelistSc):
     def draw(self, context, layout):
         sc = self.element
         col = layout.column()
-        col.prop(sc, "name", text="Filename")
         col.prop(sc, "bf_config_directory")
         row = col.row(align=True)
         row.prop(sc, "bf_config_text")
-        row.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")
+        row.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")  # TODO port to draw_operators
 
 
 # Config origin geolocation
@@ -364,7 +363,7 @@ class SP_config_default_voxel_size(BFParam):
 
 @subscribe
 class SN_config_sizes(BFNamelistSc):
-    label = "Default sizes"
+    label = "Default Sizes and Thresholds"
 
     def draw(self, context, layout):
         sc = self.element
@@ -373,6 +372,7 @@ class SN_config_sizes(BFNamelistSc):
         col.prop(sc, "bf_config_min_edge_length")
         col.prop(sc, "bf_config_min_face_area")
 
+# FIXME cache geometry
 
 # Config units
 
@@ -400,7 +400,7 @@ class SN_config_units(BFNamelistSc):
 
 @subscribe
 class SP_HEAD_CHID(BFParam):
-    label = "CHID (Filename)"
+    label = "CHID"
     description = "Case identificator, also used as case filename"
     fds_label = "CHID"
     bf_other = {"copy_protect": True}
@@ -932,7 +932,7 @@ class SP_CATF_files(BFParamOther):
                 )  # multi param
         return tuple(result)  # multi
 
-    def from_fds(self, context, value):  # FIXME test
+    def from_fds(self, context, value):
         if not value:
             self.set_value(context, None)
         elif isinstance(value, str):  # str
@@ -1103,6 +1103,9 @@ class MP_MATL_ID(BFParamStr):
     bpy_idname = "bf_matl_id"
     bpy_export = "bf_matl_id_export"
     bpy_export_default = False
+
+    def draw_operators(self, context, layout):
+        layout.operator("material.bf_choose_matl_id", icon="VIEWZOOM", text="")
 
 
 @subscribe
@@ -1648,15 +1651,18 @@ class OP_SURF_ID(BFParam):
             return self.element.active_material.name
 
     def set_value(self, context, value):
+        print("SURF_ID:",value)
         if value is None:
             self.element.active_material = None
         else:
             try:
                 ma = bpy.data.materials.get(value)
+                print("SURF_ID:",ma)
             except IndexError:
                 raise BFException(self, f"Blender Material <{value}> does not exists")
             else:
                 self.element.active_material = ma
+                print("SURF_ID: set")
 
     @property
     def exported(self):
@@ -1954,6 +1960,9 @@ class OP_DEVC_PROP_ID(BFParamStr):
     bpy_type = Object
     bpy_idname = "bf_devc_prop_id"
 
+    def draw_operators(self, context, layout):
+        layout.operator("object.bf_choose_devc_prop_id", icon="VIEWZOOM", text="")
+
 
 @subscribe
 class ON_DEVC(BFNamelistOb):
@@ -2158,7 +2167,7 @@ class BFObject:
             )
 
     def to_fds(self, context):
-        if not self.type == "MESH":
+        if self.bf_is_tmp or not self.type == "MESH":
             return
         return self.bf_namelist.to_fds(context)
 
@@ -2166,20 +2175,29 @@ class BFObject:
         # Set bf_namelist_cls
         bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label)
         self.bf_namelist_cls = bf_namelist.__name__
-        # Prevent default geometry (eg. XB=BBOX) FIXME a better way?
+        # Prevent default geometry (eg. XB=BBOX)
         self.bf_xb_export, self.bf_xyz_export, self.bf_pb_export = (False, False, False)
         # Import
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
-    def set_default_appearance(self, context):  # FIXME clean up, improve names
+    def set_default_appearance(self, context):
+        # Check preferences and namelist
+        prefs = context.preferences.addons[__package__].preferences
+        if not prefs.bf_pref_appearance:
+            return
         bf_namelist = self.bf_namelist
         if not bf_namelist:
             return
+        # Init
         appearance = bf_namelist.bf_other.get("appearance")
-        ma_dummy0 = bpy.data.materials.get("Dummy White")
-        ma_dummy1 = bpy.data.materials.get("Dummy Yellow")
-        ma_dummy2 = bpy.data.materials.get("Dummy Purple")
-        if appearance == "TEXTURED":
+        ma_inert = bpy.data.materials.get("INERT")
+        ma_dummy0 = bpy.data.materials.get("Dummy Color1")  # HOLE
+        ma_dummy1 = bpy.data.materials.get("Dummy Color2")  # DEVC, SLCF, PROF, ...
+        ma_dummy2 = bpy.data.materials.get("Dummy Color3")  # INIT, ZONE
+        # WIRE: MESH, HVAC
+        # Set
+        if appearance == "TEXTURED" and ma_inert:
+            # self.active_material = ma_inert  # FIXME
             self.show_wire = False
             self.display_type = "TEXTURED"
             return
@@ -2233,7 +2251,10 @@ class BFMaterial:
         # Import
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
-    def set_default_appearance(self, context):
+    def set_default_appearance(self, context):  # TODO
+        prefs = context.preferences.addons[__package__].preferences
+        if not prefs.bf_pref_appearance:
+            return
         pass
 
     @classmethod
@@ -2344,7 +2365,7 @@ class BFScene:
         # Set imported Scene visible
         context.window.scene = self
         # Record unmanaged namelists in free text
-        te = bpy.data.texts.new(f"Free Text of {self.name}")
+        te = bpy.data.texts.new(f"Imported")
         te.from_string(str(fds_case_un))
         te.current_line_index = 0
         self.bf_config_text = te
@@ -2354,7 +2375,10 @@ class BFScene:
     def to_ge1(self, context):
         return geometry.to_ge1.scene_to_ge1(context, self)
 
-    def set_default_appearance(self, context):
+    def set_default_appearance(self, context):  # TODO
+        prefs = context.preferences.addons[__package__].preferences
+        if not prefs.bf_pref_appearance:
+            return
         pass
 
     @classmethod
@@ -2422,7 +2446,7 @@ def register():
         default=False,
     )
     Scene.bf_file_version = IntVectorProperty(
-        name="BlenderFDS File Version", size=3, default=(5, 0, 0)
+        name="BlenderFDS File Version", size=3,
     )
     # params and namelists
     for cls in bf_params:

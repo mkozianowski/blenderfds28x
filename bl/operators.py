@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import subprocess
+import os, sys, subprocess
 
 import bpy, logging
 from bpy.types import (
@@ -39,11 +38,11 @@ from bpy.props import (
     CollectionProperty,
 )
 
-from ..types import BFException
+from ..types import BFException, FDSCase
 from .. import config
 from .. import geometry
 from ..lang import OP_XB, OP_XYZ, OP_PB
-from .. import gis
+from .. import gis, utils
 
 log = logging.getLogger(__name__)
 
@@ -57,6 +56,33 @@ def subscribe(cls):
     """Subscribe class to related collection."""
     bl_classes.append(cls)
     return cls
+
+
+# Load BlenderFDS Settings
+
+
+@subscribe
+class WM_OT_bf_load_blenderfds_settings(Operator):
+    """Load BlenderFDS Settings"""
+
+    bl_label = "Load Default BlenderFDS Settings"
+    bl_idname = "wm.bf_load_blenderfds_settings"
+    bl_description = "Load default BlenderFDS settings, deleting current data!"
+
+    def invoke(self, context, event):  # Ask for confirmation
+        wm = context.window_manager
+        return wm.invoke_confirm(self, event)
+
+    def execute(self, context):
+        # Set default startup.blend
+        filepath = os.path.dirname(sys.modules[__package__].__file__) + "/default.blend"
+        bpy.ops.wm.open_mainfile(filepath=filepath, load_ui=True, use_scripts=True)
+        bpy.ops.wm.save_homefile()
+        # Save user preferences
+        bpy.ops.wm.save_userpref()
+        # Report
+        self.report({"INFO"}, "Default BlenderFDS settings loaded")
+        return {"FINISHED"}
 
 
 # GEOM, check geometry quality and intersections
@@ -131,7 +157,10 @@ class _external_tool:
 
     @classmethod
     def poll(cls, context):
-        return cls._get_exe(context) and context.active_object
+        return os.path.isfile(cls._get_exe(context)) and context.active_object
+
+    def draw(self, context):  # to be reloaded
+        pass
 
     @classmethod
     def _get_exe(self, context):  # to be reloaded
@@ -176,6 +205,10 @@ class _external_tool:
         finally:
             w.cursor_modal_restore()
 
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
 
 @subscribe
 class OBJECT_OT_manifold(Operator, _external_tool):
@@ -190,19 +223,28 @@ class OBJECT_OT_manifold(Operator, _external_tool):
         max=10000,
         default=300,
     )
+    sharp: bpy.props.BoolProperty(
+        name="Sharp edges",
+        description="Detect and perserve the sharp edges",
+        default=True,
+    )
+
+    def draw(self, context):
+        self.layout.prop(self, "resolution")
+        self.layout.prop(self, "sharp")
 
     @classmethod
-    def _get_exe(self, context):  # to be reloaded
+    def _get_exe(cls, context):
         prefs = context.preferences.addons[__package__.split(".")[0]].preferences
-        return bpy.path.abspath(
-            prefs.bf_manifold_filepath
-        )  # FIXME or predefined with linux...  # FIXME check
+        return bpy.path.abspath(prefs.bf_manifold_filepath)
 
     def _get_cmd(self, context, ob):
         tempdir = bpy.app.tempdir
         input_obj = os.path.join(tempdir, f"{ob.name}.obj")
         output_obj = os.path.join(tempdir, f"{ob.name}_manifold.obj")
         cmd = [self._get_exe(context), input_obj, output_obj, str(self.resolution)]
+        self.sharp and cmd.append("-s")
+        log.debug(f"External command: {cmd}")
         return cmd, input_obj, output_obj
 
 
@@ -226,10 +268,15 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
         default=False,
     )
 
+    def draw(self, context):
+        self.layout.prop(self, "resolution")
+        self.layout.prop(self, "sharp")
+        self.layout.prop(self, "mcf")
+
     @classmethod
     def _get_exe(cls, context):
         prefs = context.preferences.addons[__package__.split(".")[0]].preferences
-        return prefs.bf_quadriflow_filepath  # FIXME or predefined with linux...simplify
+        return prefs.bf_quadriflow_filepath
 
     def _get_cmd(self, context, ob):
         tempdir = bpy.app.tempdir
@@ -246,6 +293,7 @@ class OBJECT_OT_quadriflow(Operator, _external_tool):
         ]
         self.mcf and cmd.append("-mcf")
         self.sharp and cmd.append("-sharp")
+        log.debug(f"External command: {cmd}")
         return cmd, input_obj, output_obj
 
 
@@ -255,17 +303,22 @@ class OBJECT_OT_simplify(Operator, _external_tool):
     bl_label = "Simplify Mesh"
     bl_description = "Simplify current mesh by reducing the number of faces"
 
-    face_num: bpy.props.IntProperty(
-        name="Number of Faces",
-        description="Desired number of faces",
-        min=100,
-        default=1000,
+    ratio: bpy.props.FloatProperty(
+        name="Simplification Ratio",
+        description="Ratio between desired and current number of faces ",
+        subtype="PERCENTAGE",
+        min=1,
+        max=100,
+        default=50,
     )
+
+    def draw(self, context):
+        self.layout.prop(self, "ratio")
 
     @classmethod
     def _get_exe(cls, context):
         prefs = context.preferences.addons[__package__.split(".")[0]].preferences
-        return prefs.bf_simplify_filepath  # FIXME or predefined with linux...simplify
+        return prefs.bf_simplify_filepath
 
     def _get_cmd(self, context, ob):
         tempdir = bpy.app.tempdir
@@ -278,9 +331,10 @@ class OBJECT_OT_simplify(Operator, _external_tool):
             input_obj,
             "-o",
             output_obj,
-            "-f",
-            str(self.face_num),
+            "-r",
+            str(self.ratio / 100.0),
         ]
+        log.debug(f"External command: {cmd}")
         return cmd, input_obj, output_obj
 
 
@@ -510,7 +564,7 @@ class OBJECT_OT_bf_hide_fds_geometry(Operator):
 
 
 @subscribe
-class SCENE_OT_bf_show_text(Operator):  # FIXME
+class SCENE_OT_bf_show_text(Operator):
     bl_label = "Show"
     bl_idname = "scene.bf_show_text"
     bl_description = "Show free text in the editor"
@@ -581,7 +635,7 @@ class WM_OT_bf_dialog(Operator):
             descriptions = self.description.splitlines()
             for description in descriptions:
                 row = col.row()
-                row.label(description)
+                row.label(text=description)
 
 
 # Copy FDS parameters between Blender elements
@@ -738,6 +792,106 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
         return {"FINISHED"}
 
 
+# Search MATL, PROP items in free text and CATF files
+
+def _get_namelist_items(self, context, label) -> "items":
+    """Get namelist IDs available in Free Text and CATF files"""
+    fds_case = FDSCase()
+    sc = context.scene
+    # Get namelists from Free Text
+    if sc.bf_config_text:
+        f90_namelists = sc.bf_config_text.as_string()
+        fds_case.from_fds(f90_namelists, reset=False)
+    # Get namelists from available CATF files
+    if sc.bf_catf_export:
+        for filepath in tuple(item.name for item in sc.bf_catf_files if item.bf_export):
+            try:
+                f90_namelists = utils.read_from_file(filepath)
+            except IOError:
+                pass
+            else:
+                fds_case.from_fds(f90_namelists, reset=False)
+    # Prepare list of IDs
+    items = list()
+    for n in fds_case.get_fds_namelists_by_label(label):
+        fds_param = n.get_fds_param_by_label("ID")
+        if fds_param:
+            hid = fds_param.values[0]
+            items.append((hid, hid, ""))
+    items.sort(key=lambda k: k[0])
+    return items
+
+
+def _get_matl_items(self, context):
+    return _get_namelist_items(self, context, "MATL")
+
+
+@subscribe
+class MATERIAL_OT_bf_choose_matl_id(Operator):
+    bl_label = "Choose MATL_ID"
+    bl_idname = "material.bf_choose_matl_id"
+    bl_description = "Choose MATL_ID from MATLs available in Free Text and CATF files"
+
+    bf_matl_id: EnumProperty(
+        name="MATL_ID",
+        description="MATL_ID parameter",
+        items=_get_matl_items,  # Updating function
+    )
+
+    def execute(self, context):
+        ma = context.active_object.active_material
+        ma.bf_matl_id = self.bf_matl_id
+        self.report({"INFO"}, "MATL_ID parameter set")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        ma = context.active_object.active_material
+        try:
+            self.bf_matl_id = ma.bf_matl_id
+        except TypeError:
+            pass
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=300)
+
+    def draw(self, context):
+        self.layout.prop(self, "bf_matl_id", text="")
+
+
+def _get_prop_items(self, context):
+    return _get_namelist_items(self, context, "PROP")
+
+
+@subscribe
+class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
+    bl_label = "Choose PROP_ID"
+    bl_idname = "object.bf_choose_devc_prop_id"
+    bl_description = "Choose PROP_ID from PROPs available in Free Text and CATF files"
+
+    bf_devc_prop_id: EnumProperty(
+        name="PROP_ID",
+        description="PROP_ID parameter",
+        items=_get_prop_items,  # Updating function
+    )
+
+    def execute(self, context):
+        ob = context.active_object
+        ob.bf_devc_prop_id = self.bf_devc_prop_id
+        self.report({"INFO"}, "PROP_ID parameter set")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        ob = context.active_object
+        try:
+            self.bf_devc_prop_id = ob.bf_devc_prop_id
+        except TypeError:
+            pass
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=300)
+
+    def draw(self, context):
+        self.layout.prop(self, "bf_devc_prop_id", text="")
+
+
 # GIS
 
 
@@ -831,7 +985,7 @@ class _bf_set_geoloc:
         # Get loc, convert
         x, y, z = self._get_loc(context)
         sc = context.scene
-        scale_length = sc.unit_settings.scale_length  # FIXME test
+        scale_length = sc.unit_settings.scale_length
         utm = gis.UTM(
             zn=sc.bf_utm_zn,
             ne=sc.bf_utm_ne,

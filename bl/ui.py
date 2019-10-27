@@ -83,32 +83,6 @@ class PROPERTIES_PT_navigation_bar(Panel):
                 col.prop_enum(
                     view, "context", "MATERIAL", text="", icon="MATERIAL_DATA"
                 )
-        # if ob.mode == "OBJECT": # FIXME crashes in new scenes, why? I do not know
-        #     pass  # layout.prop_enum(view, "context", "TEXTURE", text="", icon="TEXTURE_DATA")
-
-
-# @subscribe
-# class TOPBAR_MT_file_defaults(Menu):
-#     bl_label = "Defaults"
-
-#     def draw(self, context):
-#         layout = self.layout
-#         prefs = context.preferences
-
-#         layout.operator_context = "INVOKE_AREA"
-
-#         if any(bpy.utils.app_template_paths()):
-#             app_template = prefs.app_template
-#         else:
-#             app_template = None
-
-#         if app_template:
-#             layout.label(text=bpy.path.display_name(app_template, has_ext=False))
-
-#         layout.operator("wm.save_homefile")
-#         props = layout.operator("wm.read_factory_settings")
-#         if app_template:
-#             props.app_template = app_template
 
 
 @subscribe
@@ -143,7 +117,5 @@ def register():
         register_class(cls)
 
 
-# def unregister():  # FIXME reload Blender
-#     from bpy.utils import register_class, unregister_class
-#     for cls in reversed(bl_classes):
-#         unregister_class(cls)
+def unregister():  # reload Blender
+    pass

@@ -12,8 +12,20 @@ log = logging.getLogger(__name__)
 
 @persistent
 def _load_post(self):  # Beware: self is None
-    # Check file format version FIXME
-    # check_file_version(context)
+    # Check file format version
+    bf_file_version = tuple(bpy.data.scenes[0].bf_file_version)
+    if not bf_file_version or bf_file_version < config.supported_file_version:  # older
+        msg = "Check your old input data!"
+        description = "This file was created on a previous BlenderFDS version.\nAutomatic data conversion is not supported."
+        bpy.ops.wm.bf_dialog(
+            "INVOKE_DEFAULT", msg=msg, description=description, type="ERROR"
+        )
+    elif bf_file_version > config.supported_file_version:  # newer
+        msg = "Install latest BlenderFDS!"
+        description = "This file was created on a newer BlenderFDS version.\nNew features may not be supported."
+        bpy.ops.wm.bf_dialog(
+            "INVOKE_DEFAULT", msg=msg, description=description, type="ERROR"
+        )
     # Init FDS default materials
     for k, v in config.default_mas.items():
         if not bpy.data.materials.get(k):  # check existance
@@ -28,12 +40,14 @@ def _load_post(self):  # Beware: self is None
 
 @persistent
 def _save_pre(self):  # Beware: self is None
+    # Remove tmp objecys
     geometry.utils.rm_tmp_objects(bpy.context)
     # Set file format version
-    # set_file_version(bpy.context) FIXME
+    for sc in bpy.data.scenes:
+        sc.bf_file_version = config.supported_file_version
 
 
-@persistent
+# @persistent
 # def _depsgraph_update_post(scene):
 #     # Detect object change and erase cached geometry
 #     for update in bpy.context.view_layer.depsgraph.updates:

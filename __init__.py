@@ -37,7 +37,7 @@ from . import lang
 from .bl import operators, panels, menus, ui, handlers, preferences
 
 
-logging.basicConfig(level=logging.DEBUG)  # FIXME
+logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
@@ -61,7 +61,7 @@ def register():
 
 def unregister():
     log.debug("Unregistering")
-    # ui.unregister() # FIXME for now, restart needed
+    # ui.unregister() # restart needed
     menus.unregister()
     panels.unregister()
     operators.unregister()

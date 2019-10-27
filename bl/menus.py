@@ -91,7 +91,7 @@ class ImportFDS(Operator, ImportHelper):
 def menu_func_import_FDS(self, context):
     self.layout.operator(
         "import_scene.fds", text="NIST FDS (.fds) into New Scene"
-    ).new_scene = False
+    ).new_scene = True
 
 
 def menu_func_import_snippet_FDS(self, context):

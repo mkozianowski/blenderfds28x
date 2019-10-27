@@ -32,7 +32,6 @@ def get_voxels(context, ob, scale_length):
     ob_tmp = bpy.data.objects.new(f"{ob.name}_voxels_tmp", me_eval)
     ob_tmp.data.transform(ob.matrix_world)
     context.collection.objects.link(ob_tmp)
-    # bpy.context.view_layer.update()  # push update # FIXME not needed?
     # Align voxels to world origin and add remesh modifier
     if not ob.bf_xb_center_voxels:
         _align_remesh_to_world_origin(context, ob_tmp, voxel_size)

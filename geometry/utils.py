@@ -8,15 +8,29 @@ from ..types import BFException
 # Working on Blender objects
 
 
-def get_object_bmesh(context, ob, world=False) -> "BMesh":
+def get_object_bmesh(
+    context, ob, matrix=None, world=False, triangulate=False, lookup=False
+) -> "BMesh":
     """Return evaluated object bmesh."""
-    #if context.object:
-    #    bpy.ops.object.mode_set(mode="OBJECT")  # actualize
+    # Check object and init
+    if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
+        raise BFException(ob, "Object cannnot be converted into mesh")
+    if context.object:
+        bpy.ops.object.mode_set(mode="OBJECT")  # actualize
+    # Get evaluated bmesh from ob
     bm = bmesh.new()
     depsgraph = context.evaluated_depsgraph_get()
     bm.from_object(ob, depsgraph=depsgraph, deform=True, cage=False, face_normals=True)
+    if matrix is not None:
+        bm.transform(matrix)  # transform
     if world:
-        bm.transform(ob.matrix_world)  # world coo
+        bm.transform(ob.matrix_world)  # set in world coordinates
+    if triangulate:  # triangulate faces
+        bmesh.ops.triangulate(bm, faces=bm.faces)
+    if lookup:  # update bm indexes for reference
+        bm.faces.ensure_lookup_table()
+        bm.verts.ensure_lookup_table()
+        bm.edges.ensure_lookup_table()
     return bm
 
 

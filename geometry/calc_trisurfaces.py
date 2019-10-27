@@ -12,9 +12,6 @@ log = logging.getLogger(__name__)
 
 # Get triangulated surface
 
-# FIXME updates object after calculation
-# FIXME check mesh for quality
-
 
 def get_trisurface(
     context, ob, scale_length, check=True, terrain=False
@@ -22,50 +19,29 @@ def get_trisurface(
     """Get triangulated surface from object in xbs format."""
     log.debug(ob.name)
     mas = _get_materials(context, ob)
-    bm = _get_prepared_bmesh(context, ob)
-    # Check
+    bm = utils.get_object_bmesh(
+        context=context, ob=ob, world=True, triangulate=True, lookup=False
+    )
     if check:
         _check_bm_quality(context, ob, bm, protect=True)
     # Extract verts and faces from bmesh
-    verts = [
-        (v.co.x * scale_length, v.co.y * scale_length, v.co.z * scale_length)
-        for v in bm.verts
-    ]
-    faces = [
-        (
-            f.verts[0].index + 1,  # FDS index start from 1, not 0
-            f.verts[1].index + 1,
-            f.verts[2].index + 1,
-            f.material_index + 1,
-        )
-        for f in bm.faces
-    ]
+    verts, faces = list(), list()
+    for v in bm.verts:
+        co = v.co
+        verts.append((co.x * scale_length, co.y * scale_length, co.z * scale_length))
+    for f in bm.faces:
+        v = f.verts
+        faces.append(
+            (v[0].index + 1, v[1].index + 1, v[2].index + 1, f.material_index + 1)
+        )  # FDS index start from 1, not 0
     # Clean up
     bm.free()
     return mas, verts, faces
 
 
-def _get_prepared_bmesh(context, ob):
-    """Prepare ob into a triangulated bmesh in world coordinates."""
-    # Check object and init
-    if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
-        raise BFException(ob, "Object cannnot be converted into mesh")
-    if not ob.data.vertices:
-        raise BFException(ob, "Empty object!")
-    # Get evaluated bmesh from ob
-    bm = utils.get_object_bmesh(context, ob, world=True)
-    bmesh.ops.triangulate(bm, faces=bm.faces)
-    # Update bmesh index for reference
-    bm.faces.ensure_lookup_table()
-    bm.verts.ensure_lookup_table()
-    bm.edges.ensure_lookup_table()
-    return bm
-
-
 def _get_materials(context, ob):
-    """Get ob materials from slots."""
-    mas = list()
-    material_slots = ob.material_slots
+    """Get referenced ob materials from slots."""
+    mas, material_slots = list(), ob.material_slots
     if len(material_slots) == 0:
         raise BFException(ob, "No referenced SURF, add at least one Material")
     for material_slot in material_slots:
@@ -86,7 +62,9 @@ def _get_materials(context, ob):
 def check_geom_quality(context, ob, protect):
     """Check that Object is a closed orientable manifold,
     with no degenerate geometry."""
-    bm = _get_prepared_bmesh(context, ob)
+    bm = utils.get_object_bmesh(
+        context=context, ob=ob, world=False, triangulate=True, lookup=True
+    )
     _check_bm_quality(context, ob, bm, protect)
     bm.free()
 
@@ -197,16 +175,32 @@ def _check_bm_duplicate_vertices(context, ob, bm, epsilon_len, epsilon_area, pro
 # Check intersections
 
 
-def _get_bm_and_tree(context, ob, epsilon_len=0.0, matrix=None):
-    """Get BMesh and BVHTree from Object."""
-    bm = bmesh.new()  # remains in ob local coordinates
-    depsgraph = context.evaluated_depsgraph_get()
-    bm.from_object(ob, depsgraph=depsgraph, deform=True, cage=False, face_normals=True)
-    bm.faces.ensure_lookup_table()  # update bmesh index
-    if matrix:
-        bm.transform(matrix)
+def check_intersections(context, ob, other_obs=None, protect=True):
+    """Check ob self-intersection and intersection with other_obs."""
+    log.debug(f"Check intersections in Object <{ob.name}>")
+    if context.object:
+        bpy.ops.object.mode_set(mode="OBJECT")
+    epsilon_len = context.scene.bf_config_min_edge_length
+    bad_faces = list()
+    bm = utils.get_object_bmesh(context=context, ob=ob, lookup=True)
     tree = mathutils.bvhtree.BVHTree.FromBMesh(bm, epsilon=epsilon_len)
-    return bm, tree
+    # Get self-intersections
+    bad_faces.extend(_get_bm_intersected_faces(bm, tree, tree))
+    # Get intersections
+    for other_ob in other_obs or tuple():
+        matrix = (
+            ob.matrix_world.inverted() @ other_ob.matrix_world
+        )  # Blender 2.80 matrix multiplication
+        other_bm = utils.get_object_bmesh(
+            context=context, ob=ob, matrix=matrix, lookup=True
+        )
+        other_tree = mathutils.bvhtree.BVHTree.FromBMesh(other_bm, epsilon=epsilon_len)
+        other_bm.free()
+        bad_faces.extend(_get_bm_intersected_faces(bm, tree, other_tree))
+    # Raise
+    if bad_faces:
+        msg = "Intersection detected."
+        _raise_bad_geometry(context, ob, bm, msg, protect, bad_faces=bad_faces)
 
 
 def _get_bm_intersected_faces(bm, tree, other_tree):
@@ -216,31 +210,6 @@ def _get_bm_intersected_faces(bm, tree, other_tree):
         ifaces = {i_pair[0] for i_pair in overlap}
         return [bm.faces[iface] for iface in ifaces]
     return list()
-
-
-def check_intersections(context, ob, other_obs=None, protect=True):
-    """Check ob self-intersection and intersection with other_obs."""
-    log.debug(f"Check intersections in Object <{ob.name}>")
-    if context.object:
-        bpy.ops.object.mode_set(mode="OBJECT")
-    epsilon_len = context.scene.bf_config_min_edge_length
-    bad_faces = list()
-    bm, tree = _get_bm_and_tree(context, ob, epsilon_len=epsilon_len)
-    # Get self-intersections
-    bad_faces.extend(_get_bm_intersected_faces(bm, tree, tree))
-    # Get intersections
-    for other_ob in other_obs or tuple():
-        matrix = (
-            ob.matrix_world.inverted() @ other_ob.matrix_world
-        )  # Blender 2.80 matrix multiplication
-        _, other_tree = _get_bm_and_tree(
-            context, other_ob, epsilon_len=epsilon_len, matrix=matrix
-        )
-        bad_faces.extend(_get_bm_intersected_faces(bm, tree, other_tree))
-    # Raise
-    if bad_faces:
-        msg = "Intersection detected."
-        _raise_bad_geometry(context, ob, bm, msg, protect, bad_faces=bad_faces)
 
 
 # Raise bad geometry
@@ -270,8 +239,9 @@ def _raise_bad_geometry(
         select_type = "VERT"
         for b in bad_verts:
             b.select = True
+    # Remove applied modifiers, but keep it relative
     ob.modifiers.clear()
-    ob.matrix_world = mathutils.Matrix()  # already world!
+    # Apply bm to ob
     bm.to_mesh(ob.data)
     bm.free()
     # Select object and go to edit mode

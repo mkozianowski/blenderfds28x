@@ -1,18 +1,10 @@
 # TODO
 
-Check FDS UG for namelists
-
-Automatic path for external tools
+Use 2.81 remesh tool
 
 Toolbox: MESH, mesh alignment
 
-default blender file
-
-Search: MATL_ID in text, QUANTITY in text
-
 geometry cache not working, handler crashing
-
-file version management
 
 unit testing (WUIFI-21)
 
@@ -20,7 +12,7 @@ automatic developer's doc with doxygen (WUIFI-21)
 
 user doc (WUIFI-21)
 
-## Geography:
+## TODO Geography
 
 import geotiff, srtm, osm buildings, trees, landcover (WUIFI-21)
 
@@ -30,6 +22,16 @@ GEOM terrain toolbox (WUIFI-21)
 
 
 # DONE
+
+file version management
+
+default blender file
+
+Search: MATL_ID in text, QUANTITY in text
+
+Check FDS UG for namelists
+
+Automatic path for external tools
 
 Fixed logging
 
@@ -73,7 +75,7 @@ default appearance
 
 from_fds, import
 
-## Geography
+## DONE Geography
 
 lon, lat, elevation of scene world origin and relative transformations
 
