@@ -13,12 +13,10 @@ log = logging.getLogger(__name__)
 # to GEOM
 
 
-def ob_to_geom(
+def _ob_to_geom(
     context, ob, scale_length, check=True
 ) -> "mas, fds_verts, fds_faces, 'Msg'":
-    """Transform Object geometry to FDS mas, verts, faces notation."""
     t0 = time()
-    log.debug(ob.name)
     mas, verts, faces = calc_trisurfaces.get_trisurface(
         context, ob, scale_length, check
     )
@@ -27,6 +25,17 @@ def ob_to_geom(
     dt = time() - t0
     msg = f"GEOM: {len(fds_verts)} vertices, {len(fds_faces)} faces, in {dt:.3f} s"
     return mas, fds_verts, fds_faces, msg
+
+
+def ob_to_geom(
+    context, ob, scale_length, check=True
+) -> "mas, fds_verts, fds_faces, 'Msg'":
+    """Transform Object geometry to FDS mas, verts, faces notation."""
+    log.debug(ob.name)
+    if ob.get("ob_to_geom_cache") is None:  # recalc
+        log.debug(f"Update <{ob.name}> geom cache")
+        ob["ob_to_geom_cache"] = _ob_to_geom(context, ob, scale_length, check)
+    return ob["ob_to_geom_cache"]
 
 
 # to XB
@@ -135,7 +144,10 @@ _choice_to_xbs = {
 def ob_to_xbs(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     """Transform Object geometry according to ob.bf_xb to FDS notation."""
     log.debug(ob.name)
-    return _choice_to_xbs[ob.bf_xb](context, ob, scale_length)  # recalc
+    if ob.get("ob_to_xbs_cache") is None:  # recalc
+        log.debug(f"Update <{ob.name}> xbs cache")
+        ob["ob_to_xbs_cache"] = _choice_to_xbs[ob.bf_xb](context, ob, scale_length)
+    return ob["ob_to_xbs_cache"]
 
 
 # to XYZ in Blender units
@@ -177,7 +189,10 @@ _choice_to_xyzs = {"CENTER": _ob_to_xyzs_center, "VERTICES": _ob_to_xyzs_vertice
 def ob_to_xyzs(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
     """Transform Object geometry according to ob.bf_xyz to xyzs notation."""
     log.debug(ob.name)
-    return _choice_to_xyzs[ob.bf_xyz](context, ob, scale_length)  # recalc
+    if ob.get("ob_to_xyzs_cache") is None:  # recalc
+        log.debug(f"Update <{ob.name}> xyzs cache")
+        ob["ob_to_xyzs_cache"] = _choice_to_xyzs[ob.bf_xyz](context, ob, scale_length)
+    return ob["ob_to_xyzs_cache"]
 
 
 # to PB in Blender units
@@ -212,4 +227,7 @@ def _ob_to_pbs_planes(
 def ob_to_pbs(context, ob, scale_length) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
     """Transform Object geometry according to ob.bf_pb to pbs notation."""
     log.debug(ob.name)
-    return _ob_to_pbs_planes(context, ob, scale_length)  # recalc
+    if ob.get("ob_to_pbs_cache") is None:  # recalc
+        log.debug(f"Update <{ob.name}> pbs cache")
+        ob["ob_to_pbs_cache"] = _ob_to_pbs_planes(context, ob, scale_length)
+    return ob["ob_to_pbs_cache"]

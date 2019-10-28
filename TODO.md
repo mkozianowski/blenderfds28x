@@ -1,5 +1,7 @@
 # TODO
 
+Insert GEOREF in MISC, set a checkbox to avoid exporting
+
 Use 2.81 remesh tool
 
 Toolbox: MESH, mesh alignment
