@@ -5,9 +5,9 @@
 
 i=0
 
-#Importing Validation tests from FDS
-for d in fds/Validation/*/ ; do
-    echo "Found new Validation case: $d"
+#Importing Verification tests from FDS
+for d in fds/Verification/*/ ; do
+    echo "Found new Verification case: $d"
     case_name=$(basename $d)
 
     cases+=( $case_name )

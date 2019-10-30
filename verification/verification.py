@@ -153,7 +153,7 @@ RESULT_EMPTY = """<?xml version="1.0"?><testResults></testResults>"""
 DATE_FORMAT = "%d-%m-%Y %H.%M"
 
 
-# start of the validation script
+# start of the verification script
 xml = None
 
 try:
