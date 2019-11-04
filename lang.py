@@ -1195,7 +1195,11 @@ class MN_SURF(BFNamelistMa):
 
 
 def update_OP_namelist_cls(ob, context):
-    # Remove tmp Objects
+    # Remove cache and tmp objects
+    ob["ob_to_geom_cache"] = None
+    ob["ob_to_xbs_cache"] = None
+    ob["ob_to_xyzs_cache"] = None
+    ob["ob_to_pbs_cache"] = None
     geometry.utils.rm_tmp_objects(context)
     # Set default appearance
     ob.set_default_appearance(context)
@@ -1236,7 +1240,10 @@ class OP_FYI(BFParamFYI):
 
 
 def update_bf_xb(ob, context):
+    # Remove cache and tmp objects
+    ob["ob_to_xbs_cache"] = None
     geometry.utils.rm_tmp_objects(context)
+    # Prevent double multiparam
     if ob.bf_xb in ("VOXELS", "FACES", "PIXELS", "EDGES") and ob.bf_xb_export:
         if ob.bf_xyz == "VERTICES":
             ob.bf_xyz_export = False
@@ -1386,7 +1393,10 @@ class OP_XB(BFParamXB):
 
 
 def update_bf_xyz(ob, context):
+    # Remove cache and tmp objects
+    ob["ob_to_xyzs_cache"] = None
     geometry.utils.rm_tmp_objects(context)
+    # Prevent double multiparam
     if ob.bf_xyz == "VERTICES" and ob.bf_xyz_export:
         if ob.bf_xb in ("VOXELS", "FACES", "PIXELS", "EDGES"):
             ob.bf_xb_export = False
@@ -1490,7 +1500,10 @@ class OP_XYZ_center(OP_XYZ):
 
 
 def update_bf_pb(ob, context):
+    # Remove cache and tmp objects
     geometry.utils.rm_tmp_objects(context)
+    ob["ob_to_pbs_cache"] = None
+    # Prevent double multiparam
     if ob.bf_pb == "PLANES" and ob.bf_pb_export:
         if ob.bf_xb in ("VOXELS", "FACES", "PIXELS", "EDGES"):
             ob.bf_xb_export = False
@@ -1651,18 +1664,15 @@ class OP_SURF_ID(BFParam):
             return self.element.active_material.name
 
     def set_value(self, context, value):
-        print("SURF_ID:",value)
         if value is None:
             self.element.active_material = None
         else:
             try:
                 ma = bpy.data.materials.get(value)
-                print("SURF_ID:",ma)
             except IndexError:
                 raise BFException(self, f"Blender Material <{value}> does not exists")
             else:
                 self.element.active_material = ma
-                print("SURF_ID: set")
 
     @property
     def exported(self):
@@ -2197,7 +2207,7 @@ class BFObject:
         # WIRE: MESH, HVAC
         # Set
         if appearance == "TEXTURED" and ma_inert:
-            # self.active_material = ma_inert  # FIXME
+            # self.active_material = ma_inert  # FIXME beware it changes the material during from_fds
             self.show_wire = False
             self.display_type = "TEXTURED"
             return

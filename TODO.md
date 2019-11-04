@@ -1,10 +1,10 @@
 # TODO
 
+Insert GEOREF in MISC, set a checkbox to avoid exporting
+
 Use 2.81 remesh tool
 
 Toolbox: MESH, mesh alignment
-
-geometry cache not working, handler crashing
 
 unit testing (WUIFI-21)
 
@@ -22,6 +22,8 @@ GEOM terrain toolbox (WUIFI-21)
 
 
 # DONE
+
+geometry caching, if ob not touched
 
 file version management
 
