@@ -275,9 +275,48 @@ class VIEW3D_PT_BF_GEOM_Mesh(Panel, BF_GEOM_Toolbar):
     bl_context = "mesh_edit"
 
 
-class BF_Fix_Toolbar:
+@subscribe
+class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
+    bl_idname = "VIEW3D_PT_bf_fix_toolbar_object"
+    bl_context = "objectmode"
+
     bl_category = "FDS"
-    bl_label = "Fix Geometry"
+    bl_label = "Remesh"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        return ob and ob.type == "MESH"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        col = layout.column()
+        ob = context.active_object
+        me = ob.data
+        col.label(
+            text=f"{ob.name} | Verts: {len(me.vertices)} | Faces: {len(me.polygons)}"
+        )
+        col.prop(me, "remesh_voxel_size")
+        col.prop(me, "remesh_voxel_adaptivity")
+        col.prop(me, "remesh_fix_poles")
+        col.prop(me, "remesh_smooth_normals")
+        col.prop(me, "remesh_preserve_volume")
+        # col.prop(me, "remesh_preserve_paint_mask")
+        col.operator("object.voxel_remesh", text="Remesh")
+
+
+@subscribe
+class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
+    bl_idname = "VIEW3D_PT_bf_fix_toolbar_mesh"
+    bl_context = "mesh_edit"
+
+    bl_category = "FDS"
+    bl_label = "Fix"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
@@ -290,29 +329,14 @@ class BF_Fix_Toolbar:
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
-        me = context.object.data
-        flow = layout.grid_flow(
-            row_major=True, columns=0, even_columns=True, even_rows=False, align=False
+        col = layout.column()
+        ob = context.active_object
+        me = ob.data
+        col.label(
+            text=f"{ob.name} | Verts: {len(me.vertices)} | Faces: {len(me.polygons)}"
         )
-        flow.label(text=f"Verts: {len(me.vertices)} | Faces: {len(me.polygons)}")
-        flow.menu("VIEW3D_MT_edit_mesh_select_by_trait")
-        flow.menu("VIEW3D_MT_edit_mesh_clean")
-        flow.separator()
-        flow.operator("object.manifold")
-        flow.operator("object.quadriflow")
-        flow.operator("object.simplify")
-
-
-@subscribe
-class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel, BF_Fix_Toolbar):
-    bl_idname = "VIEW3D_PT_bf_fix_toolbar_object"
-    bl_context = "objectmode"
-
-
-@subscribe
-class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel, BF_Fix_Toolbar):
-    bl_idname = "VIEW3D_PT_bf_fix_toolbar_mesh"
-    bl_context = "mesh_edit"
+        col.menu("VIEW3D_MT_edit_mesh_select_by_trait")
+        col.menu("VIEW3D_MT_edit_mesh_clean")
 
 
 class BF_Geoloc_Toolbar:

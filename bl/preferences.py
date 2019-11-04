@@ -1,6 +1,6 @@
 """BlenderFDS, preferences panel"""
 
-import bpy, os, sys, platform
+import bpy
 import logging
 
 from bpy.types import AddonPreferences
@@ -17,13 +17,6 @@ log = logging.getLogger(__name__)
 # Get preference value like this:
 # prefs = context.preferences.addons[__package__.split(".")[0]].preferences
 # prefs.bf_pref_simplify_ui
-
-# Get default paths
-
-binpath = os.path.dirname(sys.modules[__package__.split(".")[0]].__file__) + "/bin/"
-system = platform.system()
-if system == "Windows":
-    system = "Windows.exe"
 
 
 # Preferences
@@ -61,27 +54,6 @@ class BFPreferences(AddonPreferences):
         default="DEBUG",
     )
 
-    bf_quadriflow_filepath: StringProperty(
-        name="Quadriflow",
-        description="Quadriflow executable filepath (see: github.com/hjwdzh)",
-        subtype="FILE_PATH",
-        default=system and binpath + "quadriflow/quadriflow_" + system,
-    )
-
-    bf_manifold_filepath: StringProperty(
-        name="Manifold",
-        description="Manifold executable filepath (see: github.com/hjwdzh)",
-        subtype="FILE_PATH",
-        default=system and binpath + "quadriflow/manifold_" + system,
-    )
-
-    bf_simplify_filepath: StringProperty(
-        name="Simplify",
-        description="Simplify executable filepath (see: github.com/hjwdzh)",
-        subtype="FILE_PATH",
-        default=system and binpath + "quadriflow/simplify_" + system,
-    )
-
     def draw(self, context):
         paths = context.preferences.filepaths
         layout = self.layout
@@ -93,11 +65,6 @@ class BFPreferences(AddonPreferences):
         box.prop(paths, "use_load_ui")
         box.prop(paths, "use_relative_paths")
         box.prop(self, "bf_loglevel")
-        box = layout.box()
-        box.label(text="Filepaths of External Tools")
-        box.prop(self, "bf_manifold_filepath")
-        box.prop(self, "bf_quadriflow_filepath")
-        box.prop(self, "bf_simplify_filepath")
         return layout
 
 
