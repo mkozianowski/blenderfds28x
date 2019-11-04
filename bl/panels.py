@@ -275,9 +275,9 @@ class VIEW3D_PT_BF_GEOM_Mesh(Panel, BF_GEOM_Toolbar):
     bl_context = "mesh_edit"
 
 
-class BF_Remesh_Toolbar:
+class BF_Fix_Toolbar:
     bl_category = "FDS"
-    bl_label = "Remesh"
+    bl_label = "Fix Geometry"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
@@ -304,14 +304,14 @@ class BF_Remesh_Toolbar:
 
 
 @subscribe
-class VIEW3D_PT_BF_Remesh_Toolbar_Object(Panel, BF_Remesh_Toolbar):
-    bl_idname = "VIEW3D_PT_bf_remesh_toolbar_object"
+class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel, BF_Fix_Toolbar):
+    bl_idname = "VIEW3D_PT_bf_fix_toolbar_object"
     bl_context = "objectmode"
 
 
 @subscribe
-class VIEW3D_PT_BF_Remesh_Toolbar_Mesh(Panel, BF_Remesh_Toolbar):
-    bl_idname = "VIEW3D_PT_bf_remesh_toolbar_mesh"
+class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel, BF_Fix_Toolbar):
+    bl_idname = "VIEW3D_PT_bf_fix_toolbar_mesh"
     bl_context = "mesh_edit"
 
 
