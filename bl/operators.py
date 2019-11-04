@@ -85,7 +85,7 @@ class WM_OT_bf_load_blenderfds_settings(Operator):
         return {"FINISHED"}
 
 
-# GEOM, check geometry quality and intersections
+# GEOM, check geometry sanity and intersections
 
 
 @subscribe
@@ -122,9 +122,9 @@ class OBJECT_OT_bf_check_intersections(Operator):
 
 
 @subscribe
-class SCENE_OT_bf_check_quality(Operator):
-    bl_label = "Check Quality"
-    bl_idname = "object.bf_geom_check_quality"
+class SCENE_OT_bf_check_sanity(Operator):
+    bl_label = "Check Sanity"
+    bl_idname = "object.bf_geom_check_sanity"
     bl_description = "Check if closed orientable manifold, with no degenerate geometry"
 
     @classmethod
@@ -136,14 +136,14 @@ class SCENE_OT_bf_check_quality(Operator):
         w.cursor_modal_set("WAIT")
         ob = context.active_object
         try:
-            geometry.calc_trisurfaces.check_geom_quality(
+            geometry.calc_trisurfaces.check_geom_sanity(
                 context, ob, protect=ob.bf_geom_protect
             )
         except BFException as err:
             self.report({"ERROR"}, str(err))
             return {"CANCELLED"}
         else:
-            self.report({"INFO"}, "Geometry quality ok")
+            self.report({"INFO"}, "Geometry sanity ok")
             return {"FINISHED"}
         finally:
             w.cursor_modal_restore()
@@ -444,7 +444,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
         w.cursor_modal_set("WAIT")
         # Manage GEOM
         if ob.bf_namelist_cls == "ON_GEOM" and not ob.hide_render:  # was bf_export
-            check = ob.bf_geom_check_quality
+            check = ob.bf_geom_check_sanity
             try:
                 fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
                     context=context, ob=ob, scale_length=scale_length, check=check

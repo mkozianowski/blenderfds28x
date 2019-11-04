@@ -1746,11 +1746,11 @@ class ON_other(BFNamelistOb):
 
 
 @subscribe
-class OP_GEOM_check_quality(BFParam):
-    label = "Check Quality While Exporting"
+class OP_GEOM_check_sanity(BFParam):
+    label = "Check Sanity While Exporting"
     description = "Check if closed orientable manifold, with no degenerate geometry while exporting"
     bpy_type = Object
-    bpy_idname = "bf_geom_check_quality"
+    bpy_idname = "bf_geom_check_sanity"
     bpy_prop = BoolProperty
     bpy_default = True
 
@@ -1758,7 +1758,7 @@ class OP_GEOM_check_quality(BFParam):
 @subscribe
 class OP_GEOM_protect(BFParam):
     label = "Protect Original"
-    description = "Protect original Object geometry while checking quality"
+    description = "Protect original Object geometry while checking its sanity"
     bpy_type = Object
     bpy_idname = "bf_geom_protect"
     bpy_prop = BoolProperty
@@ -1778,7 +1778,7 @@ class OP_GEOM(BFParam):
         # Check is performed while exporting
         # Get surf_idv, verts and faces
         scale_length = context.scene.unit_settings.scale_length
-        check = self.element.bf_geom_check_quality
+        check = self.element.bf_geom_check_sanity
         fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
             context, self.element, scale_length, check
         )
@@ -1841,7 +1841,7 @@ class ON_GEOM(BFNamelistOb):
     bf_params = (
         OP_ID,
         OP_FYI,
-        OP_GEOM_check_quality,
+        OP_GEOM_check_sanity,
         OP_GEOM_IS_TERRAIN,
         OP_GEOM_EXTEND_TERRAIN,
         OP_GEOM,

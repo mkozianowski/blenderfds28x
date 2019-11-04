@@ -1,5 +1,10 @@
 # TODO
 
+
+Replace "Remesh" with "Fix Mesh"
+
+New Blender 2.8x website with MAECI logo
+
 Insert GEOREF in MISC, set a checkbox to avoid exporting
 
 Use 2.81 remesh tool
@@ -22,6 +27,8 @@ GEOM terrain toolbox (WUIFI-21)
 
 
 # DONE
+
+Replace "Quality" with "Sanity"
 
 geometry caching, if ob not touched
 

@@ -23,7 +23,7 @@ def get_trisurface(
         context=context, ob=ob, world=True, triangulate=True, lookup=False
     )
     if check:
-        _check_bm_quality(context, ob, bm, protect=True)
+        _check_bm_sanity(context, ob, bm, protect=True)
     # Extract verts and faces from bmesh
     verts, faces = list(), list()
     for v in bm.verts:
@@ -56,20 +56,20 @@ def _get_materials(context, ob):
     return mas
 
 
-# Check quality
+# Check sanity
 
 
-def check_geom_quality(context, ob, protect):
+def check_geom_sanity(context, ob, protect):
     """Check that Object is a closed orientable manifold,
     with no degenerate geometry."""
     bm = utils.get_object_bmesh(
         context=context, ob=ob, world=False, triangulate=True, lookup=True
     )
-    _check_bm_quality(context, ob, bm, protect)
+    _check_bm_sanity(context, ob, bm, protect)
     bm.free()
 
 
-def _check_bm_quality(context, ob, bm, protect):
+def _check_bm_sanity(context, ob, bm, protect):
     """Check that bmesh is a closed orientable manifold, with no degenerate geometry."""
     epsilon_len = context.scene.bf_config_min_edge_length
     epsilon_area = context.scene.bf_config_min_face_area

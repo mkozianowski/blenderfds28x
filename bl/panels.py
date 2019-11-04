@@ -260,7 +260,7 @@ class BF_GEOM_Toolbar:
         ob = context.active_object
         flow.prop(ob, "bf_geom_protect")
         flow.operator("object.bf_geom_check_intersections")
-        flow.operator("object.bf_geom_check_quality")
+        flow.operator("object.bf_geom_check_sanity")
 
 
 @subscribe
