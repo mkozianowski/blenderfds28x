@@ -241,7 +241,7 @@ class MATERIAL_PT_bf_namelist(Panel):
 
 class BF_GEOM_Toolbar:
     bl_category = "FDS"
-    bl_label = "GEOM Inspect"
+    bl_label = "GEOM Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
@@ -316,7 +316,7 @@ class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
     bl_context = "mesh_edit"
 
     bl_category = "FDS"
-    bl_label = "Fix"
+    bl_label = "Clean Up"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
@@ -335,7 +335,9 @@ class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
         col.label(
             text=f"{ob.name} | Verts: {len(me.vertices)} | Faces: {len(me.polygons)}"
         )
-        col.menu("VIEW3D_MT_edit_mesh_select_by_trait")
+        row = col.row(align=True)
+        row.template_header_3D_mode()
+        row.menu("VIEW3D_MT_edit_mesh_select_by_trait")
         col.menu("VIEW3D_MT_edit_mesh_clean")
 
 
