@@ -276,7 +276,9 @@ class VIEW3D_PT_BF_GEOM_Mesh(Panel, BF_GEOM_Toolbar):
 
 
 @subscribe
-class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
+class VIEW3D_PT_BF_Fix_Toolbar_Object(
+    Panel
+):  # See: properties_data_mesh.py, class DATA_PT_remesh
     bl_idname = "VIEW3D_PT_bf_fix_toolbar_object"
     bl_context = "objectmode"
 
@@ -294,20 +296,24 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-
-        col = layout.column()
         ob = context.active_object
         me = ob.data
+        col = layout.column()
         col.label(
             text=f"{ob.name} | Verts: {len(me.vertices)} | Faces: {len(me.polygons)}"
         )
-        col.prop(me, "remesh_voxel_size")
-        col.prop(me, "remesh_voxel_adaptivity")
-        col.prop(me, "remesh_fix_poles")
-        col.prop(me, "remesh_smooth_normals")
-        col.prop(me, "remesh_preserve_volume")
-        # col.prop(me, "remesh_preserve_paint_mask")
-        col.operator("object.voxel_remesh", text="Remesh")
+        row = col.row()
+        row.prop(me, "remesh_mode", text="Mode", expand=True)
+        if me.remesh_mode == "VOXEL":
+            col.prop(me, "remesh_voxel_size")
+            col.prop(me, "remesh_voxel_adaptivity")
+            col.prop(me, "remesh_fix_poles")
+            col.prop(me, "remesh_smooth_normals")
+            col.prop(me, "remesh_preserve_volume")
+            # col.prop(me, "remesh_preserve_paint_mask")
+            col.operator("object.voxel_remesh", text="Voxel Remesh")
+        else:
+            col.operator("object.quadriflow_remesh", text="QuadriFlow Remesh")
 
 
 @subscribe

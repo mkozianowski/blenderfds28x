@@ -1,13 +1,8 @@
 # TODO
 
-
-Replace "Remesh" with "Fix Mesh"
-
 New Blender 2.8x website with MAECI logo
 
 Insert GEOREF in MISC, set a checkbox to avoid exporting
-
-Use 2.81 remesh tool
 
 Toolbox: MESH, mesh alignment
 
@@ -25,8 +20,11 @@ GEOM terrain new quality checks (WUIFI-21)
 
 GEOM terrain toolbox (WUIFI-21)
 
+North bearing of origin geolocation
 
 # DONE
+
+Use 2.81 remesh tool
 
 Replace "Quality" with "Sanity"
 
