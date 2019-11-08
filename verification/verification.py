@@ -11,8 +11,8 @@ from datetime import datetime
 from xml.sax.saxutils import escape
 
 #Routine to execute FDS on two files
-#Returns: TRUE/FALSE []
-#         string     []
+#Returns: TRUE/FALSE [] -> execution worked or not
+#         string     [] -> Execution stdout
 def fds_run( file_fds ):
 
    #Modifying FDS input file as follows
@@ -57,6 +57,11 @@ def fds_run( file_fds ):
    print (  out)
    print ( 'ERR = ')
    print (  err)
+
+   fds_execution = True
+   string        = out
+
+   return [fds_execution, string]
 
 #Routine to compare two files .FDS
 #Returns: TRUE/FALSE [are the two files equals?]
