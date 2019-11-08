@@ -9,6 +9,19 @@ from xml.dom import minidom
 from datetime import datetime
 from xml.sax.saxutils import escape
 
+def fds_run( file_fds ):
+
+   #TODO fix to FDS input file
+   #   -> if not present add &MESH /
+   #   -> set T_END to 0 ( &TIME T_END=0.0 / )
+
+   #TODO set ulimit -s unlimited to allow RAM usage
+   myCmd = 'source /opt/FDS/FDS671/bin/FDS6VARS.sh ; fds file_fds.fds'
+
+   myOut = os.popen( myCmd ).read()
+
+   print ( myOut)
+
 #Routine to compare two files .FDS
 #Returns: TRUE/FALSE [are the two files equals?]
 #         string     [diff of the two files]
@@ -92,6 +105,9 @@ def do_check(dirpath, filename):
             compare = compare_fds_files(filepath_fds, temporaryFile.name)
             result = "OK" if compare[0] else "ERROR"
             note   = compare[1]
+
+            #new FDS execution
+            print (' LANCIO ESECUZIONE FDS ')
         
         except Exception as e:
             result = "EXCEPTION"
