@@ -2,12 +2,66 @@ import os
 import sys
 import bpy
 import difflib
+import subprocess
 import tempfile
 
 from pprint import pprint
 from xml.dom import minidom
 from datetime import datetime
 from xml.sax.saxutils import escape
+
+#Routine to execute FDS on two files
+#Returns: TRUE/FALSE [] -> execution worked or not
+#         string     [] -> Execution stdout
+def fds_run( file_fds ):
+
+   #Modifying FDS input file as follows
+   #   -> if not present add &MESH /
+   #   -> set T_END to 0 ( &TIME T_END=0.0 / )
+
+   addMesh = True
+
+   with open( file_fds) as myfile:
+      if '&MESH' in myfile.read():
+         addMesh = False
+
+   with open( file_fds, "r") as f:
+      lines = f.readlines()
+
+   with open( file_fds, "w") as f:
+      for line in lines:
+
+         #removing tail (we add all the new strings at the end of file)
+         if line.strip("\n") != "&TAIL /" and line.find("&TIME"):
+            f.write(line)
+
+      if ( addMesh ):
+          f.write( "&MESH /\n\n")
+
+      f.write( "&TIME T_END=0.0 /\n\n" )
+
+      f.write( "&TAIL /")
+
+
+   #TODO set ulimit -s unlimited to allow RAM usage
+   myCmd = 'fds ' + file_fds
+
+   #Process execution
+   print( myCmd)
+   p = subprocess.Popen( myCmd, cwd='/tmp/', \
+                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True )
+
+   out,err = p.communicate()
+
+   print ( 'OUT = ')
+   print (  out)
+   print ( 'ERR = ')
+   print (  err)
+
+   fds_execution = True
+   string        = out
+
+   return [fds_execution, string]
 
 #Routine to compare two files .FDS
 #Returns: TRUE/FALSE [are the two files equals?]
@@ -92,6 +146,10 @@ def do_check(dirpath, filename):
             compare = compare_fds_files(filepath_fds, temporaryFile.name)
             result = "OK" if compare[0] else "ERROR"
             note   = compare[1]
+
+            #new FDS execution
+            print ( "@@@@@ FDS RUN @@@@")
+            fds_run( temporaryFile.name )
         
         except Exception as e:
             result = "EXCEPTION"
