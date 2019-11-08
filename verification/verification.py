@@ -40,7 +40,7 @@ def fds_run( file_fds ):
 
       f.write( "&TIME T_END=0.0 /\n\n" )
 
-#      f.write( "&TAIL /")
+      f.write( "&TAIL /")
 
 
    #TODO set ulimit -s unlimited to allow RAM usage
