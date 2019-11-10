@@ -121,6 +121,8 @@ def do_check(dirpath, filename):
 
     result = None
     note   = None
+    fdsResult = None
+    fdsNote   = None
 
     with tempfile.NamedTemporaryFile(suffix=".fds", delete=True) as temporaryFile:
 
@@ -149,13 +151,17 @@ def do_check(dirpath, filename):
 
             #new FDS execution
             print ( "@@@@@ FDS RUN @@@@")
-            fds_run( temporaryFile.name )
+            fdsRun = fds_run( temporaryFile.name )
+            fdsResult = "OK" if fdsRun[0] else "NO"
+            fdsNote = fdsRun[1]
         
         except Exception as e:
             result = "EXCEPTION"
             note   = str(e)
+            fdsResult = ""
+            fdsNote = ""
     
-    return [result, note]
+    return [result, note, fdsResult, fdsNote]
 
 #Routine to append a new Case tag with a test results
 #Input  : xml             [results.xml root tag]
@@ -165,10 +171,10 @@ def do_check(dirpath, filename):
 #         contentInput    [Input tag content]
 #         contentResult   [Result tag content]
 #         contentNote     [Note tag content]
-def append_case(xml, results, contentName, contentType, contentInput, contentResult, contentNote):
+def append_case(xml, results, contentName, contentType, contentInput, contentResult, contentNote, contentFdsResult, contentFdsNote):
 
     def escape_text(text):
-        return escape(text.encode("unicode_escape").decode("utf-8"))
+        return escape(str(text).encode("unicode_escape").decode("utf-8"))
     
     nodeName = xml.createElement("Name")
     nodeText = xml.createTextNode(escape_text(contentName))
@@ -190,12 +196,22 @@ def append_case(xml, results, contentName, contentType, contentInput, contentRes
     nodeText = xml.createTextNode(escape_text(contentNote))
     nodeNote.appendChild(nodeText)
 
+    nodeFdsResult = xml.createElement("Result_Fds")
+    nodeText = xml.createTextNode(escape_text(contentFdsResult))
+    nodeFdsResult.appendChild(nodeText)
+
+    nodeFdsNote = xml.createElement("Node_Fds")
+    nodeText = xml.createTextNode(escape_text(contentFdsNote))
+    nodeFdsNote.appendChild(nodeText)
+
     nodeCase = xml.createElement("Case")
     nodeCase.appendChild(nodeName)
     nodeCase.appendChild(nodeType)
     nodeCase.appendChild(nodeInput)
     nodeCase.appendChild(nodeResult)
     nodeCase.appendChild(nodeNote)
+    nodeCase.appendChild(nodeFdsResult)
+    nodeCase.appendChild(nodeFdsNote)
     results.appendChild(nodeCase)
 
 #==================================================================
@@ -260,7 +276,7 @@ try:
                         print("> Test: blend to fds")
                         print("> Input: " + filename)
                         check = do_check(dirpath, filename)
-                        append_case(xml, results, dirname, "blnfds", filename, check[0], check[1])
+                        append_case(xml, results, dirname, "blnfds", filename, check[0], check[1], check[2], check[3])
                         print("")
 
             # fds to fds test
@@ -270,14 +286,14 @@ try:
                         print("> Test: fds to fds")
                         print("> Input: " + filename)
                         check = do_check(dirpath, filename)
-                        append_case(xml, results, dirname, "fdsfds", filename, check[0], check[1])
+                        append_case(xml, results, dirname, "fdsfds", filename, check[0], check[1], check[2], check[3])
                         print("")
         
         except Exception as e:
             contentType = ""
             contentResult = "EXCEPTION"
             contentNote = str(e)
-            append_case(xml, results, dirname, "", "", "EXCEPTION", str(e))
+            append_case(xml, results, dirname, "", "", "EXCEPTION", str(e), "", "")
 
 finally:
     if xml != None:
