@@ -1,12 +1,12 @@
 # TODO
 
+unit testing (WUIFI-21)
+
 New Blender 2.8x website with MAECI logo
 
 Insert GEOREF in MISC, set a checkbox to avoid exporting
 
 Toolbox: MESH, mesh alignment
-
-unit testing (WUIFI-21)
 
 automatic developer's doc with doxygen (WUIFI-21)
 
@@ -21,6 +21,12 @@ GEOM terrain new quality checks (WUIFI-21)
 GEOM terrain toolbox (WUIFI-21)
 
 North bearing of origin geolocation
+
+## TODO Improvements
+
+progress_begin(min, max)
+progress_update(value)
+progress_end()
 
 # DONE
 
