@@ -38,7 +38,7 @@ def fds_run( file_fds ):
       if ( addMesh ):
           f.write( "&MESH /\n\n")
 
-      f.write( "&TIME T_END=0.0 /\n\n" )
+      f.write( "&TIME T_END=1.0 /\n\n" )
 
       f.write( "&TAIL /")
 
