@@ -17,7 +17,7 @@ def fds_run( file_fds ):
 
    #Modifying FDS input file as follows
    #   -> if not present add &MESH /
-   #   -> set T_END to 0 ( &TIME T_END=0.0 / )
+   #   -> set T_END to 1 ( &TIME T_END=1.0 / )
 
    addMesh = True
 
@@ -47,19 +47,18 @@ def fds_run( file_fds ):
    myCmd = 'fds ' + file_fds
 
    #Process execution
-   print( myCmd)
    p = subprocess.Popen( myCmd, cwd='/tmp/', \
                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True )
 
    out,err = p.communicate()
 
-   print ( 'OUT = ')
-   print (  out)
-   print ( 'ERR = ')
-   print (  err)
-
-   fds_execution = True
+   fds_execution = False
    string        = out
+
+   #Research of successful string in FDS log
+   success = "STOP: FDS completed successfully"
+   if string.decode( "utf-8" ).find( success ) > 0:
+       fds_execution = True
 
    return [fds_execution, string]
 
@@ -152,7 +151,7 @@ def do_check(dirpath, filename):
             #new FDS execution
             print ( "@@@@@ FDS RUN @@@@")
             fdsRun = fds_run( temporaryFile.name )
-            fdsResult = "OK" if fdsRun[0] else "NO"
+            fdsResult = "OK" if fdsRun[0] else "ERROR"
             fdsNote = fdsRun[1]
         
         except Exception as e:
