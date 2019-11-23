@@ -17,7 +17,7 @@ def fds_run( file_fds ):
 
    #Modifying FDS input file as follows
    #   -> if not present add &MESH /
-   #   -> set T_END to 0 ( &TIME T_END=0.0 / )
+   #   -> set T_END to 1 ( &TIME T_END=1.0 / )
 
    addMesh = True
 
@@ -38,7 +38,7 @@ def fds_run( file_fds ):
       if ( addMesh ):
           f.write( "&MESH /\n\n")
 
-      f.write( "&TIME T_END=0.0 /\n\n" )
+      f.write( "&TIME T_END=1.0 /\n\n" )
 
       f.write( "&TAIL /")
 
@@ -47,19 +47,18 @@ def fds_run( file_fds ):
    myCmd = 'fds ' + file_fds
 
    #Process execution
-   print( myCmd)
    p = subprocess.Popen( myCmd, cwd='/tmp/', \
                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True )
 
    out,err = p.communicate()
 
-   print ( 'OUT = ')
-   print (  out)
-   print ( 'ERR = ')
-   print (  err)
-
-   fds_execution = True
+   fds_execution = False
    string        = out
+
+   #Research of successful string in FDS log
+   success = "STOP: FDS completed successfully"
+   if string.decode( "utf-8" ).find( success ) > 0:
+       fds_execution = True
 
    return [fds_execution, string]
 
@@ -112,50 +111,73 @@ def compare_fds_files( filea, fileb ):
 
    return [fds_equals, string]
 
-#Routine to execute the check of a .blend or .fds file
+#Routine to execute the test of a .blend or .fds file
 #Input  : dirpath    [path to the directory with "Blender_Input_Files" and "FDS_Input_Files" folders within]
 #         filename   [name of the .blend or .fds file to be tested]
-#Returns: string     [the test result]
-#         string     [the note of the test]
-def do_check(dirpath, filename):
+#Returns: dictionary [scene, result, note, fdsResult, fdsNote]
+def do_tests(dirpath, filename):
 
-    result = None
-    note   = None
+    def getFilePathFDS(scene, inputFileName):
+        fileNameFDS = scene.name + ".fds" if inputFileName.endswith(".blend") else inputFileName
+        return os.path.join(dirpath, DIR_NAME_FDS2FDS, fileNameFDS)
 
-    with tempfile.NamedTemporaryFile(suffix=".fds", delete=True) as temporaryFile:
+    tests = []
+    testDict = {
+        "scene": "",
+        "result": "",
+        "note": "",
+        "fdsResult": "",
+        "fdsNote": ""
+    }
 
-        try:
-            filepath_fds = None
+    try:
+        filepath_fds = None
 
-            # .blend input
-            if filename.endswith(".blend"):
-                filepath_bln = os.path.join(dirpath, DIR_NAME_BLN2FDS, filename)
-                filepath_fds = os.path.join(dirpath, DIR_NAME_FDS2FDS, filename.replace(".blend", ".fds"))
-                bpy.ops.wm.open_mainfile(filepath=filepath_bln)
-                
-            # .fds input
-            elif filename.endswith(".fds"):
-                filepath_fds = os.path.join(dirpath, DIR_NAME_FDS2FDS, filename)
-                bpy.ops.import_scene.fds(filepath=filepath_fds)
+        # .blend input
+        if filename.endswith(".blend"):
+            filepath_bln = os.path.join(dirpath, DIR_NAME_BLN2FDS, filename)
+            bpy.ops.wm.open_mainfile(filepath=filepath_bln)
             
-            else:
-                raise ValueError("Invalid check type")
-
-            # test
-            bpy.ops.export_scene.fds(filepath=temporaryFile.name)
-            compare = compare_fds_files(filepath_fds, temporaryFile.name)
-            result = "OK" if compare[0] else "ERROR"
-            note   = compare[1]
-
-            #new FDS execution
-            print ( "@@@@@ FDS RUN @@@@")
-            fds_run( temporaryFile.name )
+        # .fds input
+        elif filename.endswith(".fds"):
+            filepath_fds = os.path.join(dirpath, DIR_NAME_FDS2FDS, filename)
+            bpy.ops.import_scene.fds(filepath=filepath_fds)
         
-        except Exception as e:
-            result = "EXCEPTION"
-            note   = str(e)
+        else:
+            raise ValueError("Invalid test type")
+
+        for sc in bpy.data.scenes:
+            test = dict(testDict)
+            test["scene"] = sc.name
+
+            try:
+                with tempfile.NamedTemporaryFile(suffix=".fds", delete=True) as temporaryFile:
+                    bpy.context.window.scene = sc
+                    bpy.ops.export_scene.fds(filepath=temporaryFile.name)
+                    compare = compare_fds_files(getFilePathFDS(sc, filename), temporaryFile.name)
+                    fdsRun = fds_run(temporaryFile.name)
+
+                    test["result"]    = "OK" if compare[0] else "ERROR"
+                    test["note"]      = compare[1]
+                    test["fdsResult"] = "OK" if fdsRun[0] else "ERROR"
+                    test["fdsNote"]   = fdsRun[1]
+            
+            except Exception as e:
+                print(e)
+                test["result"] = "EXCEPTION"
+                test["note"]   = str(e)
+            
+            finally:
+                tests.append(test)
     
-    return [result, note]
+    except Exception as e:
+        print(e)
+        test = dict(testDict)
+        test["result"] = "EXCEPTION"
+        test["note"]   = str(e)
+        tests.append(test)
+    
+    return tests
 
 #Routine to append a new Case tag with a test results
 #Input  : xml             [results.xml root tag]
@@ -163,40 +185,60 @@ def do_check(dirpath, filename):
 #         contentName     [Name tag content]
 #         contentType     [Type tag content]
 #         contentInput    [Input tag content]
-#         contentResult   [Result tag content]
-#         contentNote     [Note tag content]
-def append_case(xml, results, contentName, contentType, contentInput, contentResult, contentNote):
+#         tests           [test results ordered in a dictionary]
+def append_case(xml, 
+                results, 
+                contentName, 
+                contentType, 
+                contentInput, 
+                tests):
 
     def escape_text(text):
-        return escape(text.encode("unicode_escape").decode("utf-8"))
+        return escape(str(text).encode("unicode_escape").decode("utf-8"))
     
-    nodeName = xml.createElement("Name")
-    nodeText = xml.createTextNode(escape_text(contentName))
-    nodeName.appendChild(nodeText)
+    for test in tests:
+        nodeName = xml.createElement("Name")
+        nodeText = xml.createTextNode(escape_text(contentName))
+        nodeName.appendChild(nodeText)
 
-    nodeType = xml.createElement("Type")
-    nodeText = xml.createTextNode(escape_text(contentType))
-    nodeType.appendChild(nodeText)
+        nodeType = xml.createElement("Type")
+        nodeText = xml.createTextNode(escape_text(contentType))
+        nodeType.appendChild(nodeText)
 
-    nodeInput = xml.createElement("Input")
-    nodeText  = xml.createTextNode(escape_text(contentInput))
-    nodeInput.appendChild(nodeText)
+        nodeInput = xml.createElement("Input")
+        nodeText  = xml.createTextNode(escape_text(contentInput))
+        nodeInput.appendChild(nodeText)
 
-    nodeResult = xml.createElement("Result")
-    nodeText   = xml.createTextNode(escape_text(contentResult))
-    nodeResult.appendChild(nodeText)
+        nodeScene = xml.createElement("Scene")
+        nodeText  = xml.createTextNode(escape_text(test["scene"]))
+        nodeScene.appendChild(nodeText)
 
-    nodeNote = xml.createElement("Note")
-    nodeText = xml.createTextNode(escape_text(contentNote))
-    nodeNote.appendChild(nodeText)
+        nodeResult = xml.createElement("Result")
+        nodeText   = xml.createTextNode(escape_text(test["result"]))
+        nodeResult.appendChild(nodeText)
 
-    nodeCase = xml.createElement("Case")
-    nodeCase.appendChild(nodeName)
-    nodeCase.appendChild(nodeType)
-    nodeCase.appendChild(nodeInput)
-    nodeCase.appendChild(nodeResult)
-    nodeCase.appendChild(nodeNote)
-    results.appendChild(nodeCase)
+        nodeNote = xml.createElement("Note")
+        nodeText = xml.createTextNode(escape_text(test["note"]))
+        nodeNote.appendChild(nodeText)
+
+        nodeFdsResult = xml.createElement("Result_Fds")
+        nodeText = xml.createTextNode(escape_text(test["fdsResult"]))
+        nodeFdsResult.appendChild(nodeText)
+
+        nodeFdsNote = xml.createElement("Node_Fds")
+        nodeText = xml.createTextNode(escape_text(test["fdsNote"]))
+        nodeFdsNote.appendChild(nodeText)
+
+        nodeCase = xml.createElement("Case")
+        nodeCase.appendChild(nodeName)
+        nodeCase.appendChild(nodeType)
+        nodeCase.appendChild(nodeInput)
+        nodeCase.appendChild(nodeScene)
+        nodeCase.appendChild(nodeResult)
+        nodeCase.appendChild(nodeNote)
+        nodeCase.appendChild(nodeFdsResult)
+        nodeCase.appendChild(nodeFdsNote)
+        results.appendChild(nodeCase)
 
 #==================================================================
 
@@ -259,8 +301,8 @@ try:
                     if filename.endswith(".blend"):
                         print("> Test: blend to fds")
                         print("> Input: " + filename)
-                        check = do_check(dirpath, filename)
-                        append_case(xml, results, dirname, "blnfds", filename, check[0], check[1])
+                        test = do_tests(dirpath, filename)
+                        append_case(xml, results, dirname, "blnfds", filename, test)
                         print("")
 
             # fds to fds test
@@ -269,15 +311,15 @@ try:
                     if filename.endswith(".fds"):
                         print("> Test: fds to fds")
                         print("> Input: " + filename)
-                        check = do_check(dirpath, filename)
-                        append_case(xml, results, dirname, "fdsfds", filename, check[0], check[1])
+                        test = do_tests(dirpath, filename)
+                        append_case(xml, results, dirname, "fdsfds", filename, test)
                         print("")
         
         except Exception as e:
             contentType = ""
             contentResult = "EXCEPTION"
             contentNote = str(e)
-            append_case(xml, results, dirname, "", "", "EXCEPTION", str(e))
+            append_case(xml, results, dirname, "", "", "EXCEPTION", str(e), "", "")
 
 finally:
     if xml != None:
