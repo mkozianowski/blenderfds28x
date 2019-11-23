@@ -1,5 +1,7 @@
 # TODO
 
+Is copy working?
+
 unit testing (WUIFI-21)
 
 New Blender 2.8x website with MAECI logo
@@ -11,6 +13,8 @@ Toolbox: MESH, mesh alignment
 automatic developer's doc with doxygen (WUIFI-21)
 
 user doc (WUIFI-21)
+
+active_object can be None, replace with object
 
 ## TODO Geography
 
