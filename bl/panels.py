@@ -239,7 +239,7 @@ class MATERIAL_PT_bf_namelist(Panel):
 # Toolbar panels
 
 
-class BF_GEOM_Toolbar:
+class BF_GEOM_Toolbar:  # FIXME here or in the property panel?
     bl_category = "FDS"
     bl_label = "GEOM Tools"
     bl_space_type = "VIEW_3D"
@@ -247,20 +247,18 @@ class BF_GEOM_Toolbar:
 
     @classmethod
     def poll(cls, context):
-        ob = context.active_object
+        ob = context.object
         return ob and ob.type == "MESH" and ob.bf_namelist_cls == "ON_GEOM"
 
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
-        flow = layout.grid_flow(
-            row_major=True, columns=0, even_columns=True, even_rows=False, align=False
-        )
-        ob = context.active_object
-        flow.prop(ob, "bf_geom_protect")
-        flow.operator("object.bf_geom_check_intersections")
-        flow.operator("object.bf_geom_check_sanity")
+        ob = context.object
+        col = layout.column()
+        col.prop(ob, "bf_geom_protect")
+        col.operator("object.bf_geom_check_intersections")
+        col.operator("object.bf_geom_check_sanity")
 
 
 @subscribe
@@ -286,6 +284,7 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(
     bl_label = "Remesh"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_options = {"DEFAULT_CLOSED"}
 
     @classmethod
     def poll(cls, context):
@@ -325,6 +324,7 @@ class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
     bl_label = "Clean Up"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_options = {"DEFAULT_CLOSED"}
 
     @classmethod
     def poll(cls, context):
@@ -352,6 +352,7 @@ class BF_Geoloc_Toolbar:
     bl_label = "Geolocation"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         cursor = context.scene.cursor
