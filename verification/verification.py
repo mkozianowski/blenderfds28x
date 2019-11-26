@@ -131,6 +131,12 @@ def do_tests(dirpath, filename):
     }
 
     try:
+        for sc in bpy.data.scenes:
+            bpy.data.scenes.remove(sc)
+    except:
+        pass
+
+    try:
         filepath_fds = None
 
         # .blend input
