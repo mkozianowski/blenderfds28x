@@ -131,6 +131,12 @@ def do_tests(dirpath, filename):
     }
 
     try:
+        for sc in bpy.data.scenes:
+            bpy.data.scenes.remove(sc)
+    except:
+        pass
+
+    try:
         filepath_fds = None
 
         # .blend input
@@ -141,7 +147,7 @@ def do_tests(dirpath, filename):
         # .fds input
         elif filename.endswith(".fds"):
             filepath_fds = os.path.join(dirpath, DIR_NAME_FDS2FDS, filename)
-            bpy.ops.import_scene.fds(filepath=filepath_fds)
+            bpy.ops.import_scene.fds(filepath=filepath_fds, new_scene=False)
         
         else:
             raise ValueError("Invalid test type")
