@@ -400,6 +400,10 @@ class SN_config_units(BFNamelistSc):
 
 @subscribe
 class SP_HEAD_CHID(BFParam):
+    """!
+    Blender representation of the CHID parameter.
+    """
+
     label = "CHID"
     description = "Case identificator, also used as case filename"
     fds_label = "CHID"
@@ -408,6 +412,10 @@ class SP_HEAD_CHID(BFParam):
     bpy_idname = "name"
 
     def check(self, context):
+        """
+        !Check self validity.
+        @param context: data in the current active view.
+        """
         value = self.element.name
         if value and bpy.path.clean_name(value) != value:
             raise BFException(self, "Illegal characters in case filename")
@@ -415,6 +423,10 @@ class SP_HEAD_CHID(BFParam):
 
 @subscribe
 class SP_HEAD_TITLE(BFParamFYI):
+    """!
+    Blender representation of the TITLE parameter.
+    """
+
     label = "TITLE"
     description = "Case description"
     fds_label = "TITLE"
@@ -425,6 +437,10 @@ class SP_HEAD_TITLE(BFParamFYI):
 
 @subscribe
 class SN_HEAD(BFNamelistSc):
+    """!
+    Blender representation of the HEAD namelist group.
+    """
+
     label = "HEAD"
     description = "Case header"
     enum_id = 3001
@@ -437,6 +453,10 @@ class SN_HEAD(BFNamelistSc):
 
 @subscribe
 class SN_TAIL(BFNamelistSc):  # for importing only
+    """!
+    Blender representation of the TAIL namelist group.
+    """
+
     label = "TAIL"
     description = "Case closing"
     enum_id = 3010
@@ -470,6 +490,10 @@ class SP_TIME_setup_only(BFParam):
 
 @subscribe
 class SP_TIME_T_BEGIN(BFParam):
+    """!
+    Blender representation of the T_BEGIN parameter.
+    """
+
     label = "T_BEGIN [s]"
     description = "Simulation starting time"
     fds_label = "T_BEGIN"
@@ -481,11 +505,19 @@ class SP_TIME_T_BEGIN(BFParam):
 
     @property
     def exported(self):
+        """!
+        Get if self is exported.
+        @return True if is exported, False otherwise.
+        """
         return super().exported and not self.element.bf_time_setup_only
 
 
 @subscribe
 class SP_TIME_T_END(BFParam):
+    """!
+    Blender representation of the T_END parameter.
+    """
+
     label = "T_END [s]"
     description = "Simulation ending time"
     fds_label = "T_END"
@@ -497,6 +529,10 @@ class SP_TIME_T_END(BFParam):
 
     @property
     def exported(self):
+        """!
+        Get if self is exported.
+        @return True if is exported, False otherwise.
+        """
         return super().exported and not self.element.bf_time_setup_only
 
 
@@ -510,6 +546,10 @@ class SP_TIME_other(BFParamOther):
 
 @subscribe
 class SN_TIME(BFNamelistSc):
+    """!
+    Blender representation of the TIME namelist group.
+    """
+
     label = "TIME"
     description = "Simulation time settings"
     enum_id = 3002
@@ -531,6 +571,10 @@ class SP_MISC_FYI(BFParamFYI):
 
 @subscribe
 class SP_MISC_OVERWRITE(BFParam):
+    """!
+    Blender representation of the OVERWRITE parameter.
+    """
+
     label = "OVERWRITE"
     description = "Do not check for the existence of CHID.out and overwrite files"
     fds_label = "OVERWRITE"
@@ -542,6 +586,10 @@ class SP_MISC_OVERWRITE(BFParam):
 
 @subscribe
 class SP_MISC_THICKEN_OBSTRUCTIONS(BFParam):
+    """!
+    Blender representation of the THICKEN_OBSTRUCTIONS parameter.
+    """
+
     label = "THICKEN_OBSTRUCTIONS"
     description = "Do not allow thin sheet obstructions"
     fds_label = "THICKEN_OBSTRUCTIONS"
@@ -561,6 +609,10 @@ class SP_MISC_other(BFParamOther):
 
 @subscribe
 class SN_MISC(BFNamelistSc):
+    """!
+    Blender representation of the MISC namelist group.
+    """
+
     label = "MISC"
     description = "Miscellaneous parameters"
     enum_id = 3003
@@ -581,6 +633,10 @@ class SN_MISC(BFNamelistSc):
 
 @subscribe
 class SP_REAC_ID(BFParamStr):
+    """!
+    Blender representation of the ID string parameter.
+    """
+
     label = "ID"
     description = "Identificator of the reaction"
     fds_label = "ID"
@@ -594,6 +650,10 @@ class SP_REAC_FYI(BFParamFYI):
 
 @subscribe
 class SP_REAC_FUEL(BFParamStr):  # FIXME from table
+    """!
+    Blender representation of the FUEL string parameter.
+    """
+
     label = "FUEL"
     description = "Identificator of fuel species"
     fds_label = "FUEL"
@@ -603,6 +663,10 @@ class SP_REAC_FUEL(BFParamStr):  # FIXME from table
 
 @subscribe
 class SP_REAC_FORMULA(BFParamStr):
+    """!
+    Blender representation of the FORMULA string parameter.
+    """
+
     label = "FORMULA"
     description = "Chemical formula of fuel species, it can only contain C, H, O, or N"
     fds_label = "FORMULA"
@@ -612,6 +676,10 @@ class SP_REAC_FORMULA(BFParamStr):
 
 @subscribe
 class SP_REAC_CO_YIELD(BFParam):
+    """!
+    Blender representation of the CO_YIELD parameter.
+    """
+
     label = "CO_YIELD [kg/kg]"
     description = "Fraction of fuel mass converted into carbon monoxide"
     fds_label = "CO_YIELD"
@@ -624,6 +692,10 @@ class SP_REAC_CO_YIELD(BFParam):
 
 @subscribe
 class SP_REAC_SOOT_YIELD(SP_REAC_CO_YIELD):
+    """!
+    Blender representation of the SOOT_YIELD parameter.
+    """
+
     label = "SOOT_YIELD [kg/kg]"
     description = "Fraction of fuel mass converted into smoke particulate"
     fds_label = "SOOT_YIELD"
@@ -633,6 +705,10 @@ class SP_REAC_SOOT_YIELD(SP_REAC_CO_YIELD):
 
 @subscribe
 class SP_REAC_HEAT_OF_COMBUSTION(BFParam):
+    """!
+    Blender representation of the HEAT_OF_COMBUSTION parameter.
+    """
+
     label = "HEAT_OF_COMBUSTION [kJ/kg]"
     description = "Fuel heat of combustion"
     fds_label = "HEAT_OF_COMBUSTION"
@@ -645,6 +721,10 @@ class SP_REAC_HEAT_OF_COMBUSTION(BFParam):
 
 @subscribe
 class SP_REAC_IDEAL(BFParam):
+    """!
+    Blender representation of the IDEAL parameter.
+    """
+
     label = "IDEAL"
     description = "Set ideal heat of combustion"
     fds_label = "IDEAL"
@@ -655,6 +735,10 @@ class SP_REAC_IDEAL(BFParam):
 
 @subscribe
 class SP_REAC_RADIATIVE_FRACTION(BFParam):
+    """!
+    Blender representation of the RADIATIVE_FRACTION parameter.
+    """
+
     label = "RADIATIVE_FRACTION"
     description = (
         "Fraction of the total combustion energy that is released "
@@ -677,6 +761,10 @@ class SP_REAC_other(BFParamOther):
 
 @subscribe
 class SN_REAC(BFNamelistSc):
+    """!
+    Blender representation of the REAC namelist group.
+    """
+
     label = "REAC"
     description = "Reaction"
     enum_id = 3004
