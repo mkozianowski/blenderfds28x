@@ -38,13 +38,23 @@ log = logging.getLogger(__name__)
 
 
 class BFException(Exception):
-    """Exception raised by methods in case of a BF error."""
+    """!
+    Exception raised by methods in case of a BF error.
+    """
 
     def __init__(self, sender, msg):
+        """!
+        Constructor of the Exception
+        @param sender: the object that generate the exception
+        @param msg: exception message
+        """
         self.sender = sender
         self.msg = msg
 
     def __str__(self):
+        """!
+        String representation
+        """
         sender = self.sender
         try:
             element = sender.element
@@ -60,7 +70,9 @@ class BFException(Exception):
 
 
 class BFParam:
-    """Blender representation of an FDS parameter."""
+    """!
+    Blender representation of an FDS parameter.
+    """
 
     label = "No Label"  # Object label
     description = None  # Object description
@@ -78,11 +90,18 @@ class BFParam:
     bpy_export_default = False  # idname of export toggle Blender property
 
     def __init__(self, element):
+        """!
+        Class constructor.
+        @param element: FDS element to represent.
+        """
         self.element = element
 
     @classmethod
     def register(cls):
-        """Register related Blender properties."""
+        """!
+        Register related Blender properties.
+        @param cls: class to be registered.
+        """
         log.debug(f"Registering <{cls.label}>")
         if not cls.bpy_type:
             raise Exception(f"No bpy_type in class <{cls}>")
@@ -121,7 +140,10 @@ class BFParam:
 
     @classmethod
     def unregister(cls):
-        """Unregister related Blender properties."""
+        """!
+        Unregister related Blender properties.
+        @param cls: class to be unregistered.
+        """
         # if cls.bpy_prop and cls.bpy_idname:
         #     delattr(cls.bpy_type, cls.bpy_idname)
         # if cls.bpy_export:
@@ -130,11 +152,18 @@ class BFParam:
 
     @property
     def value(self) -> "any":
-        """Get value."""
+        """!
+        Get value.
+        @return value to be get
+        """
         return getattr(self.element, self.bpy_idname)
 
     def set_value(self, context, value=None):
-        """Set value. If value is None, set defaul"""
+        """!
+        Set value. If value is None, set defaul.
+        @param context: data in the current active view.
+        @param value: value to set.
+        """
         if value is None:
             setattr(self.element, self.bpy_idname, self.bpy_default)
             return
@@ -144,7 +173,10 @@ class BFParam:
 
     @property
     def exported(self) -> "bool":
-        """Get if self is exported."""
+        """!
+        Get if self is exported.
+        @return True if is exported, False otherwise.
+        """
         # Check if empty
         value = self.value
         if value is None or value == "":
@@ -160,7 +192,11 @@ class BFParam:
         return bool(getattr(self.element, str(self.bpy_export), True))
 
     def set_exported(self, context, value=None):
-        """Set if self is exported."""
+        """!
+        Set if self is exported. If value is None, set defaul
+        @param context: data in the current active view.
+        @param value: value to set.
+        """
         if self.bpy_export:
             if value is None:
                 setattr(self.element, self.bpy_export, self.bpy_export_default)
@@ -168,15 +204,26 @@ class BFParam:
                 setattr(self.element, self.bpy_export, value)
 
     def check(self, context):
-        """Check self validity."""
+        """
+        !Check self validity.
+        @param context: data in the current active view.
+        """
         pass
 
     def draw_operators(self, context, layout):
-        """Draw operators on layout."""
+        """!Draw operators on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        """
         pass
 
     def draw(self, context, layout) -> "layout":
-        """Draw self UI on layout."""
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         if not self.bpy_idname:
             return
         col = layout.column()
@@ -198,7 +245,11 @@ class BFParam:
         return col
 
     def to_fds_param(self, context) -> "None, FDSParam, or ((FDSParam, ...), ...)":
-        """Return the FDSParam Python representation."""
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         # Get if exported and check
         if not self.exported or not self.fds_label:
             return
@@ -217,12 +268,20 @@ class BFParam:
         )
 
     def to_fds(self, context) -> "None or str":
-        """Return the FDS str representation."""
+        """!
+        Return the FDS str representation.
+        @param context: data in the current active view.
+        @return string representation.
+        """
         fds_param = self.to_fds_param(context)
         return fds_param and str(fds_param)
 
     def from_fds(self, context, value):
-        """Set parameter value from value in FDS notation, on error raise BFException."""
+        """!
+        Set parameter value from value in FDS notation, on error raise BFException.
+        @param context: data in the current active view.
+        @param value: the value to set.
+        """
         log.debug(f"{self} {value}")
         if (
             value is not None and len(value) == 1
@@ -236,29 +295,41 @@ class BFParam:
 
 
 class BFParamXB(BFParam):
-    """Helper for FDS XB parameter."""
+    """!
+    Helper for FDS XB parameter.
+    """
 
     pass
 
 
 class BFParamXYZ(BFParam):
-    """Helper for FDS XYZ parameter."""
+    """!
+    Helper for FDS XYZ parameter.
+    """
 
     pass
 
 
 class BFParamPB(BFParam):
-    """Helper for FDS PB parameter."""
+    """!
+    Helper for FDS PB parameter.
+    """
 
     pass
 
 
 class BFParamStr(BFParam):
-    """Helper for FDS string parameter."""
+    """!
+    Helper for FDS string parameter.
+    """
 
     bpy_prop = StringProperty
 
     def check(self, context):
+        """!
+        Checking the value validity.
+        @param context: data in the current active view.
+        """
         value = self.value
         if "&" in value or "/" in value or "#" in value:
             raise BFException(self, "<&>, </>, and <#> characters not allowed")
@@ -275,7 +346,9 @@ class BFParamStr(BFParam):
 
 
 class BFParamFYI(BFParamStr):
-    """Helper for FDS FYI parameter."""
+    """!
+    Helper for FDS FYI parameter.
+    """
 
     label = "FYI"
     description = "For your information"
@@ -285,6 +358,11 @@ class BFParamFYI(BFParamStr):
     bpy_other = {"maxlen": 128}
 
     def draw(self, context, layout):
+        """!
+        ???
+        @param context: data in the current active view.
+        @param layout: ???
+        """
         col = layout.column()
         try:
             self.check(context)
@@ -296,7 +374,9 @@ class BFParamFYI(BFParamStr):
 
 
 class BFParamOther(BFParam):
-    """Helper for FDS other parameters."""
+    """!
+    Helper for FDS other parameters.
+    """
 
     label = "Other Parameters"
     description = "Other parameters (eg. PROP='Example')"
@@ -308,6 +388,10 @@ class BFParamOther(BFParam):
 
     @classmethod
     def register(cls):
+        """!
+        Register related Blender properties.
+        @param cls: class to be registered.
+        """
         cls._ops = custom_uilist.register_collection(
             bpy_type=cls.bpy_type,
             bpy_idname=cls.bpy_idname,
@@ -318,16 +402,29 @@ class BFParamOther(BFParam):
 
     @classmethod
     def unregister(cls):
+        """!
+        Register related Blender properties.
+        @param cls: class to be unregistered.
+        """
         custom_uilist.unregister_collection(
             bpy_type=cls.bpy_type, bpy_idname=cls.bpy_idname, ops=cls._ops
         )
 
     @property
     def value(self):
+        """!
+        Get value.
+        @return value to be get
+        """
         collection = getattr(self.element, self.bpy_idname)
         return tuple(item.name for item in collection if item.bf_export)
 
     def set_value(self, context, value):
+        """!
+        Set value.
+        @param context: data in the current active view.
+        @param value: value to set.
+        """
         collection = getattr(self.element, self.bpy_idname)
         if value is None:
             collection.clear()
@@ -336,6 +433,11 @@ class BFParamOther(BFParam):
             item.name, item.bf_export = value, True
 
     def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        """
         custom_uilist.draw_collection(
             element=self.element,
             context=context,
@@ -347,6 +449,11 @@ class BFParamOther(BFParam):
         )
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         self.check(context)
         coll = getattr(self.element, self.bpy_idname)
         if coll:
@@ -359,16 +466,26 @@ class BFParamOther(BFParam):
 
 
 class BFNamelist(BFParam):
-    """Blender representation of an FDS namelist group."""
+    """!
+    Blender representation of an FDS namelist group.
+    """
 
     maxlen = 80  # max columns when exporting
 
     def __init__(self, element):
+        """!
+        Class constructor
+        @param element: FDS element to represent.
+        """
         self.element = element
         self.bf_params = tuple(p(element) for p in self.bf_params)  # instantiate
 
     @classmethod
     def register(cls):
+        """!
+        Register related Blender properties.
+        @param cls: class to be registered.
+        """
         super().register()
         # Indexes are used to link both the class and the instance
         cls._bf_param_idx_by_fds_label = dict()  # fds_label: index of param
@@ -389,37 +506,58 @@ class BFNamelist(BFParam):
                 cls._bf_param_other_idx = i
 
     def get_bf_param_by_fds_label(self, fds_label) -> "BFParam or None":
-        """Get bf_param (class or instance) by its fds_label."""
+        """!
+        Get bf_param (class or instance) by its fds_label.
+        @param fds_label: FDS parameter to be obtained.
+        @return FDS parameter.
+        """
         i = self._bf_param_idx_by_fds_label.get(fds_label)
         if i is not None:
             return self.bf_params[i]
 
     @property
     def bf_param_xb(self):
-        """XB bf_param (class or instance)."""
+        """!
+        XB bf_param (class or instance).
+        @return BFParamXB parameter.
+        """
         if self._bf_param_xb_idx is not None:
             return self.bf_params[self._bf_param_xb_idx]
 
     @property
     def bf_param_xyz(self):
-        """XYZ bf_param (class or instance)."""
+        """!
+        XYZ bf_param (class or instance).
+        @return BFParamXYZ parameter.
+        """
         if self._bf_param_xyz_idx is not None:
             return self.bf_params[self._bf_param_xyz_idx]
 
     @property
     def bf_param_pb(self):
-        """PB bf_param (class or instance)."""
+        """!
+        PB bf_param (class or instance).
+        @return BFParamPB parameter.
+        """
         if self._bf_param_pb_idx is not None:
             return self.bf_params[self._bf_param_pb_idx]
 
     @property
     def bf_param_other(self):
-        """Other bf_param (class or instance)."""
+        """!
+        Other bf_param (class or instance).
+        @return BFParamOther parameter.
+        """
         if self._bf_param_other_idx is not None:
             return self.bf_params[self._bf_param_other_idx]
 
     def draw(self, context, layout) -> "layout":
-        """Draw self UI on layout."""
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         # Check and active
         try:
             self.check(context)
@@ -434,13 +572,20 @@ class BFNamelist(BFParam):
 
     @property
     def exported(self) -> "bool":
-        """Get if self is exported."""
+        """!
+        Get if self is exported.
+        @return True if is exported, False otherwise.
+        """
         if self.bpy_export is None:
             return True
         return bool(getattr(self.element, self.bpy_export, True))
 
     def to_fds_namelist(self, context) -> "None or FDSNamelist":
-        """Return the FDSNamelist Python representation."""
+        """!
+        Return the FDSNamelist Python representation.
+        @param context: data in the current active view.
+        @return FDSNamelist.
+        """
         # Get if exported and check
         if not self.exported or not self.fds_label:
             return
@@ -453,12 +598,20 @@ class BFNamelist(BFParam):
         )
 
     def to_fds(self, context) -> "None or str":
-        """Return the FDS str representation."""
+        """!
+        Return the FDS str representation.
+        @param context: data in the current active view.
+        @return string representation.
+        """
         fds_namelist = self.to_fds_namelist(context)
         return fds_namelist and str(fds_namelist)
 
     def from_fds(self, context, fds_params):
-        """Set namelist parameter values from list of FDSParam, on error raise BFException."""
+        """!
+        Set namelist parameter values from list of FDSParam, on error raise BFException.
+        @param context: data in the current active view.
+        @param fds_params: fds parameter to set.
+        """
         for p in fds_params:
             bf_param = self.get_bf_param_by_fds_label(p.label)
             if bf_param is None:
@@ -501,15 +654,19 @@ class BFNamelistMa(BFNamelist):
 
 
 class FDSParam:
-    """Python datastructure for FDS namelist parameter.
-    
-    label: namelist parameter label
-    values: list of parameter values of type float, int, str, bool
-    precision: float precision, number of decimal digits
-    msg: comment msg
+    """!
+    Python datastructure for FDS namelist parameter.
     """
 
     def __init__(self, label, values=None, precision=3, exponential=False, msg=None):
+        """!
+        Class constructor.
+        @param label: namelist parameter label.
+        @param values: list of parameter values of type float, int, str, bool.
+        @param precision: float precision, number of decimal digits.
+        @param exponential: ???
+        @param msg: comment msg.
+        """
         self.label = label
         self.values = values or list()
         self.precision = precision
@@ -517,6 +674,9 @@ class FDSParam:
         self.msg = msg
 
     def __str__(self):
+        """!
+        String representation
+        """
         if not self.values:
             return self.label
         # Check first element of the iterable and choose formatting
@@ -545,7 +705,9 @@ class FDSParam:
     _scan_integer = re.compile(_re_integer, re.VERBOSE | re.DOTALL | re.IGNORECASE)
 
     def from_fds(self, f90_values):
-        """Import from f90_values string, eg. "2.34, 1.23, 3.44"    
+        """!
+        Import from f90 values.
+        @param f90_values: f90 string value (eg. "2.34, 1.23, 3.44").
         """
         f90_values += ","  # always return a tuple, eg. "34" -> "34,"
         # Translate F90 booleans
@@ -578,23 +740,29 @@ class FDSParam:
 
 
 class FDSNamelist:
-    """Python datastructure for FDS namelist.
-    
-    label: namelist group label, string
-    fds_params: list of FDSParam instances.
-        Can contain one and only one list of lists of FDSParam instances
-        to represent multiple params: (("ID=X1", "PBX=1"), ("ID=X2", "PBX=2"), ...)
-    msg: comment msg
-    maxlen: max columns of formatted output
+    """!
+    Python datastructure for FDS namelist.
     """
 
     def __init__(self, label, fds_params=None, msg=None, maxlen=80):
+        """!
+        Class constructor.
+        @param label: namelist group label, string
+        @param fds_params: list of FDSParam instances.
+                Can contain one and only one list of lists of FDSParam instances
+                to represent multiple params: (("ID=X1", "PBX=1"), ("ID=X2", "PBX=2"), ...)
+        @param msg: comment msg
+        @param maxlen: max columns of formatted output
+        """
         self.label = label
         self.fds_params = fds_params or list()
         self.msg = msg
         self.maxlen = maxlen
 
     def __str__(self):
+        """!
+        String representation
+        """
         ps, mps, msgs = list(), list(), list((self.msg,))
         # Select parameters ps, multi parameters mps, messages msgs
         for p in self.fds_params:
@@ -687,15 +855,21 @@ class FDSNamelist:
 
 
 class FDSCase:
-    """Python datastructure for FDS case.
-
-    fds_namelists: list of FDSNamelist instances
+    """!
+    Python datastructure for FDS case.
     """
 
     def __init__(self, fds_namelists=None):
+        """!
+        Class constructor.
+        @param fds_namelists: list of FDSNamelist instances
+        """
         self.fds_namelists = fds_namelists or list()
 
     def __str__(self):
+        """!
+        String representation
+        """
         return "\n".join(str(n) for n in self.fds_namelists)
 
     _scan = re.compile(
@@ -707,7 +881,10 @@ class FDSCase:
     )  # MULTILINE, so that ^ is the beginning of each line
 
     def from_fds(self, f90_namelists, reset=True):
-        """Import from f90_namelists string, eg. "&OBST ... /\n&DEVC ... /" 
+        """!
+        Import from f90 namelists.
+        @param f90_namelists: f90 namelists string (eg. "&OBST ... /\n&DEVC ... /").
+        @param reset: ???
         """
         if reset:
             self.fds_namelists = list()
@@ -717,7 +894,11 @@ class FDSCase:
             self.fds_namelists.append(nl)
 
     def get_fds_namelists_by_label(self, label) -> "tuple of FDSNamelist":
-        """Get tuple of fds_namelists by label."""
+        """!
+        Get tuple of fds_namelists by label.
+        @param label: label of the f90 namelists.
+        @return tuple of fds namelists
+        """
         return tuple(n for n in self.fds_namelists if n.label == label)
 
 

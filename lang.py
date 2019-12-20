@@ -74,7 +74,10 @@ bf_namelists_by_fds_label = dict()  # dict of all BFNamelist classes by fds_labe
 
 
 def subscribe(cls):
-    """Subscribe class to related collection."""
+    """!
+    Subscribe class to related collection.
+    """
+    
     if issubclass(cls, BFNamelist):
         bf_namelists.append(cls)
         bf_namelists_by_cls[cls.__name__] = cls
@@ -95,13 +98,22 @@ def subscribe(cls):
 
 @subscribe
 class WM_PG_bf_other(PropertyGroup):
+    """!
+    ???
+    """
     bf_export: BoolProperty(name="Export", default=True)
     name: StringProperty(name="Name")
 
 
 @subscribe
 class WM_UL_bf_other_items(UIList):
+    """!
+    ???
+    """
     def draw_item(self, context, layout, data, item, icon, active_data):
+        """!
+        ???
+        """
         col = layout.column()
         col.active = item.bf_export
         col.prop(item, "name", text="", emboss=False, icon_value=icon)
@@ -111,12 +123,18 @@ class WM_UL_bf_other_items(UIList):
 
 @subscribe
 class WM_PG_bf_filepaths(PropertyGroup):
+    """!
+    ???
+    """
     bf_export: BoolProperty(name="Export", default=False)
     name: StringProperty(name="Name", subtype="FILE_PATH")
 
 
 @subscribe
 class WM_UL_bf_filepaths_items(UIList):
+    """!
+    ???
+    """
     def draw_item(self, context, layout, data, item, icon, active_data):
         col = layout.column()
         col.active = item.bf_export
@@ -130,6 +148,10 @@ class WM_UL_bf_filepaths_items(UIList):
 
 @subscribe
 class SP_config_directory(BFParam):
+    """!
+    Blender representation for the destination directory of the exported case.
+    """
+    
     label = "Case Directory"
     description = "Destination directory for exported case"
     bpy_type = Scene
@@ -138,6 +160,10 @@ class SP_config_directory(BFParam):
     bpy_other = {"subtype": "DIR_PATH", "maxlen": 1024}
 
     def check(self, context):
+        """
+        !Check self validity.
+        @param context: data in the current active view.
+        """
         value = self.element.bf_config_directory
         if value and not os.path.exists(bpy.path.abspath(value)):
             raise BFException(self, "Case directory path not existing")
@@ -145,6 +171,10 @@ class SP_config_directory(BFParam):
 
 @subscribe
 class SP_config_text(BFParam):
+    """!
+    Blender representation for the internal free text, included verbatim.
+    """
+    
     label = "Free Text"
     description = "Internal free text, included verbatim"
     bpy_type = Scene
@@ -155,9 +185,19 @@ class SP_config_text(BFParam):
 
 @subscribe
 class SN_config(BFNamelistSc):
+    """!
+    Blender representation for the FDS Case Config.
+    """
+    
     label = "FDS Case Config"
 
     def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         sc = self.element
         col = layout.column()
         col.prop(sc, "bf_config_directory")
@@ -171,6 +211,10 @@ class SN_config(BFNamelistSc):
 
 @subscribe
 class SP_crs(BFParam):
+    """!
+    Blender representation for the coordinate reference system.
+    """
+    
     label = "Coordinate Reference System"
     description = "Coordinate reference system"
     bpy_type = Scene
@@ -194,6 +238,9 @@ class SP_crs(BFParam):
 
 
 def update_lonlat(self, context):
+    """!
+    ???
+    """
     sc = context.scene
     utm = gis.LonLat(sc.bf_lon, sc.bf_lat).to_UTM()
     sc["bf_utm_zn"] = utm.zn  # avoid triggering another update
@@ -203,6 +250,9 @@ def update_lonlat(self, context):
 
 
 def update_utm(self, context):
+    """!
+    ???
+    """
     sc = context.scene
     lonlat = gis.UTM(
         sc.bf_utm_zn, sc.bf_utm_ne, sc.bf_utm_easting, sc.bf_utm_northing
@@ -213,6 +263,10 @@ def update_utm(self, context):
 
 @subscribe
 class SP_geoname(BFParam):
+    """!
+    Blender representation for the origin location geographic name.
+    """
+    
     label = "Origin Geoname"
     description = "Origin location geographic name"
     bpy_type = Scene
@@ -223,6 +277,10 @@ class SP_geoname(BFParam):
 
 @subscribe
 class SP_lon(BFParam):
+    """!
+    Blender representation for the longitude (WGS84, EPSG:4326) of world origin in decimal degrees.
+    """
+    
     label = "Origin Longitude"
     description = "Longitude (WGS84, EPSG:4326) of world origin in decimal degrees"
     bpy_type = Scene
@@ -234,6 +292,10 @@ class SP_lon(BFParam):
 
 @subscribe
 class SP_lat(BFParam):
+    """!
+    Blender representation for the latitude (WGS84, EPSG:4326) of world origin in decimal degrees.
+    """
+    
     label = "Origin Latitude"
     description = "Latitude (WGS84, EPSG:4326) of world origin in decimal degrees"
     bpy_type = Scene
@@ -245,6 +307,10 @@ class SP_lat(BFParam):
 
 @subscribe
 class SP_utm_zn(BFParam):
+    """!
+    Blender representation for the UTM Zone Number (WGS84) of world origin.
+    """
+    
     label = "Origin UTM Zone Number"
     description = "UTM Zone Number (WGS84) of world origin"
     bpy_type = Scene
@@ -256,6 +322,10 @@ class SP_utm_zn(BFParam):
 
 @subscribe
 class SP_utm_ne(BFParam):
+    """!
+    Blender representation for the UTM northern emisphere (WGS84) of world origin.
+    """
+    
     label = "Origin UTM Northern Emisphere"
     description = "UTM northern emisphere (WGS84) of world origin"
     bpy_type = Scene
@@ -267,6 +337,10 @@ class SP_utm_ne(BFParam):
 
 @subscribe
 class SP_utm_easting(BFParam):
+    """!
+    Blender representation for the UTM easting (WGS84) of world origin.
+    """
+    
     label = "Origin UTM Easting"
     description = "UTM easting (WGS84) of world origin"
     bpy_type = Scene
@@ -278,6 +352,10 @@ class SP_utm_easting(BFParam):
 
 @subscribe
 class SP_utm_northing(BFParam):
+    """!
+    Blender representation for the UTM northing (WGS84) of world origin.
+    """
+    
     label = "Origin UTM Northing"
     description = "UTM northing (WGS84) of world origin"
     bpy_type = Scene
@@ -289,6 +367,10 @@ class SP_utm_northing(BFParam):
 
 @subscribe
 class SP_elevation(BFParam):
+    """!
+    Blender representation for the Elevation of world origin.
+    """
+    
     label = "Origin Elevation"
     description = "Elevation of world origin"
     bpy_type = Scene
@@ -300,9 +382,19 @@ class SP_elevation(BFParam):
 
 @subscribe
 class SN_config_geoloc(BFNamelistSc):
+    """!
+    Blender representation for the origin geolocation.
+    """
+    
     label = "Origin Geolocation"
 
     def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         sc = self.element
         col = layout.column()
         row = col.row()
@@ -330,6 +422,10 @@ class SN_config_geoloc(BFNamelistSc):
 
 @subscribe
 class SP_config_min_edge_length(BFParam):
+    """!
+    Blender representation for the min allowed edge length.
+    """
+    
     label = "Min Edge Length"
     description = "Min allowed edge length"
     bpy_type = Scene
@@ -341,6 +437,10 @@ class SP_config_min_edge_length(BFParam):
 
 @subscribe
 class SP_config_min_face_area(BFParam):
+    """!
+    Blender representation for the min allowed face area.
+    """
+    
     label = "Min Face Area"
     description = "Min allowed face area"
     bpy_type = Scene
@@ -352,6 +452,10 @@ class SP_config_min_face_area(BFParam):
 
 @subscribe
 class SP_config_default_voxel_size(BFParam):
+    """!
+    Blender representation for the default voxel/pixel resolution.
+    """
+    
     label = "Voxel/Pixel Size"
     description = "Default voxel/pixel resolution"
     bpy_type = Scene
@@ -363,9 +467,19 @@ class SP_config_default_voxel_size(BFParam):
 
 @subscribe
 class SN_config_sizes(BFNamelistSc):
+    """!
+    Blender representation for the default Sizes and Thresholds.
+    """
+    
     label = "Default Sizes and Thresholds"
 
     def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         sc = self.element
         col = layout.column()
         col.prop(sc, "bf_default_voxel_size")
@@ -379,9 +493,19 @@ class SN_config_sizes(BFNamelistSc):
 
 @subscribe
 class SN_config_units(BFNamelistSc):
+    """!
+    Blender representation for the units.
+    """
+    
     label = "Units"
 
     def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         sc = self.element
         unit = sc.unit_settings
         col = layout.column()
@@ -400,6 +524,10 @@ class SN_config_units(BFNamelistSc):
 
 @subscribe
 class SP_HEAD_CHID(BFParam):
+    """!
+    Blender representation of the CHID parameter, the case identificator, also used as case filename.
+    """
+
     label = "CHID"
     description = "Case identificator, also used as case filename"
     fds_label = "CHID"
@@ -408,6 +536,10 @@ class SP_HEAD_CHID(BFParam):
     bpy_idname = "name"
 
     def check(self, context):
+        """
+        !Check self validity.
+        @param context: data in the current active view.
+        """
         value = self.element.name
         if value and bpy.path.clean_name(value) != value:
             raise BFException(self, "Illegal characters in case filename")
@@ -415,6 +547,10 @@ class SP_HEAD_CHID(BFParam):
 
 @subscribe
 class SP_HEAD_TITLE(BFParamFYI):
+    """!
+    Blender representation of the TITLE parameter, the case description.
+    """
+
     label = "TITLE"
     description = "Case description"
     fds_label = "TITLE"
@@ -425,6 +561,10 @@ class SP_HEAD_TITLE(BFParamFYI):
 
 @subscribe
 class SN_HEAD(BFNamelistSc):
+    """!
+    Blender representation of the HEAD namelist group, the case header.
+    """
+
     label = "HEAD"
     description = "Case header"
     enum_id = 3001
@@ -436,16 +576,31 @@ class SN_HEAD(BFNamelistSc):
 
 
 @subscribe
-class SN_TAIL(BFNamelistSc):  # for importing only
+class SN_TAIL(BFNamelistSc):
+    """!
+    Blender representation of the TAIL namelist group, the case closing.
+    For importing only.
+    """
+
     label = "TAIL"
     description = "Case closing"
     enum_id = 3010
     fds_label = "TAIL"
 
     def to_fds_namelist(self, context):
+        """!
+        Return the FDSNamelist Python representation.
+        @param context: data in the current active view.
+        @return FDSNamelist.
+        """
         pass
 
     def from_fds(self, context, fds_params):
+        """!
+        Import from FDSParam in FDS notation, on error raise BFException.
+        @param context: data in the current active view.
+        @param fds_params: FDSParam to import
+        """
         pass
 
 
@@ -454,6 +609,10 @@ class SN_TAIL(BFNamelistSc):  # for importing only
 
 @subscribe
 class SP_TIME_setup_only(BFParam):
+    """!
+    Blender representation to set Smokeview to setup only geometry.
+    """
+
     label = "Smokeview Geometry Setup"
     description = "Set Smokeview to setup only geometry"
     bpy_type = Scene
@@ -462,6 +621,11 @@ class SP_TIME_setup_only(BFParam):
     bpy_default = False
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         if self.element.bf_time_setup_only:
             return FDSParam(
                 label="T_END", values=(0.0,), msg="Smokeview setup only", precision=1
@@ -470,6 +634,10 @@ class SP_TIME_setup_only(BFParam):
 
 @subscribe
 class SP_TIME_T_BEGIN(BFParam):
+    """!
+    Blender representation of the T_BEGIN parameter, the simulation starting time.
+    """
+
     label = "T_BEGIN [s]"
     description = "Simulation starting time"
     fds_label = "T_BEGIN"
@@ -481,11 +649,19 @@ class SP_TIME_T_BEGIN(BFParam):
 
     @property
     def exported(self):
+        """!
+        Get if self is exported.
+        @return True if is exported, False otherwise.
+        """
         return super().exported and not self.element.bf_time_setup_only
 
 
 @subscribe
 class SP_TIME_T_END(BFParam):
+    """!
+    Blender representation of the T_END parameter, the simulation ending time.
+    """
+
     label = "T_END [s]"
     description = "Simulation ending time"
     fds_label = "T_END"
@@ -497,11 +673,18 @@ class SP_TIME_T_END(BFParam):
 
     @property
     def exported(self):
+        """!
+        Get if self is exported.
+        @return True if is exported, False otherwise.
+        """
         return super().exported and not self.element.bf_time_setup_only
 
 
 @subscribe
 class SP_TIME_other(BFParamOther):
+    """!
+    ???
+    """
     bpy_type = Scene
     bpy_idname = "bf_time_other"
     bpy_pg = WM_PG_bf_other
@@ -510,6 +693,10 @@ class SP_TIME_other(BFParamOther):
 
 @subscribe
 class SN_TIME(BFNamelistSc):
+    """!
+    Blender representation of the TIME namelist group, the simulation time settings.
+    """
+
     label = "TIME"
     description = "Simulation time settings"
     enum_id = 3002
@@ -525,12 +712,19 @@ class SN_TIME(BFNamelistSc):
 
 @subscribe
 class SP_MISC_FYI(BFParamFYI):
+    """!
+    ???
+    """
     bpy_type = Scene
     bpy_idname = "bf_misc_fyi"
 
 
 @subscribe
 class SP_MISC_OVERWRITE(BFParam):
+    """!
+    Blender representation of the OVERWRITE parameter.
+    """
+
     label = "OVERWRITE"
     description = "Do not check for the existence of CHID.out and overwrite files"
     fds_label = "OVERWRITE"
@@ -542,6 +736,10 @@ class SP_MISC_OVERWRITE(BFParam):
 
 @subscribe
 class SP_MISC_THICKEN_OBSTRUCTIONS(BFParam):
+    """!
+    Blender representation of the THICKEN_OBSTRUCTIONS parameter, to not allow thin sheet obstructions.
+    """
+
     label = "THICKEN_OBSTRUCTIONS"
     description = "Do not allow thin sheet obstructions"
     fds_label = "THICKEN_OBSTRUCTIONS"
@@ -553,6 +751,9 @@ class SP_MISC_THICKEN_OBSTRUCTIONS(BFParam):
 
 @subscribe
 class SP_MISC_other(BFParamOther):
+    """!
+    ???
+    """
     bpy_type = Scene
     bpy_idname = "bf_misc_other"
     bpy_pg = WM_PG_bf_other
@@ -561,6 +762,10 @@ class SP_MISC_other(BFParamOther):
 
 @subscribe
 class SN_MISC(BFNamelistSc):
+    """!
+    Blender representation of the MISC namelist group, the miscellaneous parameters.
+    """
+
     label = "MISC"
     description = "Miscellaneous parameters"
     enum_id = 3003
@@ -581,6 +786,10 @@ class SN_MISC(BFNamelistSc):
 
 @subscribe
 class SP_REAC_ID(BFParamStr):
+    """!
+    Blender representation of the ID string parameter, the identificator of the reaction.
+    """
+
     label = "ID"
     description = "Identificator of the reaction"
     fds_label = "ID"
@@ -589,11 +798,19 @@ class SP_REAC_ID(BFParamStr):
 
 @subscribe
 class SP_REAC_FYI(BFParamFYI):
+    """!
+    ???
+    """
     bpy_type = Scene
     bpy_idname = "bf_reac_fyi"
 
 @subscribe
-class SP_REAC_FUEL(BFParamStr):  # FIXME from table
+class SP_REAC_FUEL(BFParamStr): 
+    """!
+    Blender representation of the FUEL string parameter, the identificator of fuel species.
+    FIXME from table
+    """
+
     label = "FUEL"
     description = "Identificator of fuel species"
     fds_label = "FUEL"
@@ -603,6 +820,10 @@ class SP_REAC_FUEL(BFParamStr):  # FIXME from table
 
 @subscribe
 class SP_REAC_FORMULA(BFParamStr):
+    """!
+    Blender representation of the FORMULA string parameter, the chemical formula of fuel species, it can only contain C, H, O, or N.
+    """
+
     label = "FORMULA"
     description = "Chemical formula of fuel species, it can only contain C, H, O, or N"
     fds_label = "FORMULA"
@@ -612,6 +833,10 @@ class SP_REAC_FORMULA(BFParamStr):
 
 @subscribe
 class SP_REAC_CO_YIELD(BFParam):
+    """!
+    Blender representation of the CO_YIELD parameter, the fraction of fuel mass converted into carbon monoxide.
+    """
+
     label = "CO_YIELD [kg/kg]"
     description = "Fraction of fuel mass converted into carbon monoxide"
     fds_label = "CO_YIELD"
@@ -624,6 +849,10 @@ class SP_REAC_CO_YIELD(BFParam):
 
 @subscribe
 class SP_REAC_SOOT_YIELD(SP_REAC_CO_YIELD):
+    """!
+    Blender representation of the SOOT_YIELD parameter, the fraction of fuel mass converted into smoke particulate.
+    """
+
     label = "SOOT_YIELD [kg/kg]"
     description = "Fraction of fuel mass converted into smoke particulate"
     fds_label = "SOOT_YIELD"
@@ -633,6 +862,10 @@ class SP_REAC_SOOT_YIELD(SP_REAC_CO_YIELD):
 
 @subscribe
 class SP_REAC_HEAT_OF_COMBUSTION(BFParam):
+    """!
+    Blender representation of the HEAT_OF_COMBUSTION parameter, the fuel heat of combustion.
+    """
+
     label = "HEAT_OF_COMBUSTION [kJ/kg]"
     description = "Fuel heat of combustion"
     fds_label = "HEAT_OF_COMBUSTION"
@@ -645,6 +878,10 @@ class SP_REAC_HEAT_OF_COMBUSTION(BFParam):
 
 @subscribe
 class SP_REAC_IDEAL(BFParam):
+    """!
+    Blender representation of the IDEAL parameter to set ideal heat of combustion.
+    """
+
     label = "IDEAL"
     description = "Set ideal heat of combustion"
     fds_label = "IDEAL"
@@ -655,6 +892,10 @@ class SP_REAC_IDEAL(BFParam):
 
 @subscribe
 class SP_REAC_RADIATIVE_FRACTION(BFParam):
+    """!
+    Blender representation of the RADIATIVE_FRACTION parameter, the fraction of the total combustion energy that is released in the form of thermal radiation
+    """
+
     label = "RADIATIVE_FRACTION"
     description = (
         "Fraction of the total combustion energy that is released "
@@ -669,6 +910,9 @@ class SP_REAC_RADIATIVE_FRACTION(BFParam):
 
 @subscribe
 class SP_REAC_other(BFParamOther):
+    """!
+    ???
+    """
     bpy_type = Scene
     bpy_idname = "bf_reac_other"
     bpy_pg = WM_PG_bf_other
@@ -677,6 +921,10 @@ class SP_REAC_other(BFParamOther):
 
 @subscribe
 class SN_REAC(BFNamelistSc):
+    """!
+    Blender representation of the REAC (reaction) namelist group.
+    """
+
     label = "REAC"
     description = "Reaction"
     enum_id = 3004
@@ -702,12 +950,19 @@ class SN_REAC(BFNamelistSc):
 
 @subscribe
 class SP_RADI_FYI(BFParamFYI):
+    """!
+    ???
+    """
     bpy_type = Scene
     bpy_idname = "bf_radi_fyi"
 
 
 @subscribe
 class SP_RADI_RADIATION(BFParam):
+    """!
+    Blender representation of the RADIATION parameter to turn on/off the radiation solver.
+    """
+
     label = "RADIATION"
     description = "Turn on/off the radiation solver"
     fds_label = "RADIATION"
@@ -719,6 +974,10 @@ class SP_RADI_RADIATION(BFParam):
 
 @subscribe
 class SP_RADI_NUMBER_RADIATION_ANGLES(BFParam):
+    """!
+    Blender representation of the NUMBER_RADIATION_ANGLES parameter, the number of angles for spatial resolution of radiation solver.
+    """
+
     label = "NUMBER_RADIATION_ANGLES"
     description = "Number of angles for spatial resolution of radiation solver"
     fds_label = "NUMBER_RADIATION_ANGLES"
@@ -731,6 +990,10 @@ class SP_RADI_NUMBER_RADIATION_ANGLES(BFParam):
 
 @subscribe
 class SP_RADI_TIME_STEP_INCREMENT(BFParam):
+    """!
+    Blender representation of the TIME_STEP_INCREMENT parameter, the frequency of calls to the radiation solver in time steps.
+    """
+
     label = "TIME_STEP_INCREMENT"
     description = "Frequency of calls to the radiation solver in time steps"
     fds_label = "TIME_STEP_INCREMENT"
@@ -743,6 +1006,10 @@ class SP_RADI_TIME_STEP_INCREMENT(BFParam):
 
 @subscribe
 class SP_RADI_ANGLE_INCREMENT(BFParam):
+    """!
+    Blender representation of the ANGLE_INCREMENT parameter, the increment over which the angles are updated.
+    """
+
     label = "ANGLE_INCREMENT"
     description = "Increment over which the angles are updated"
     fds_label = "ANGLE_INCREMENT"
@@ -755,6 +1022,10 @@ class SP_RADI_ANGLE_INCREMENT(BFParam):
 
 @subscribe
 class SP_RADI_RADIATION_ITERATIONS(BFParam):
+    """!
+    Blender representation of the RADIATION_ITERATIONS parameter, the number of times the radiative intensity is updated in a time step.
+    """
+
     label = "RADIATION_ITERATIONS"
     description = "Number of times the radiative intensity is updated in a time step"
     fds_label = "RADIATION_ITERATIONS"
@@ -767,6 +1038,9 @@ class SP_RADI_RADIATION_ITERATIONS(BFParam):
 
 @subscribe
 class SP_RADI_other(BFParamOther):
+    """!
+    ???
+    """
     bpy_type = Scene
     bpy_idname = "bf_radi_other"
     bpy_pg = WM_PG_bf_other
@@ -775,6 +1049,10 @@ class SP_RADI_other(BFParamOther):
 
 @subscribe
 class SN_RADI(BFNamelistSc):
+    """!
+    Blender representation of the RADI namelist group, the radiation parameters.
+    """
+
     label = "RADI"
     description = "Radiation parameters"
     enum_id = 3006
@@ -798,12 +1076,19 @@ class SN_RADI(BFNamelistSc):
 
 @subscribe
 class SP_DUMP_FYI(BFParamFYI):
+    """!
+    ???
+    """
     bpy_type = Scene
     bpy_idname = "bf_dump_fyi"
 
 
 @subscribe
 class SP_DUMP_render_file(BFParam):
+    """!
+    Blender representation of the RENDER_FILE parameter to export geometric description file GE1.
+    """
+
     label = "Export Geometric Description File"
     description = "Export geometric description file GE1"
     fds_label = "RENDER_FILE"
@@ -814,14 +1099,28 @@ class SP_DUMP_render_file(BFParam):
 
     @property
     def value(self):
+        """!
+        Get value.
+        @return value to be get
+        """
         if self.element.bf_dump_render_file:
             return f"{self.element.name}.ge1"
 
-    def set_value(self, context, value):  # in FDS it is a str!
+    def set_value(self, context, value):
+        """!
+        Set value. If value is None, set defaul.
+        In FDS it is a str!
+        @param context: data in the current active view.
+        @param value: value to set.
+        """
         self.element.bf_dump_render_file = bool(value)         
 
 @subscribe
 class SP_DUMP_STATUS_FILES(BFParam):
+    """!
+    Blender representation of the STATUS_FILES parameter, the export status file (*.notready), deleted when the simulation is completed successfully.
+    """
+
     label = "STATUS_FILES"
     description = "Export status file (*.notready), deleted when the simulation is completed successfully"
     fds_label = "STATUS_FILES"
@@ -833,6 +1132,10 @@ class SP_DUMP_STATUS_FILES(BFParam):
 
 @subscribe
 class SP_DUMP_NFRAMES(BFParam):
+    """!
+    Blender representation of the NFRAMES parameter, the number of output dumps per calculation.
+    """
+
     label = "NFRAMES"
     description = "Number of output dumps per calculation"
     fds_label = "NFRAMES"
@@ -845,6 +1148,10 @@ class SP_DUMP_NFRAMES(BFParam):
 
 @subscribe
 class SP_DUMP_set_frequency(BFParam):
+    """!
+    Blender representation of the dump output every 1 s.
+    """
+
     label = "Dump Output every 1 s"
     description = "Dump output every 1 s"
     bpy_type = Scene
@@ -855,6 +1162,10 @@ class SP_DUMP_set_frequency(BFParam):
 
 @subscribe
 class SP_DUMP_DT_RESTART(BFParam):
+    """!
+    Blender representation of the DT_RESTART parameter, the time interval between restart files are saved.
+    """
+
     label = "DT_RESTART [s]"
     description = "Time interval between restart files are saved"
     fds_label = "DT_RESTART"
@@ -867,6 +1178,9 @@ class SP_DUMP_DT_RESTART(BFParam):
 
 @subscribe
 class SP_DUMP_other(BFParamOther):
+    """!
+    ???
+    """
     bpy_type = Scene
     bpy_idname = "bf_dump_other"
     bpy_pg = WM_PG_bf_other
@@ -875,6 +1189,10 @@ class SP_DUMP_other(BFParamOther):
 
 @subscribe
 class SN_DUMP(BFNamelistSc):
+    """!
+    Blender representation of the DUMP namelist group, the output parameters.
+    """
+
     label = "DUMP"
     description = "Output parameters"
     enum_id = 3005
@@ -898,6 +1216,10 @@ class SN_DUMP(BFNamelistSc):
 
 @subscribe
 class SP_CATF_check_files(BFParam):
+    """!
+    Blender representation to check file existence while exporting filepaths.
+    """
+
     label = "Check File Existance While Exporting"
     description = "Check file existence while exporting filepaths"
     bpy_type = Scene
@@ -906,11 +1228,20 @@ class SP_CATF_check_files(BFParam):
     bpy_default = False
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         return
 
 
 @subscribe
 class SP_CATF_files(BFParamOther):
+    """!
+    Blender representation to concatenated files (eg. PROP='/drive/test.catf').
+    """
+
     label = "Concatenated File Paths"
     description = "Concatenated files (eg. PROP='/drive/test.catf')"
     fds_label = "OTHER_FILES"
@@ -920,6 +1251,11 @@ class SP_CATF_files(BFParamOther):
     bpy_ul = WM_UL_bf_filepaths_items
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         el = self.element
         coll = getattr(self.element, self.bpy_idname)
         result = list()
@@ -933,6 +1269,11 @@ class SP_CATF_files(BFParamOther):
         return tuple(result)  # multi
 
     def from_fds(self, context, value):
+        """!
+        Set parameter value from value in FDS notation, on error raise BFException.
+        @param context: data in the current active view.
+        @param value: the value to set.
+        """
         if not value:
             self.set_value(context, None)
         elif isinstance(value, str):  # str
@@ -943,6 +1284,10 @@ class SP_CATF_files(BFParamOther):
 
 @subscribe
 class SN_CATF(BFNamelistSc):
+    """!
+    Blender representation of the CATF namelist group, the concatenated file paths.
+    """
+
     label = "CATF"
     description = "Concatenated file paths"
     fds_label = "CATF"
@@ -956,12 +1301,19 @@ class SN_CATF(BFNamelistSc):
 
 
 def update_MP_namelist_cls(self, context):
+    """!
+    ???
+    """
     # Set default appearance
     self.set_default_appearance(context)
 
 
 @subscribe
 class MP_namelist_cls(BFParam):
+    """!
+    Blender representation to the identification of FDS namelist.
+    """
+
     label = "Namelist"
     description = "Identification of FDS namelist"
     bpy_type = Material
@@ -974,6 +1326,11 @@ class MP_namelist_cls(BFParam):
     bpy_default = "MN_SURF"
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         if self.element.name in {"INERT", "HVAC", "MIRROR", "OPEN", "PERIODIC"}:
             return
         super().to_fds_param(context)
@@ -981,6 +1338,10 @@ class MP_namelist_cls(BFParam):
 
 @subscribe
 class MP_ID(BFParamStr):
+    """!
+    Blender representation of the ID parameter, the material identification name.
+    """
+
     label = "ID"
     description = "Material identification name"
     fds_label = "ID"
@@ -992,12 +1353,20 @@ class MP_ID(BFParamStr):
 
 @subscribe
 class MP_FYI(BFParamFYI):
+    """!
+    ???
+    """
     bpy_type = Material
     bpy_idname = "bf_fyi"
 
 
 @subscribe
-class MP_RGB(BFParam):  # exports both RGB and TRANSPARENCY
+class MP_RGB(BFParam):
+    """!
+    Blender representation of the RGB parameter, the color values (red, green, blue).
+    Exports both RGB and TRANSPARENCY.
+    """
+
     label = "RGB"
     description = "Color values (red, green, blue)"
     fds_label = "RGB"
@@ -1006,10 +1375,20 @@ class MP_RGB(BFParam):  # exports both RGB and TRANSPARENCY
     bpy_idname = "diffuse_color"
 
     def set_value(self, context, value):
+        """!
+        Set value. If value is None, set defaul.
+        @param context: data in the current active view.
+        @param value: value to set.
+        """
         c = self.element.diffuse_color
         c[0], c[1], c[2] = value[0] / 255.0, value[1] / 255.0, value[2] / 255.0
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         c = self.element.diffuse_color
         rs = (int(c[0] * 255), int(c[1] * 255), int(c[2] * 255))
         ts = (c[3],)
@@ -1022,7 +1401,12 @@ class MP_RGB(BFParam):  # exports both RGB and TRANSPARENCY
 
 
 @subscribe
-class MP_COLOR(BFParam):  # for importing only
+class MP_COLOR(BFParam):
+    """!
+    Blender representation of the COLOR parameter.
+    For importing only.
+    """
+
     label = "COLOR"
     description = "Color"
     fds_label = "COLOR"
@@ -1030,6 +1414,11 @@ class MP_COLOR(BFParam):  # for importing only
     bpy_prop = None  # Do not register
 
     def set_value(self, context, value):
+        """!
+        Set value. If value is None, set defaul.
+        @param context: data in the current active view.
+        @param value: value to set.
+        """
         c = self.element.diffuse_color
         rgb = utils.fds_colors.get(value, None)
         if not rgb:
@@ -1037,11 +1426,21 @@ class MP_COLOR(BFParam):  # for importing only
         c[0], c[1], c[2] = rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         pass
 
 
 @subscribe
-class MP_TRANSPARENCY(BFParam):  # for importing only, exported by MP_RGB
+class MP_TRANSPARENCY(BFParam):
+    """!
+    Blender representation of the TRANSPARENCY parameter, the color values (red, green, blue) and transparency.
+    For importing only, exported by MP_RGB.
+    """
+
     label = "TRANSPARENCY"
     description = "Color values (red, green, blue) and transparency"
     fds_label = "TRANSPARENCY"
@@ -1049,15 +1448,29 @@ class MP_TRANSPARENCY(BFParam):  # for importing only, exported by MP_RGB
     bpy_prop = None  # Do not register
 
     def set_value(self, context, value):
+        """!
+        Set value. If value is None, set defaul.
+        @param context: data in the current active view.
+        @param value: value to set.
+        """
         c = self.element.diffuse_color
         c[3] = value
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         pass
 
 
 @subscribe
 class MP_THICKNESS(BFParam):
+    """!
+    Blender representation of the THICKNESS parameter, the surface thickness for heat transfer calculation.
+    """
+
     label = "THICKNESS [m]"
     description = "Surface thickness for heat transfer calculation"
     fds_label = "THICKNESS"
@@ -1072,6 +1485,10 @@ class MP_THICKNESS(BFParam):
 
 @subscribe
 class MP_HRRPUA(BFParam):
+    """!
+    Blender representation of the HRRPUA parameter, the heat release rate per unit area.
+    """
+
     label = "HRRPUA [kW/m²]"
     description = "Heat release rate per unit area"
     fds_label = "HRRPUA"
@@ -1084,6 +1501,10 @@ class MP_HRRPUA(BFParam):
 
 @subscribe
 class MP_TAU_Q(BFParam):
+    """!
+    Blender representation of the TAU_Q parameter, the ramp time for heat release rate.
+    """
+
     label = "TAU_Q [s]"
     description = "Ramp time for heat release rate"
     fds_label = "TAU_Q"
@@ -1096,6 +1517,10 @@ class MP_TAU_Q(BFParam):
 
 @subscribe
 class MP_MATL_ID(BFParamStr):
+    """!
+    Blender representation of the MATL_ID parameter, the reference to a MATL (Material) line for self properties.
+    """
+
     label = "MATL_ID"
     description = "Reference to a MATL (Material) line for self properties"
     fds_label = "MATL_ID"
@@ -1105,11 +1530,18 @@ class MP_MATL_ID(BFParamStr):
     bpy_export_default = False
 
     def draw_operators(self, context, layout):
+        """!
+        ???
+        """
         layout.operator("material.bf_choose_matl_id", icon="VIEWZOOM", text="")
 
 
 @subscribe
 class MP_IGNITION_TEMPERATURE(BFParam):
+    """!
+    Blender representation of the IGNITION_TEMPERATURE parameter.
+    """
+
     label = "IGNITION_TEMPERATURE [°C]"
     description = "Ignition temperature"
     fds_label = "IGNITION_TEMPERATURE"
@@ -1124,6 +1556,10 @@ class MP_IGNITION_TEMPERATURE(BFParam):
 
 @subscribe
 class MP_BACKING(BFParam):
+    """!
+    Blender representation of the BACKING parameter, the exposition of back side surface.
+    """
+
     label = "BACKING"
     description = "Exposition of back side surface"
     fds_label = "BACKING"
@@ -1156,6 +1592,9 @@ class MP_BACKING(BFParam):
 
 @subscribe
 class MP_other(BFParamOther):
+    """!
+    ???
+    """
     bpy_type = Material
     bpy_idname = "bf_other"
     bpy_pg = WM_PG_bf_other
@@ -1164,6 +1603,10 @@ class MP_other(BFParamOther):
 
 @subscribe
 class MN_SURF(BFNamelistMa):
+    """!
+    Blender representation of the SURF namelist group, the generic boundary condition.
+    """
+
     label = "SURF"
     description = "Generic boundary condition"
     enum_id = 2000
@@ -1188,6 +1631,10 @@ class MN_SURF(BFNamelistMa):
 
     @property
     def exported(self) -> "bool":
+        """!
+        Get if self is exported.
+        @return True if is exported, False otherwise.
+        """
         return self.element.bf_surf_export and self.element.name not in default_mas
 
 
@@ -1195,6 +1642,9 @@ class MN_SURF(BFNamelistMa):
 
 
 def update_OP_namelist_cls(ob, context):
+    """!
+    ???
+    """
     # Remove cache and tmp objects
     ob["ob_to_geom_cache"] = None
     ob["ob_to_xbs_cache"] = None
@@ -1207,6 +1657,10 @@ def update_OP_namelist_cls(ob, context):
 
 @subscribe
 class OP_namelist_cls(BFParam):
+    """!
+    Blender representation to the identification of FDS namelist.
+    """
+
     label = "Namelist"
     description = "Identification of FDS namelist"
     bpy_type = Object
@@ -1224,6 +1678,10 @@ class OP_namelist_cls(BFParam):
 
 @subscribe
 class OP_ID(BFParamStr):
+    """!
+    Blender representation of the ID parameter, the object identification name.
+    """
+
     label = "ID"
     description = "Object identification name"
     fds_label = "ID"
@@ -1235,11 +1693,17 @@ class OP_ID(BFParamStr):
 
 @subscribe
 class OP_FYI(BFParamFYI):
+    """!
+    ???
+    """
     bpy_type = Object
     bpy_idname = "bf_fyi"
 
 
 def update_bf_xb(ob, context):
+    """!
+    ???
+    """
     # Remove cache and tmp objects
     ob["ob_to_xbs_cache"] = None
     geometry.utils.rm_tmp_objects(context)
@@ -1254,6 +1718,10 @@ def update_bf_xb(ob, context):
 
 @subscribe
 class OP_XB_custom_voxel(BFParam):
+    """!
+    Blender representation to use custom voxel/pixel size for current Object.
+    """
+
     label = "Use Custom Voxel/Pixel"
     description = "Use custom voxel/pixel size for current Object"
     bpy_type = Object
@@ -1265,6 +1733,10 @@ class OP_XB_custom_voxel(BFParam):
 
 @subscribe
 class OP_XB_voxel_size(BFParam):
+    """!
+    Blender representation to use custom voxel/pixel size for current Object.
+    """
+
     label = "Custom Voxel/Pixel Size"
     description = "Custom voxel/pixel size for current Object"
     bpy_type = Object
@@ -1284,6 +1756,10 @@ class OP_XB_voxel_size(BFParam):
 
 @subscribe
 class OP_XB_center_voxels(BFParam):
+    """!
+    Blender representation to center voxels/pixels to Object bounding box.
+    """
+
     label = "Center Voxels/Pixels"
     description = "Center voxels/pixels to Object bounding box"
     bpy_type = Object
@@ -1295,6 +1771,10 @@ class OP_XB_center_voxels(BFParam):
 
 @subscribe
 class OP_XB_export(BFParam):
+    """!
+    Blender representation to set if XB shall be exported to FDS.
+    """
+
     label = "Export XB"
     description = "Set if XB shall be exported to FDS"
     bpy_type = Object
@@ -1306,6 +1786,10 @@ class OP_XB_export(BFParam):
 
 @subscribe
 class OP_XB(BFParamXB):
+    """!
+    Blender representation to export as volumes/faces.
+    """
+
     label = "XB"
     description = "Export as volumes/faces"
     fds_label = "XB"
@@ -1326,6 +1810,12 @@ class OP_XB(BFParamXB):
     bf_xb_from_fds = None  # auto
 
     def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         super().draw(context, layout)
         ob = self.element
         if ob.bf_xb_export and ob.bf_xb in ("VOXELS", "PIXELS"):
@@ -1333,6 +1823,11 @@ class OP_XB(BFParamXB):
             OP_XB_voxel_size(ob).draw(context, layout)
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         ob = self.element
         if not ob.bf_xb_export:
             return
@@ -1375,6 +1870,11 @@ class OP_XB(BFParamXB):
         return result
 
     def from_fds(self, context, value):
+        """!
+        Set parameter value from value in FDS notation, on error raise BFException.
+        @param context: data in the current active view.
+        @param value: the value to set.
+        """
         scale_length = context.scene.unit_settings.scale_length
         try:
             bf_xb = geometry.from_fds.xbs_to_ob(
@@ -1393,6 +1893,9 @@ class OP_XB(BFParamXB):
 
 
 def update_bf_xyz(ob, context):
+    """!
+    ???
+    """
     # Remove cache and tmp objects
     ob["ob_to_xyzs_cache"] = None
     geometry.utils.rm_tmp_objects(context)
@@ -1407,6 +1910,10 @@ def update_bf_xyz(ob, context):
 
 @subscribe
 class OP_XYZ_export(BFParam):
+    """!
+    Blender representation to set if XYZ shall be exported to FDS.
+    """
+
     label = "Export XYZ"
     description = "Set if XYZ shall be exported to FDS"
     bpy_type = Object
@@ -1418,6 +1925,10 @@ class OP_XYZ_export(BFParam):
 
 @subscribe
 class OP_XYZ(BFParamXYZ):
+    """!
+    Blender representation of the XYZ parameter to export as points.
+    """
+
     label = "XYZ"
     description = "Export as points"
     fds_label = "XYZ"
@@ -1434,6 +1945,11 @@ class OP_XYZ(BFParamXYZ):
     bpy_export = "bf_xyz_export"
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         ob = self.element
         if not ob.bf_xyz_export:
             return
@@ -1476,6 +1992,11 @@ class OP_XYZ(BFParamXYZ):
         return result
 
     def from_fds(self, context, value):
+        """!
+        Set parameter value from value in FDS notation, on error raise BFException.
+        @param context: data in the current active view.
+        @param value: the value to set.
+        """
         scale_length = context.scene.unit_settings.scale_length
         try:
             bf_xyz = geometry.from_fds.xyzs_to_ob(
@@ -1494,6 +2015,10 @@ class OP_XYZ(BFParamXYZ):
 
 @subscribe
 class OP_XYZ_center(OP_XYZ):
+    """!
+    Blender representation of the XYZ parameter to export as points (center).
+    """
+
     description = "Export as points (center)"
     bpy_prop = None  # do not redefine
     bf_xyz_idxs = (0,)  # CENTER, VERTICES
@@ -1514,6 +2039,10 @@ def update_bf_pb(ob, context):
 
 @subscribe
 class OP_PB_export(BFParam):
+    """!
+    Blender representation to set if PBX, PBY, PBZ shall be exported to FDS.
+    """
+
     label = "Export PBX, PBY, PBZ"
     description = "Set if PBX, PBY, PBZ shall be exported to FDS"
     bpy_type = Object
@@ -1525,6 +2054,10 @@ class OP_PB_export(BFParam):
 
 @subscribe
 class OP_PB(BFParamPB):
+    """!
+    Blender representation to export as planes.
+    """
+
     label = "PBX, PBY, PBZ"
     description = "Export as planes"
     bpy_type = Object
@@ -1539,6 +2072,11 @@ class OP_PB(BFParamPB):
     axis = None  # axis for importing
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         ob = self.element
         if not ob.bf_pb_export:
             return
@@ -1576,6 +2114,11 @@ class OP_PB(BFParamPB):
         return result
 
     def from_fds(self, context, value):
+        """!
+        Set parameter value from value in FDS notation, on error raise BFException.
+        @param context: data in the current active view.
+        @param value: the value to set.
+        """
         scale_length = context.scene.unit_settings.scale_length
         try:
             bf_pb = geometry.from_fds.pbs_to_ob(
@@ -1593,32 +2136,62 @@ class OP_PB(BFParamPB):
 
 
 @subscribe
-class OP_PBX(OP_PB):  # for importing only
+class OP_PBX(OP_PB):
+    """!
+    Blender representation of the PBX parameter.
+    For importing only.
+    """
+
     fds_label = "PBX"
     bpy_prop = None  # already defined
     axis = 0  # axis for importing
 
     def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         return
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         return
 
 
 @subscribe
-class OP_PBY(OP_PBX):  # for importing only
+class OP_PBY(OP_PBX):
+    """!
+    Blender representation of the PBY parameter.
+    For importing only.
+    """
+
     fds_label = "PBY"
     axis = 1  # axis for importing
 
 
 @subscribe
-class OP_PBZ(OP_PBX):  # for importing only
+class OP_PBZ(OP_PBX):
+    """!
+    Blender representation of the PBZ parameter.
+    For importing only.
+    """
+
     fds_label = "PBZ"
     axis = 2  # axis for importing
 
 
 @subscribe
 class OP_ID_suffix(BFParam):
+    """!
+    Blender representation to append suffix to multiple ID values.
+    """
+
     label = "IDs Suffix"
     description = "Append suffix to multiple ID values"
     bpy_type = Object
@@ -1638,6 +2211,12 @@ class OP_ID_suffix(BFParam):
     }
 
     def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         ob = self.element
         if (
             (ob.bf_xb_export and ob.bf_xb in ("VOXELS", "PIXELS"))
@@ -1650,6 +2229,10 @@ class OP_ID_suffix(BFParam):
 
 @subscribe
 class OP_SURF_ID(BFParam):
+    """!
+    Blender representation of the SURF_ID parameter, the reference to SURF.
+    """
+
     label = "SURF_ID"
     description = "Reference to SURF"
     fds_label = "SURF_ID"
@@ -1660,10 +2243,19 @@ class OP_SURF_ID(BFParam):
 
     @property
     def value(self):
+        """!
+        Get value.
+        @return value to be get
+        """
         if self.element.active_material:
             return self.element.active_material.name
 
     def set_value(self, context, value):
+        """!
+        Set value. If value is None, set defaul.
+        @param context: data in the current active view.
+        @param value: value to set.
+        """
         if value is None:
             self.element.active_material = None
         else:
@@ -1676,12 +2268,19 @@ class OP_SURF_ID(BFParam):
 
     @property
     def exported(self):
+        """!
+        Get if self is exported.
+        @return True if is exported, False otherwise.
+        """
         ob = self.element
         return ob.bf_surf_id_export and ob.active_material
 
 
 @subscribe
 class OP_other(BFParamOther):
+    """!
+    ???
+    """
     bpy_type = Object
     bpy_idname = "bf_other"
     bpy_pg = WM_PG_bf_other
@@ -1690,6 +2289,10 @@ class OP_other(BFParamOther):
 
 @subscribe
 class ON_OBST(BFNamelistOb):
+    """!
+    Blender representation of the OBST parameter, the obstructions.
+    """
+
     label = "OBST"
     description = "Obstruction"
     enum_id = 1000
@@ -1703,6 +2306,10 @@ class ON_OBST(BFNamelistOb):
 
 @subscribe
 class OP_other_namelist(BFParam):
+    """!
+    Blender representation of the other namelist label, eg <ABCD>.
+    """
+
     label = "Label"
     description = "Other namelist label, eg <ABCD>"
     bpy_type = Object
@@ -1712,12 +2319,19 @@ class OP_other_namelist(BFParam):
     bpy_other = {"maxlen": 4}
 
     def check(self, context):
+        """
+        !Check self validity.
+        @param context: data in the current active view.
+        """
         if not re.match("^[A-Z0-9_]{4}$", self.element.bf_other_namelist):
             raise BFException(self, "Malformed other namelist label")
 
 
 @subscribe
 class ON_other(BFNamelistOb):
+    """!
+    ???
+    """
     label = "Other"
     description = "Other namelist"
     enum_id = 1007
@@ -1739,6 +2353,9 @@ class ON_other(BFNamelistOb):
 
     @property
     def fds_label(self):
+        """!
+        ???
+        """
         return self.element.bf_other_namelist
 
 
@@ -1747,6 +2364,10 @@ class ON_other(BFNamelistOb):
 
 @subscribe
 class OP_GEOM_check_sanity(BFParam):
+    """!
+    Blender representation to check if closed orientable manifold, with no degenerate geometry while exporting.
+    """
+
     label = "Check Sanity While Exporting"
     description = "Check if closed orientable manifold, with no degenerate geometry while exporting"
     bpy_type = Object
@@ -1757,6 +2378,10 @@ class OP_GEOM_check_sanity(BFParam):
 
 @subscribe
 class OP_GEOM_protect(BFParam):
+    """!
+    Blender representation to protect original Object geometry while checking its sanity.
+    """
+
     label = "Protect Original"
     description = "Protect original Object geometry while checking its sanity"
     bpy_type = Object
@@ -1767,14 +2392,29 @@ class OP_GEOM_protect(BFParam):
 
 @subscribe
 class OP_GEOM(BFParam):
+    """!
+    Blender representation for the geometry parameters.
+    """
+
     label = "Geometry Parameters"
     description = "Geometry parameters"
     bpy_type = Object
 
     def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: data in the current active view.
+        @param layout: ???
+        @return layout column.
+        """
         pass
 
     def to_fds_param(self, context):
+        """!
+        Return the FDSParam Python representation.
+        @param context: data in the current active view.
+        @return FDSParam representation of the context.
+        """
         # Check is performed while exporting
         # Get surf_idv, verts and faces
         scale_length = context.scene.unit_settings.scale_length
@@ -1806,7 +2446,12 @@ class OP_GEOM(BFParam):
 
 
 @subscribe
-class OP_GEOM_IS_TERRAIN(BFParam):  # FIXME
+class OP_GEOM_IS_TERRAIN(BFParam):  
+    """!
+    Blender representation of the IS_TERRAIN parameter to set if it represents a terrain.
+    FIXME.
+    """
+
     label = "IS_TERRAIN"
     description = "Set if it represents a terrain"
     fds_label = "IS_TERRAIN"
@@ -1817,7 +2462,12 @@ class OP_GEOM_IS_TERRAIN(BFParam):  # FIXME
 
 
 @subscribe
-class OP_GEOM_EXTEND_TERRAIN(BFParam):  # FIXME
+class OP_GEOM_EXTEND_TERRAIN(BFParam):
+    """!
+    Blender representation of the EXTEND_TERRAIN parameter to set if this terrain needs extension to fully cover the domain.
+    FIXME.
+    """
+
     label = "EXTEND_TERRAIN"
     description = "Set if this terrain needs extension to fully cover the domain"
     fds_label = "EXTEND_TERRAIN"
@@ -1828,12 +2478,20 @@ class OP_GEOM_EXTEND_TERRAIN(BFParam):  # FIXME
 
     @property
     def exported(self):
+        """!
+        Get if self is exported.
+        @return True if is exported, False otherwise.
+        """
         ob = self.element
         return ob.bf_geom_is_terrain
 
 
 @subscribe
 class ON_GEOM(BFNamelistOb):
+    """!
+    Blender representation of the GEOM parameter, the geometry of the obstructions.
+    """
+
     label = "GEOM"
     description = "Geometry"
     enum_id = 1021
@@ -1855,6 +2513,10 @@ class ON_GEOM(BFNamelistOb):
 
 @subscribe
 class ON_HOLE(BFNamelistOb):
+    """!
+    Blender representation of the HOLE parameter, the obstruction cutout.
+    """
+
     label = "HOLE"
     description = "Obstruction cutout"
     enum_id = 1009
@@ -1866,7 +2528,12 @@ class ON_HOLE(BFNamelistOb):
 # VENT
 
 @subscribe
-class OP_VENT_OBST_ID(BFParam):  # FIXME test
+class OP_VENT_OBST_ID(BFParam):
+    """!
+    Blender representation of the OBST_ID parameter to specify OBST on which projecting the condition.
+    FIXME.
+    """
+
     label = "OBST_ID"
     description = "Specify OBST on which projecting the condition"
     fds_label = "OBST_ID"
@@ -1876,11 +2543,21 @@ class OP_VENT_OBST_ID(BFParam):  # FIXME test
     bpy_other = {"type": Object}
 
     @property
-    def value(self):  # FIXME to str
+    def value(self):
+        """!
+        Get value.
+        FIXME to str.
+        @return value to be get
+        """
         if self.element.bf_vent_obst_id:
             return self.element.bf_vent_obst_id.name
 
     def set_value(self, context, value):
+        """!
+        Set value. If value is None, set defaul.
+        @param context: data in the current active view.
+        @param value: value to set.
+        """
         if value:
             ob = bpy.data.objects.get(value)
             if ob:
@@ -1893,6 +2570,10 @@ class OP_VENT_OBST_ID(BFParam):  # FIXME test
 
 @subscribe
 class ON_VENT(BFNamelistOb):
+    """!
+    Blender representation of the VENT parameter, the boundary condition patch.
+    """
+
     label = "VENT"
     description = "Boundary condition patch"
     enum_id = 1010
@@ -1919,6 +2600,10 @@ class ON_VENT(BFNamelistOb):
 
 @subscribe
 class OP_DEVC_QUANTITY(BFParamStr):
+    """!
+    Blender representation of the QUANTITY parameter, the output quantity.
+    """
+
     label = "QUANTITY"
     description = "Output quantity"
     fds_label = "QUANTITY"
@@ -1928,6 +2613,10 @@ class OP_DEVC_QUANTITY(BFParamStr):
 
 @subscribe
 class OP_DEVC_SETPOINT(BFParam):
+    """!
+    Blender representation of the SETPOINT parameter, the value of the device at which its state changes.
+    """
+
     label = "SETPOINT [~]"
     description = "Value of the device at which its state changes"
     fds_label = "SETPOINT"
@@ -1942,6 +2631,10 @@ class OP_DEVC_SETPOINT(BFParam):
 
 @subscribe
 class OP_DEVC_INITIAL_STATE(BFParam):
+    """!
+    Blender representation of the INITIAL_STATE parameter to set device initial state.
+    """
+
     label = "INITIAL_STATE"
     description = "Set device initial state"
     fds_label = "INITIAL_STATE"
@@ -1953,6 +2646,10 @@ class OP_DEVC_INITIAL_STATE(BFParam):
 
 @subscribe
 class OP_DEVC_LATCH(BFParam):
+    """!
+    Blender representation of the LATCH parameter, the device only changes state once.
+    """
+
     label = "LATCH"
     description = "Device only changes state once"
     fds_label = "LATCH"
@@ -1964,6 +2661,10 @@ class OP_DEVC_LATCH(BFParam):
 
 @subscribe
 class OP_DEVC_PROP_ID(BFParamStr):
+    """!
+    Blender representation of the PROP_ID parameter, the reference to a PROP (Property) line for self properties.
+    """
+
     label = "PROP_ID"
     description = "Reference to a PROP (Property) line for self properties"
     fds_label = "PROP_ID"
@@ -1976,6 +2677,10 @@ class OP_DEVC_PROP_ID(BFParamStr):
 
 @subscribe
 class ON_DEVC(BFNamelistOb):
+    """!
+    Blender representation of the DEVC parameter, the device.
+    """
+
     label = "DEVC"
     description = "Device"
     enum_id = 1011
@@ -2001,6 +2706,10 @@ class ON_DEVC(BFNamelistOb):
 
 @subscribe
 class OP_SLCF_VECTOR(BFParam):
+    """!
+    Blender representation of the VECTOR parameter to create animated vectors.
+    """
+
     label = "VECTOR"
     description = "Create animated vectors"
     fds_label = "VECTOR"
@@ -2012,6 +2721,10 @@ class OP_SLCF_VECTOR(BFParam):
 
 @subscribe
 class OP_SLCF_CELL_CENTERED(BFParam):
+    """!
+    Blender representation of the CELL_CENTERED parameter to output the actual cell-centered data with no averaging.
+    """
+
     label = "CELL_CENTERED"
     description = "Output the actual cell-centered data with no averaging"
     fds_label = "CELL_CENTERED"
@@ -2023,6 +2736,10 @@ class OP_SLCF_CELL_CENTERED(BFParam):
 
 @subscribe
 class ON_SLCF(BFNamelistOb):
+    """!
+    Blender representation of the SLCF parameter to slice file.
+    """
+
     label = "SLCF"
     description = "Slice file"
     enum_id = 1012
@@ -2049,6 +2766,10 @@ class ON_SLCF(BFNamelistOb):
 
 @subscribe
 class ON_PROF(BFNamelistOb):
+    """!
+    Blender representation of the PROF parameter, the wall profile output.
+    """
+
     label = "PROF"
     description = "Wall profile output"
     enum_id = 1013
@@ -2062,6 +2783,10 @@ class ON_PROF(BFNamelistOb):
 
 @subscribe
 class OP_MESH_IJK(BFParam):
+    """!
+    Blender representation of the IJK parameter, the cell number in x, y, and z direction.
+    """
+
     label = "IJK"
     description = "Cell number in x, y, and z direction"
     fds_label = "IJK"
@@ -2076,6 +2801,10 @@ class OP_MESH_IJK(BFParam):
 
 @subscribe
 class OP_MESH_MPI_PROCESS(BFParam):
+    """!
+    Blender representation of the MPI_PROCESS parameter, the assigned to given MPI process (Starting from 0.).
+    """
+
     label = "MPI_PROCESS"
     description = "Assigned to given MPI process (Starting from 0.)"
     fds_label = "MPI_PROCESS"
@@ -2090,6 +2819,10 @@ class OP_MESH_MPI_PROCESS(BFParam):
 
 @subscribe
 class ON_MESH(BFNamelistOb):
+    """!
+    Blender representation of the MESH parameter, the domain of simulation.
+    """
+
     label = "MESH"
     description = "Domain of simulation"
     enum_id = 1014
@@ -2103,6 +2836,10 @@ class ON_MESH(BFNamelistOb):
 
 @subscribe
 class ON_INIT(BFNamelistOb):
+    """!
+    Blender representation of the INIT parameter, the initial condition.
+    """
+
     label = "INIT"
     description = "Initial condition"
     enum_id = 1015
@@ -2116,6 +2853,10 @@ class ON_INIT(BFNamelistOb):
 
 @subscribe
 class ON_ZONE(BFNamelistOb):
+    """!
+    Blender representation of the ZONE parameter, the pressure zone.
+    """
+
     label = "ZONE"
     description = "Pressure zone"
     enum_id = 1016
@@ -2129,6 +2870,10 @@ class ON_ZONE(BFNamelistOb):
 
 @subscribe
 class ON_HVAC(BFNamelistOb):
+    """!
+    Blender representation of the HVAC parameter, the HVAC system definition.
+    """
+
     label = "HVAC"
     description = "HVAC system definition"
     enum_id = 1017
@@ -2164,10 +2909,15 @@ MP_namelist_cls.bpy_other["items"] = items
 
 
 class BFObject:
-    """Extension of Blender Object."""
+    """!
+    Extension of Blender Object.
+    """
 
     @property
     def bf_namelist(self):
+        """!
+        ???
+        """
         try:
             return bf_namelists_by_cls[self.bf_namelist_cls](self)
         except IndexError:
@@ -2177,11 +2927,21 @@ class BFObject:
             )
 
     def to_fds(self, context):
+        """!
+        Return the FDS str representation.
+        @param context: data in the current active view.
+        @return string representation.
+        """
         if self.bf_is_tmp or not self.type == "MESH":
             return
         return self.bf_namelist.to_fds(context)
 
     def from_fds(self, context, fds_namelist):
+        """!
+        Import from FDSNamelist in FDS notation, on error raise BFException.
+        @param context: data in the current active view.
+        @param fds_namelist: FDSNamelist to import
+        """
         # Set bf_namelist_cls
         bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label)
         self.bf_namelist_cls = bf_namelist.__name__
@@ -2191,6 +2951,9 @@ class BFObject:
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
     def set_default_appearance(self, context):
+        """!
+        ???
+        """
         # Check preferences and namelist
         prefs = context.preferences.addons[__package__].preferences
         if not prefs.bf_pref_appearance:
@@ -2226,6 +2989,10 @@ class BFObject:
 
     @classmethod
     def register(cls):
+        """!
+        Register related Blender properties.
+        @param cls: class to be registered.
+        """
         Object.bf_namelist = cls.bf_namelist
         Object.to_fds = cls.to_fds
         Object.from_fds = cls.from_fds
@@ -2233,6 +3000,10 @@ class BFObject:
 
     @classmethod
     def unregister(cls):
+        """!
+        Unregister related Blender properties.
+        @param cls: class to be unregistered.
+        """
         del Object.set_default_appearance
         del Object.from_fds
         del Object.to_fds
@@ -2240,10 +3011,15 @@ class BFObject:
 
 
 class BFMaterial:
-    """Extension of Blender Material."""
-
+    """!
+    Extension of Blender Material.
+    """
+    
     @property
     def bf_namelist(self):
+        """!
+        ???
+        """
         try:
             return bf_namelists_by_cls[self.bf_namelist_cls](self)
         except IndexError:
@@ -2253,9 +3029,19 @@ class BFMaterial:
             )
 
     def to_fds(self, context):
+        """!
+        Return the FDS str representation.
+        @param context: data in the current active view.
+        @return string representation.
+        """
         return self.bf_namelist.to_fds(context)
 
     def from_fds(self, context, fds_namelist):
+        """!
+        Import from FDSNamelist in FDS notation, on error raise BFException.
+        @param context: data in the current active view.
+        @param fds_namelist: FDSNamelist to import
+        """
         # Set bf_namelist_cls
         self.bf_namelist_cls = "MN_SURF"
         # Import
@@ -2269,6 +3055,10 @@ class BFMaterial:
 
     @classmethod
     def register(cls):
+        """!
+        Register related Blender properties.
+        @param cls: class to be registered.
+        """
         Material.bf_namelist = cls.bf_namelist
         Material.to_fds = cls.to_fds
         Material.from_fds = cls.from_fds
@@ -2276,6 +3066,10 @@ class BFMaterial:
 
     @classmethod
     def unregister(cls):
+        """!
+        Unregister related Blender properties.
+        @param cls: class to be unregistered.
+        """
         del Material.set_default_appearance
         del Material.from_fds
         del Material.to_fds
@@ -2283,7 +3077,9 @@ class BFMaterial:
 
 
 class BFScene:
-    """Extension of Blender Scene."""
+    """!
+    Extension of Blender Scene.
+    """
 
     name = str()  # sc.name
     bf_head_export = bool()  # sc.bf_head_export
@@ -2291,9 +3087,18 @@ class BFScene:
 
     @property
     def bf_namelists(self):
+        """!
+        ???
+        """
         return (n(self) for _, n in bf_namelists_by_cls.items() if n.bpy_type == Scene)
 
     def to_fds(self, context, full=False):
+        """!
+        Return the FDS str representation.
+        @param context: data in the current active view.
+        @param full: ???
+        @return string representation.
+        """
         # Header
         v = sys.modules[__package__].bl_info["version"]
         blv = bpy.app.version_string
@@ -2332,7 +3137,11 @@ class BFScene:
         return "\n".join(line for line in lines if line)  # remove empties
 
     def from_fds(self, context, fds_case):
-        """Import from FDSCase."""
+        """!
+        Import from FDSCase in FDS notation, on error raise BFException.
+        @param context: data in the current active view.
+        @param fds_case: fds case to set
+        """
         self.set_default_appearance(context)  # current scene
         fds_case_un = FDSCase()  # unmanaged namelists
         # Import SURFs first FIXME improve, repetition!
@@ -2383,9 +3192,16 @@ class BFScene:
         bpy.ops.scene.bf_show_text()
 
     def to_ge1(self, context):
+        """!
+        ???
+        """
         return geometry.to_ge1.scene_to_ge1(context, self)
 
-    def set_default_appearance(self, context):  # TODO
+    def set_default_appearance(self, context):
+        """!
+        ???
+        TODO
+        """
         prefs = context.preferences.addons[__package__].preferences
         if not prefs.bf_pref_appearance:
             return
@@ -2393,6 +3209,10 @@ class BFScene:
 
     @classmethod
     def register(cls):
+        """!
+        Register related Blender properties.
+        @param cls: class to be registered.
+        """
         Scene.bf_namelists = cls.bf_namelists
         Scene.to_fds = cls.to_fds
         Scene.to_ge1 = cls.to_ge1
@@ -2401,6 +3221,10 @@ class BFScene:
 
     @classmethod
     def unregister(cls):
+        """!
+        Unregister related Blender properties.
+        @param cls: class to be unregistered.
+        """
         del Scene.set_default_appearance
         del Scene.from_fds
         del Scene.to_ge1
@@ -2409,13 +3233,21 @@ class BFScene:
 
 
 class BFCollection:
-    """Extension of Blender Collection."""
+    """!
+    Extension of Blender Collection.
+    """
 
     name = str()  # collection.name
     objects = list()  # collection.objects
     children = list()  # collection.children
 
     def to_fds(self, context):
+        """!
+        Return the FDS str representation.
+        @param context: data in the current active view.
+        @param full: ???
+        @return string representation.
+        """
         obs, lines = list(self.objects), list()
         obs.sort(key=lambda k: k.name)  # alphabetic by name
         if obs:
@@ -2428,10 +3260,18 @@ class BFCollection:
 
     @classmethod
     def register(cls):
+        """!
+        Register related Blender properties.
+        @param cls: class to be registered.
+        """
         Collection.to_fds = cls.to_fds
 
     @classmethod
     def unregister(cls):
+        """!
+        Unregister related Blender properties.
+        @param cls: class to be unregistered.
+        """
         del Collection.to_fds
 
 
@@ -2439,6 +3279,9 @@ class BFCollection:
 
 
 def register():
+    """!
+    Register Blender classes.
+    """
     from bpy.utils import register_class
 
     # Blender classes
@@ -2471,6 +3314,9 @@ def register():
 
 
 def unregister():
+    """!
+    Unregister Blender classes.
+    """
     from bpy.utils import unregister_class
 
     # Blender Object, Material, and Scene
