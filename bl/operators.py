@@ -704,6 +704,11 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
         self.layout.prop(self, "bf_devc_prop_id", text="")
 
 
+# FIXME Align MESHes
+
+
+
+
 # GIS
 
 
