@@ -1,4 +1,6 @@
-"""BlenderFDS, export geometry to ge1 cad file format."""
+"""!
+BlenderFDS, export geometry to ge1 cad file format.
+"""
 
 import bpy, bmesh
 from . import utils
@@ -28,7 +30,12 @@ def _get_appearance(name, i, rgb):
 
 
 def scene_to_ge1(context, scene):  # TODO use BMesh
-    """Export scene geometry in FDS GE1 notation."""
+    """!
+    Export scene geometry in FDS GE1 notation.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param scene: the Blender scene.
+    @return FDS GE1 notation.
+    """
     # Cursor
     w = context.window_manager.windows[0]
     w.cursor_modal_set("WAIT")

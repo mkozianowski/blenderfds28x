@@ -1,3 +1,7 @@
+"""!
+???
+"""
+
 import bpy, logging
 from bpy.app.handlers import persistent, load_post, save_pre, depsgraph_update_post
 from bpy.types import Object
@@ -11,7 +15,11 @@ log = logging.getLogger(__name__)
 
 
 @persistent
-def _load_post(self):  # Beware: self is None
+def _load_post(self):
+    """!
+    ???. Beware: self is None.
+    """
+    # Beware: self is None
     # Check file format version
     bf_file_version = tuple(bpy.data.scenes[0].bf_file_version)
     if not bf_file_version or bf_file_version < config.supported_file_version:  # older
@@ -39,7 +47,10 @@ def _load_post(self):  # Beware: self is None
 
 
 @persistent
-def _save_pre(self):  # Beware: self is None
+def _save_pre(self):
+    """!
+    ???. Beware: self is None.
+    """
     # Remove tmp objecys
     geometry.utils.rm_tmp_objects(bpy.context)
     # Set file format version
@@ -48,8 +59,10 @@ def _save_pre(self):  # Beware: self is None
 
 
 @persistent
-def _depsgraph_update_post(scene):  # FIXME test, was crashing
-    # Detect object change and erase cached geometry
+def _depsgraph_update_post(scene):
+    """!
+    Detect object change and erase cached geometry. FIXME test, was crashing.
+    """
     for update in bpy.context.view_layer.depsgraph.updates:
         ob = update.id.original
         if (
@@ -68,6 +81,9 @@ def _depsgraph_update_post(scene):  # FIXME test, was crashing
 
 
 def register():
+    """!
+    Load the Python classes and functions to blender.
+    """
     log.debug(f"Registering handlers")
     load_post.append(_load_post)
     save_pre.append(_save_pre)
@@ -75,6 +91,9 @@ def register():
 
 
 def unregister():
+    """!
+    Unload the Python classes and functions from blender.
+    """
     log.debug(f"Unregistering handlers")
     load_post.remove(_load_post)
     save_pre.remove(_save_pre)

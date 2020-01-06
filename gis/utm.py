@@ -1,10 +1,13 @@
-# Original code from https://github.com/Turbo87/utm
-# >simplified version that only handle utm zones (and not latitude bands from MGRS grid)
-# >reverse coord order : latlon --> lonlat
-# >add support for UTM EPSG codes
+"""!
+Geographic information system: original code from https://github.com/Turbo87/utm
+- simplified version that only handle utm zones (and not latitude bands from MGRS grid)
+- reverse coord order : latlon --> lonlat
+- add support for UTM EPSG codes
 
-# more infos : http://geokov.com/education/utm.aspx
-# formulas : https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system
+More infos : http://geokov.com/education/utm.aspx
+
+Formulas : https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system
+"""
 
 # The crs is WGS84
 # zn: UTM zone number
@@ -49,6 +52,12 @@ R = 6378137
 
 
 def _lonlat_to_zn(lon, lat):
+    """!
+    Conversion from longitude/latitude to UTM zone number.
+    @param lon: longitude in decimal degrees.
+    @param lat: latitude in decimal degrees.
+    @return the UTM zone number.
+    """
     if 56 <= lat < 64 and 3 <= lon < 12:
         return 32
     if 72 <= lat <= 84 and lon >= 0:
@@ -64,6 +73,11 @@ def _lonlat_to_zn(lon, lat):
 
 
 def _lat_to_ne(lat):
+    """!
+    Detect if latitude is on the UTM north hemisphere.
+    @param lat: latitude in decimal degrees.
+    @return True if UTM north hemisphere. False otherwise.
+    """
     if lat >= -1e-6:
         return True
     else:
@@ -71,10 +85,23 @@ def _lat_to_ne(lat):
 
 
 def _zn_to_central_lon(zn):
+    """!
+    UTM zone number to central longitude.
+    @param zn: UTM zone number.
+    @return central longitude.
+    """
     return (zn - 1) * 6 - 180 + 3
 
 
 def _lonlat_to_utm(lon, lat, force_zn=None, force_ne=None):
+    """!
+    Conversion from longitude/latitude to UTM.
+    @param lon: longitude in decimal degrees.
+    @param lat: latitude in decimal degrees.
+    @param force_zn: ???
+    @param force_ne: ???
+    @return UTM as zn (UTM zone number), ne (UTM north emisphere True/False), easting and northing
+    """
     # Check range
     if not -80.0 <= lat <= 84.0:
         raise ValueError(f"Latitude {lat} out of UTM range")
@@ -139,6 +166,14 @@ def _lonlat_to_utm(lon, lat, force_zn=None, force_ne=None):
 
 
 def _utm_to_lonlat(zn, ne, easting, northing):
+    """!
+    Conversion from UTM to longitude/latitude.
+    @param zn: UTM zone number.
+    @param ne: UTM north emisphere True/False.
+    @param easting: easting.
+    @param northing: northing.
+    @return the longitude and latitude.
+    """
     x = easting - 500000
     y = northing
     if not ne:
@@ -192,6 +227,12 @@ def _utm_to_lonlat(zn, ne, easting, northing):
 
 
 def _zn_ne_to_epsg(zn, ne):
+    """!
+    Conversion from UTM to EPSG.
+    @param zn: UTM zone number.
+    @param ne: UTM north emisphere True/False.
+    @return the EPSG.
+    """
     if ne:
         return "EPSG:326" + str(zn).zfill(2)
     else:
@@ -199,11 +240,21 @@ def _zn_ne_to_epsg(zn, ne):
 
 
 def _epsg_to_code(epsg):
+    """!
+    ???
+    @param epsg: EPSG.
+    @return ???
+    """
     code = _, code = epsg.split(":")
     return code
 
 
 def _epsg_to_zn_ne(epsg):
+    """!
+    Conversion from EPSG to UTM.
+    @param epsg: EPSG.
+    @return UTM as zn (UTM zone number) and ne (UTM north emisphere True/False)
+    """
     code = _epsg_to_code(epsg)
     zn = int(code[-2:])
     if code[2] == "6":
@@ -214,6 +265,12 @@ def _epsg_to_zn_ne(epsg):
 
 
 def _lonlat_to_epsg(lon, lat):
+    """!
+    Conversion from longitude/latitude to EPSG.
+    @param lon: longitude in decimal degrees.
+    @param lat: latitude in decimal degrees.
+    @return the EPSG.
+    """
     zn = _lonlat_to_zn(lon=lon, lat=lat)
     if _lat_to_ne(lat):
         return "EPSG:326" + str(zn).zfill(2)
@@ -225,9 +282,16 @@ def _lonlat_to_epsg(lon, lat):
 
 
 class Ellipsoid:
-    """Ellipsoid"""
+    """!
+    Ellipsoid coordinate system.
+    """
 
     def __init__(self, a, b):
+        """!
+        Constructor of the class.
+        @param a: equatorial radius in meters.
+        @param b: polar radius in meters.
+        """
         self.a = a  # equatorial radius in meters
         self.b = b  # polar radius in meters
         self.f = (self.a - self.b) / self.a  # inverse flat
@@ -238,6 +302,12 @@ GRS80 = Ellipsoid(6378137, 6356752.314245)
 
 
 def webMercToLonLat(x, y):
+    """!
+    Conversion from UTM to Geographic coordinate system.
+    @param x: UTM x coordinate.
+    @param y: UTM y coordinate.
+    @return the longitude/latitude.
+    """
     k = GRS80.perimeter / 360
     lon = x / k
     lat = y / k
@@ -248,6 +318,12 @@ def webMercToLonLat(x, y):
 
 
 def lonLatToWebMerc(lon, lat):
+    """!
+    Conversion from Geographic coordinate system to UTM coordinate system.
+    @param lon: longitude in decimal degrees.
+    @param lat: latitude in decimal degrees.
+    @return the x/y UTM coordinates.
+    """
     k = GRS80.perimeter / 360
     x = lon * k
     lat = math.log(math.tan((90 + lat) * math.pi / 360.0)) / (math.pi / 180.0)
@@ -257,9 +333,21 @@ def lonLatToWebMerc(lon, lat):
 
 # Classes
 
+# WGS84
+class UTM:
+    """!
+    UTM coordinate system.
+    """
 
-class UTM:  # WGS84
     def __init__(self, zn=1, ne=True, easting=500000, northing=5000000, elevation=0.0):
+        """!
+        Constructor of the class.
+        @param zn: UTM zone number.
+        @param ne: UTM north emisphere True/False.
+        @param easting: easting in meters.
+        @param northing: northing in meters.
+        @param elevation: elevation in meters.
+        """
         # Check range
         if not 1 <= zn <= 60:
             raise ValueError(f"Zone number {zn} out of range")
@@ -285,20 +373,40 @@ class UTM:  # WGS84
         )
 
     def __str__(self):
+        """!
+        String representation of the class.
+        @return the string.
+        """
         return f"{self.zn}{self.ne and 'N' or 'S'}  {self.easting:.1f}m E  {self.northing:.1f}m N (WGS84) h={self.elevation}m"
 
     def __repr__(self):
+        """!
+        Representation of the class.
+        @return ???
+        """
         return f"UTM({self.zn}, {self.ne}, {self.easting}, {self.northing}, {self.elevation})"
 
     @property
     def epsg(self):
+        """!
+        The EPSG conversion.
+        @return the EPSG.
+        """
         return _zn_ne_to_epsg(zn=self.zn, ne=self.ne)
 
     @epsg.setter
     def epsg(self, epsg):
+        """!
+        Update the UTM coordinate using the EPSG code.
+        @param epsg: EPSG code.
+        """
         self.zn, self.ne = _epsg_to_zn_ne(epsg=epsg)
 
     def to_LonLat(self):
+        """!
+        Retrive the Geographic coordinate.
+        @return the LonLat equivalent object.
+        """
         return LonLat(
             *_utm_to_lonlat(
                 zn=self.zn, ne=self.ne, easting=self.easting, northing=self.northing
@@ -306,11 +414,26 @@ class UTM:  # WGS84
         )
 
     def to_url(self):
+        """!
+        Retrive the openstreetmap url.
+        @return the openstreetmap url.
+        """
         return self.to_LonLat().to_url()
 
 
-class LonLat:  # WGS84
+# WGS84
+class LonLat:
+    """!
+    Geographic coordinate system.
+    """
+
     def __init__(self, lon=0.0, lat=0.0, elevation=0.0):
+        """!
+        Constructor of the class.
+        @param lon: longitude in decimal degrees.
+        @param lat: latitude in decimal degrees.
+        @param elevation: elevation in meters.
+        """
         if not -180.0 <= lon <= 180.0:
             raise ValueError(f"Longitude <{lon}> out of range")
         if not -90.0 <= lat <= 90.0:
@@ -318,12 +441,24 @@ class LonLat:  # WGS84
         self.lon, self.lat, self.elevation = lon, lat, elevation
 
     def __str__(self):
+        """!
+        String representation of the class.
+        @return the string.
+        """
         return f"{self.lon:.6f}° {self.lon<0. and 'W' or 'E'}  {self.lat:.6f}° {self.lat<0. and 'S' or 'N'} (WGS84) h={self.elevation}m"
 
     def __repr__(self):
+        """!
+        Representation of the class.
+        @return ???
+        """
         return f"LonLat({self.lon}, {self.lat}, {self.elevation})"
 
     def to_UTM(self, force_zn=None, force_ne=None):
+        """!
+        Retrive the UTM coordinate.
+        @return the UTM equivalent object.
+        """
         return UTM(
             *_lonlat_to_utm(
                 lon=self.lon, lat=self.lat, force_zn=force_zn, force_ne=force_ne
@@ -332,4 +467,8 @@ class LonLat:  # WGS84
         )
 
     def to_url(self):
+        """!
+        Retrive the openstreetmap url.
+        @return the openstreetmap url.
+        """
         return f"http://www.openstreetmap.org/?mlat={self.lat}&mlon={self.lon}&zoom=12"

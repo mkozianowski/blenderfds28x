@@ -1,3 +1,7 @@
+"""!
+???
+"""
+
 # BlenderFDS, an open tool for the NIST Fire Dynamics Simulator
 
 # Copyright (C) 2013  Emanuele Gissi, http://www.blenderfds.org
@@ -34,7 +38,11 @@ bl_classes = list()
 
 
 def subscribe(cls):
-    """Subscribe class to related collection."""
+    """!
+    Subscribe class to related collection.
+    @param cls: the class to subscribe.
+    @return the class subscribed.
+    """
     bl_classes.append(cls)
     return cls
 
@@ -44,7 +52,9 @@ def subscribe(cls):
 
 @subscribe
 class ImportFDS(Operator, ImportHelper):
-    """Import FDS case file to a Scene"""
+    """!
+    Import FDS case file to a Scene.
+    """
 
     bl_idname = "import_scene.fds"
     bl_label = "Import FDS"
@@ -56,9 +66,24 @@ class ImportFDS(Operator, ImportHelper):
 
     @classmethod
     def poll(cls, context):
+        """!
+        Test if the operator can be called or not
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return True if operator can be called, False otherwise.
+        """
         return context.scene is not None
 
     def execute(self, context):
+        """!
+        Execute the operator.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return return
+        - "RUNNING_MODAL" keep the operator running with blender.
+        - "CANCELLED" when no action has been taken, operator exits.
+        - "FINISHED" when the operator is complete, operator exits.
+        - "PASS_THROUGH" do nothing and pass the event on.
+        - "INTERFACE" handled but not executed (popup menus).
+        """
         # Init
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
@@ -89,12 +114,20 @@ class ImportFDS(Operator, ImportHelper):
 
 
 def menu_func_import_FDS(self, context):
+    """!
+    ???
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    """
     self.layout.operator(
         "import_scene.fds", text="NIST FDS (.fds) into New Scene"
     ).new_scene = True
 
 
 def menu_func_import_snippet_FDS(self, context):
+    """!
+    ???
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    """
     self.layout.operator(
         "import_scene.fds", text="NIST FDS (.fds) into Current Scene"
     ).new_scene = False
@@ -105,7 +138,9 @@ def menu_func_import_snippet_FDS(self, context):
 
 @subscribe
 class ExportFDS(Operator, ExportHelper):
-    """Export current Scene to FDS case file"""
+    """!
+    Export current Scene to FDS case file.
+    """
 
     bl_idname = "export_scene.fds"
     bl_label = "Export FDS"
@@ -116,9 +151,24 @@ class ExportFDS(Operator, ExportHelper):
 
     @classmethod
     def poll(cls, context):
+        """!
+        Test if the operator can be called or not
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return True if operator can be called, False otherwise.
+        """
         return context.scene is not None
 
     def execute(self, context):
+        """!
+        Execute the operator.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return return
+        - "RUNNING_MODAL" keep the operator running with blender.
+        - "CANCELLED" when no action has been taken, operator exits.
+        - "FINISHED" when the operator is complete, operator exits.
+        - "PASS_THROUGH" do nothing and pass the event on.
+        - "INTERFACE" handled but not executed (popup menus).
+        """
         # Init
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
@@ -173,10 +223,18 @@ class ExportFDS(Operator, ExportHelper):
         return {"FINISHED"}
 
     def draw(self, context):
+        """!
+        Draw function for the operator.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         pass
 
 
 def menu_func_export_FDS(self, context):
+    """!
+    ???
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    """
     # Init
     sc = context.scene
     basename = "{0}.fds".format(bpy.path.clean_name(sc.name))
@@ -202,6 +260,9 @@ def menu_func_export_FDS(self, context):
 
 
 def register():
+    """!
+    Load the Python classes and functions to blender.
+    """
     from bpy.utils import register_class
 
     for cls in bl_classes:
@@ -212,6 +273,9 @@ def register():
 
 
 def unregister():
+    """!
+    Unload the Python classes and functions from blender.
+    """
     from bpy.utils import unregister_class
 
     for cls in reversed(bl_classes):

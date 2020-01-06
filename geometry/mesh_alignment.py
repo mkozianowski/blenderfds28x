@@ -1,4 +1,6 @@
-"""BlenderFDS, mesh alignment experiments."""
+"""!
+BlenderFDS, mesh alignment experiments.
+"""
 
 # Before:
 #  |  |  |  |  | n0, cs0
@@ -14,8 +16,13 @@
 
 
 def get_multiple_cell_size(ref_size, orig_size):
-    """Get cell size that is exact multiple of ref_size,
-    and as close as possible to orig_size. """
+    """!
+    Get cell size that is exact multiple of ref_size,
+    and as close as possible to orig_size.
+    @param ref_size: reference size.
+    @param orig_size: origin cell size.
+    @return the new cell size
+    """
     if orig_size < ref_size:
         return ref_size / round(ref_size / orig_size)
     else:
@@ -23,17 +30,33 @@ def get_multiple_cell_size(ref_size, orig_size):
 
 
 def is_close(c0, c1, ref_size):
-    """If orig_coo is close enough to ref_coo return True."""
+    """!
+    If orig_coo is close enough to ref_coo return True.
+    @param c0: origin coordinate.
+    @param c1: reference coordinate.
+    @param ref_size: reference size.
+    @return True if distance between c0 and c1 is less than ref_size. False otherwise.
+    """
     return abs(c1 - c0) <= ref_size
 
 
 def is_overlapping(interval0, interval1):
-    """Return True if intervals are overlapping."""
+    """!
+    Return True if intervals are overlapping.
+    @param interval0: first interval.
+    @param interval1: second interval.
+    @return True if interval0 overlaps interval1. False otherwise.
+    """
     return max(interval0) > min(interval1) and min(interval0) < max(interval1)
 
 
 def get_cs(xb, ijk):
-    """Return MESH cell size."""
+    """!
+    Return MESH cell size.
+    @param xb: ???
+    @param ijk: unit vectors.
+    @return the mesh cell size.
+    """
     return (
         abs(xb[0] - xb[1]) / ijk[0],
         abs(xb[2] - xb[3]) / ijk[1],

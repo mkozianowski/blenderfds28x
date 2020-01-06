@@ -1,4 +1,6 @@
-"""BlenderFDS, algorithms for triangulated surfaces."""
+"""!
+BlenderFDS, algorithms for triangulated surfaces.
+"""
 
 from time import time
 from math import floor, ceil
@@ -13,10 +15,16 @@ log = logging.getLogger(__name__)
 # Get triangulated surface
 
 
-def get_trisurface(
-    context, ob, scale_length, check=True, terrain=False
-) -> "mas, verts, faces":
-    """Get triangulated surface from object in xbs format."""
+def get_trisurface(context, ob, scale_length, check=True, terrain=False) -> "mas, verts, faces":
+    """!
+    Get triangulated surface from object in xbs format.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @param check: True to check the bmesh sanity.
+    @param terrain: ???
+    @return the materials, verts and faces lists.
+    """
     log.debug(ob.name)
     mas = _get_materials(context, ob)
     bm = utils.get_object_bmesh(
@@ -40,7 +48,12 @@ def get_trisurface(
 
 
 def _get_materials(context, ob):
-    """Get referenced ob materials from slots."""
+    """!
+    Get referenced ob materials from slots.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @return the materials list.
+    """
     mas, material_slots = list(), ob.material_slots
     if len(material_slots) == 0:
         raise BFException(ob, "No referenced SURF, add at least one Material")
@@ -60,8 +73,12 @@ def _get_materials(context, ob):
 
 
 def check_geom_sanity(context, ob, protect):
-    """Check that Object is a closed orientable manifold,
-    with no degenerate geometry."""
+    """!
+    Check that Object is a closed orientable manifold, with no degenerate geometry.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param protect: ???
+    """
     bm = utils.get_object_bmesh(
         context=context, ob=ob, world=False, triangulate=True, lookup=True
     )
@@ -70,7 +87,13 @@ def check_geom_sanity(context, ob, protect):
 
 
 def _check_bm_sanity(context, ob, bm, protect):
-    """Check that bmesh is a closed orientable manifold, with no degenerate geometry."""
+    """!
+    Check that bmesh is a closed orientable manifold, with no degenerate geometry.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param bm: the object's bmesh.
+    @param protect: ???
+    """
     epsilon_len = context.scene.bf_config_min_edge_length
     epsilon_area = context.scene.bf_config_min_face_area
     _check_bm_manifold_verts(context, ob, bm, epsilon_len, epsilon_area, protect)
@@ -83,7 +106,15 @@ def _check_bm_sanity(context, ob, bm, protect):
 
 
 def _check_bm_manifold_verts(context, ob, bm, epsilon_len, epsilon_area, protect):
-    """Check manifold vertices."""
+    """!
+    Check manifold vertices.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param bm: the object's bmesh.
+    @param epsilon_len: ???
+    @param epsilon_area: ???
+    @param protect: ???
+    """
     bad_verts = list()
     for vert in bm.verts:
         if not vert.is_manifold:
@@ -94,7 +125,15 @@ def _check_bm_manifold_verts(context, ob, bm, epsilon_len, epsilon_area, protect
 
 
 def _check_bm_manifold_edges(context, ob, bm, epsilon_len, epsilon_area, protect):
-    """Check manifold edges, each edge should join two faces, no more no less."""
+    """!
+    Check manifold edges, each edge should join two faces, no more no less.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param bm: the object's bmesh.
+    @param epsilon_len: ???
+    @param epsilon_area: ???
+    @param protect: ???
+    """
     bad_edges = list()
     for edge in bm.edges:
         if not edge.is_manifold:
@@ -105,7 +144,15 @@ def _check_bm_manifold_edges(context, ob, bm, epsilon_len, epsilon_area, protect
 
 
 def _check_bm_normals(context, ob, bm, epsilon_len, epsilon_area, protect):
-    """Check normals, adjoining faces should have normals in the same directions."""
+    """!
+    Check normals, adjoining faces should have normals in the same directions.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param bm: the object's bmesh.
+    @param epsilon_len: ???
+    @param epsilon_area: ???
+    @param protect: ???
+    """
     bad_edges = list()
     for edge in bm.edges:
         if not edge.is_contiguous:
@@ -118,7 +165,15 @@ def _check_bm_normals(context, ob, bm, epsilon_len, epsilon_area, protect):
 
 
 def _check_bm_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area, protect):
-    """Check no degenerate edges, zero lenght edges."""
+    """!
+    Check no degenerate edges, zero lenght edges.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param bm: the object's bmesh.
+    @param epsilon_len: ???
+    @param epsilon_area: ???
+    @param protect: ???
+    """
     bad_edges = list()
     for edge in bm.edges:
         if edge.calc_length() <= epsilon_len:
@@ -128,10 +183,16 @@ def _check_bm_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area, prote
         _raise_bad_geometry(context, ob, bm, msg, protect, bad_edges=bad_edges)
 
 
-def _check_bm_degenerate_faces(
-    context, ob, bm, epsilon_len, epsilon_area, protect=True
-):
-    """Check degenerate faces, zero area faces."""
+def _check_bm_degenerate_faces(context, ob, bm, epsilon_len, epsilon_area, protect=True):
+    """!
+    Check degenerate faces, zero area faces.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param bm: the object's bmesh.
+    @param epsilon_len: ???
+    @param epsilon_area: ???
+    @param protect: ???
+    """
     bad_faces = list()
     for face in bm.faces:
         if face.calc_area() <= epsilon_area:
@@ -142,7 +203,15 @@ def _check_bm_degenerate_faces(
 
 
 def _check_bm_loose_vertices(context, ob, bm, epsilon_len, epsilon_area, protect):
-    """Check loose vertices, vertices that have no connectivity."""
+    """!
+    Check loose vertices, vertices that have no connectivity.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param bm: the object's bmesh.
+    @param epsilon_len: ???
+    @param epsilon_area: ???
+    @param protect: ???
+    """
     bad_verts = list()
     for vert in bm.verts:
         if not bool(vert.link_edges):
@@ -153,7 +222,15 @@ def _check_bm_loose_vertices(context, ob, bm, epsilon_len, epsilon_area, protect
 
 
 def _check_bm_duplicate_vertices(context, ob, bm, epsilon_len, epsilon_area, protect):
-    """Check duplicate vertices."""
+    """!
+    Check duplicate vertices.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param bm: the object's bmesh.
+    @param epsilon_len: ???
+    @param epsilon_area: ???
+    @param protect: ???
+    """
     bad_verts = list()
     size = len(bm.verts)
     kd = mathutils.kdtree.KDTree(size)  # create a kd-tree from a mesh
@@ -176,7 +253,13 @@ def _check_bm_duplicate_vertices(context, ob, bm, epsilon_len, epsilon_area, pro
 
 
 def check_intersections(context, ob, other_obs=None, protect=True):
-    """Check ob self-intersection and intersection with other_obs."""
+    """!
+    Check ob self-intersection and intersection with other_obs.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param other_obs: the list of objects to evaluate the intersection with ob.
+    @param protect: ???
+    """
     log.debug(f"Check intersections in Object <{ob.name}>")
     if context.object:
         bpy.ops.object.mode_set(mode="OBJECT")
@@ -204,7 +287,12 @@ def check_intersections(context, ob, other_obs=None, protect=True):
 
 
 def _get_bm_intersected_faces(bm, tree, other_tree):
-    """Get intersected faces between trees."""
+    """!
+    Get intersected faces between trees.
+    @param bm: the object's bmesh.
+    @param tree: ???
+    @param other_tree: ???
+    """
     overlap = tree.overlap(other_tree)
     if overlap:
         ifaces = {i_pair[0] for i_pair in overlap}
@@ -215,10 +303,18 @@ def _get_bm_intersected_faces(bm, tree, other_tree):
 # Raise bad geometry
 
 
-def _raise_bad_geometry(
-    context, ob, bm, msg, protect, bad_verts=None, bad_edges=None, bad_faces=None
-):
-    """Select bad elements, show them, raise BFException."""
+def _raise_bad_geometry(context, ob, bm, msg, protect, bad_verts=None, bad_edges=None, bad_faces=None):
+    """!
+    Select bad elements, show them, raise BFException.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param bm: the object's bmesh.
+    @param msg: the BFException message.
+    @param protect: if True raise BFException without context modifications.
+    @param bad_verts: ???
+    @param bad_edges: ???
+    @param bad_faces: ???
+    """
     if protect:
         raise BFException(ob, msg)
     # Deselect all in bmesh

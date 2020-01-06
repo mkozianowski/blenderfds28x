@@ -161,7 +161,7 @@ class BFParam:
     def set_value(self, context, value=None):
         """!
         Set value. If value is None, set defaul.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param value: value to set.
         """
         if value is None:
@@ -194,7 +194,7 @@ class BFParam:
     def set_exported(self, context, value=None):
         """!
         Set if self is exported. If value is None, set defaul
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param value: value to set.
         """
         if self.bpy_export:
@@ -206,22 +206,23 @@ class BFParam:
     def check(self, context):
         """
         !Check self validity.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         """
         pass
 
     def draw_operators(self, context, layout):
-        """!Draw operators on layout.
-        @param context: data in the current active view.
-        @param layout: ???
+        """!
+        Draw operators on layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
         """
         pass
 
     def draw(self, context, layout) -> "layout":
         """!
         Draw self UI on layout.
-        @param context: data in the current active view.
-        @param layout: ???
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
         @return layout column.
         """
         if not self.bpy_idname:
@@ -247,7 +248,7 @@ class BFParam:
     def to_fds_param(self, context) -> "None, FDSParam, or ((FDSParam, ...), ...)":
         """!
         Return the FDSParam Python representation.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return FDSParam representation of the context.
         """
         # Get if exported and check
@@ -270,7 +271,7 @@ class BFParam:
     def to_fds(self, context) -> "None or str":
         """!
         Return the FDS str representation.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return string representation.
         """
         fds_param = self.to_fds_param(context)
@@ -279,7 +280,7 @@ class BFParam:
     def from_fds(self, context, value):
         """!
         Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param value: the value to set.
         """
         log.debug(f"{self} {value}")
@@ -328,7 +329,7 @@ class BFParamStr(BFParam):
     def check(self, context):
         """!
         Checking the value validity.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         """
         value = self.value
         if "&" in value or "/" in value or "#" in value:
@@ -360,8 +361,9 @@ class BFParamFYI(BFParamStr):
     def draw(self, context, layout):
         """!
         ???
-        @param context: data in the current active view.
-        @param layout: ???
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
+        @return layout column.
         """
         col = layout.column()
         try:
@@ -403,7 +405,7 @@ class BFParamOther(BFParam):
     @classmethod
     def unregister(cls):
         """!
-        Register related Blender properties.
+        Unregister related Blender properties.
         @param cls: class to be unregistered.
         """
         custom_uilist.unregister_collection(
@@ -422,7 +424,7 @@ class BFParamOther(BFParam):
     def set_value(self, context, value):
         """!
         Set value.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param value: value to set.
         """
         collection = getattr(self.element, self.bpy_idname)
@@ -435,8 +437,8 @@ class BFParamOther(BFParam):
     def draw(self, context, layout):
         """!
         Draw self UI on layout.
-        @param context: data in the current active view.
-        @param layout: ???
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
         """
         custom_uilist.draw_collection(
             element=self.element,
@@ -451,7 +453,7 @@ class BFParamOther(BFParam):
     def to_fds_param(self, context):
         """!
         Return the FDSParam Python representation.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return FDSParam representation of the context.
         """
         self.check(context)
@@ -554,8 +556,8 @@ class BFNamelist(BFParam):
     def draw(self, context, layout) -> "layout":
         """!
         Draw self UI on layout.
-        @param context: data in the current active view.
-        @param layout: ???
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
         @return layout column.
         """
         # Check and active
@@ -583,7 +585,7 @@ class BFNamelist(BFParam):
     def to_fds_namelist(self, context) -> "None or FDSNamelist":
         """!
         Return the FDSNamelist Python representation.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return FDSNamelist.
         """
         # Get if exported and check
@@ -600,7 +602,7 @@ class BFNamelist(BFParam):
     def to_fds(self, context) -> "None or str":
         """!
         Return the FDS str representation.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return string representation.
         """
         fds_namelist = self.to_fds_namelist(context)
@@ -609,7 +611,7 @@ class BFNamelist(BFParam):
     def from_fds(self, context, fds_params):
         """!
         Set namelist parameter values from list of FDSParam, on error raise BFException.
-        @param context: data in the current active view.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param fds_params: fds parameter to set.
         """
         for p in fds_params:

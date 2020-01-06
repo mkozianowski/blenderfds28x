@@ -1,3 +1,7 @@
+"""!
+???
+"""
+
 # BlenderFDS, an open tool for the NIST Fire Dynamics Simulator
 # Copyright (C) 2013  Emanuele Gissi, http://www.blenderfds.org
 #
@@ -27,7 +31,11 @@ bf_classes = list()
 
 
 def subscribe(cls):
-    """Subscribe class to related collection."""
+    """!
+    Subscribe class to related collection.
+    @param cls: the class to subscribe.
+    @return the class subscribed.
+    """
     if issubclass(cls, bpy_struct):
         bl_classes.append(cls)
     else:
@@ -39,6 +47,10 @@ def subscribe(cls):
 
 
 class SCENE_PT_bf_namelist:
+    """!
+    ???
+    """
+
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_label = "FDS Panel"
@@ -49,9 +61,18 @@ class SCENE_PT_bf_namelist:
 
     @classmethod
     def poll(cls, context):
+        """!
+        If this method returns a non-null output, then the panel can be drawn
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return current scene
+        """
         return context.scene
 
     def draw_header(self, context):
+        """!
+        Draw UI elements into the panel’s header UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         sc = context.scene
         # Manage Scene
         bf_namelist = lang.bf_namelists_by_cls[self.bf_namelist_cls]
@@ -63,6 +84,10 @@ class SCENE_PT_bf_namelist:
             self.bl_label = bf_namelist.label
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         sc = context.scene
         layout = self.layout
         layout.use_property_split = True
@@ -74,9 +99,17 @@ class SCENE_PT_bf_namelist:
 
 @subscribe
 class SCENE_PT_bf_case_config(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_config"
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         row = self.layout.row(align=True)
         row.operator("scene.bf_show_fds_code", text="FDS Code", icon="HIDE_OFF")
         row.operator("scene.bf_props_to_scene", text="Copy To", icon="COPYDOWN")
@@ -85,6 +118,10 @@ class SCENE_PT_bf_case_config(Panel, SCENE_PT_bf_namelist):
 
 @subscribe
 class SCENE_PT_bf_config_geoloc(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_config_geoloc"
     bl_parent_id = "SCENE_PT_bf_case_config"
     bl_options = {"DEFAULT_CLOSED"}
@@ -92,6 +129,10 @@ class SCENE_PT_bf_config_geoloc(Panel, SCENE_PT_bf_namelist):
 
 @subscribe
 class SCENE_PT_bf_config_sizes(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_config_sizes"
     bl_parent_id = "SCENE_PT_bf_case_config"
     bl_options = {"DEFAULT_CLOSED"}
@@ -99,6 +140,10 @@ class SCENE_PT_bf_config_sizes(Panel, SCENE_PT_bf_namelist):
 
 @subscribe
 class SCENE_PT_bf_config_units(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_config_units"
     bl_parent_id = "SCENE_PT_bf_case_config"
     bl_options = {"DEFAULT_CLOSED"}
@@ -106,47 +151,79 @@ class SCENE_PT_bf_config_units(Panel, SCENE_PT_bf_namelist):
 
 @subscribe
 class SCENE_PT_bf_namelist_HEAD(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_HEAD"
 
 
 @subscribe
 class SCENE_PT_bf_namelist_TIME(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_TIME"
     bl_options = {"DEFAULT_CLOSED"}
 
 
 @subscribe
 class SCENE_PT_bf_namelist_MISC(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_MISC"
     bl_options = {"DEFAULT_CLOSED"}
 
 
 @subscribe
 class SCENE_PT_bf_namelist_REAC(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_REAC"
     bl_options = {"DEFAULT_CLOSED"}
 
 
 @subscribe
 class SCENE_PT_bf_namelist_RADI(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_RADI"
     bl_options = {"DEFAULT_CLOSED"}
 
 
 @subscribe
 class SCENE_PT_bf_namelist_DUMP(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_DUMP"
     bl_options = {"DEFAULT_CLOSED"}
 
 
 @subscribe
 class SCENE_PT_bf_namelist_CATF(Panel, SCENE_PT_bf_namelist):
+    """!
+    ???
+    """
+
     bf_namelist_cls = "SN_CATF"
     bl_options = {"DEFAULT_CLOSED"}
 
 
 @subscribe
 class OBJECT_PT_bf_namelist(Panel):
+    """!
+    ???
+    """
+
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"
@@ -154,10 +231,19 @@ class OBJECT_PT_bf_namelist(Panel):
 
     @classmethod
     def poll(cls, context):
+        """!
+        If this method returns a non-null output, then the panel can be drawn
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return current object
+        """
         ob = context.object
         return ob and ob.type == "MESH"
 
     def draw_header(self, context):
+        """!
+        Draw UI elements into the panel’s header UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         ob = context.object
         # Manage tmp Object
         if ob.bf_is_tmp:
@@ -169,6 +255,10 @@ class OBJECT_PT_bf_namelist(Panel):
         self.layout.prop(ob, "hide_render", emboss=False, icon_only=True)
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         ob = context.object
         layout = self.layout
         layout.use_property_split = True
@@ -196,6 +286,10 @@ class OBJECT_PT_bf_namelist(Panel):
 
 @subscribe
 class MATERIAL_PT_bf_namelist(Panel):
+    """!
+    ???
+    """
+
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "material"
@@ -203,10 +297,19 @@ class MATERIAL_PT_bf_namelist(Panel):
 
     @classmethod
     def poll(cls, context):
+        """!
+        If this method returns a non-null output, then the panel can be drawn
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return current object
+        """
         ob = context.object
         return ob and ob.active_material
 
     def draw_header(self, context):
+        """!
+        Draw UI elements into the panel’s header UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         ma = context.object.active_material
         # Manage default Material
         if ma.name in config.default_mas:
@@ -218,6 +321,10 @@ class MATERIAL_PT_bf_namelist(Panel):
         self.layout.prop(ma, "bf_surf_export", icon_only=True)
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         ma = context.object.active_material
         layout = self.layout
         layout.use_property_split = True
@@ -239,7 +346,12 @@ class MATERIAL_PT_bf_namelist(Panel):
 # Toolbar panels
 
 
-class BF_GEOM_Toolbar:  # FIXME here or in the property panel?
+class BF_GEOM_Toolbar:
+    """!
+    ???
+    """
+    # FIXME here or in the property panel?
+
     bl_category = "FDS"
     bl_label = "GEOM Tools"
     bl_space_type = "VIEW_3D"
@@ -247,10 +359,19 @@ class BF_GEOM_Toolbar:  # FIXME here or in the property panel?
 
     @classmethod
     def poll(cls, context):
+        """!
+        If this method returns a non-null output, then the panel can be drawn
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return current object
+        """
         ob = context.object
         return ob and ob.type == "MESH" and ob.bf_namelist_cls == "ON_GEOM"
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
@@ -263,20 +384,31 @@ class BF_GEOM_Toolbar:  # FIXME here or in the property panel?
 
 @subscribe
 class VIEW3D_PT_BF_GEOM_Object(Panel, BF_GEOM_Toolbar):
+    """!
+    ???
+    """
+
     bl_idname = "VIEW3D_PT_bf_geom_object"
     bl_context = "objectmode"
 
 
 @subscribe
 class VIEW3D_PT_BF_GEOM_Mesh(Panel, BF_GEOM_Toolbar):
+    """!
+    ???
+    """
+
     bl_idname = "VIEW3D_PT_bf_geom_mesh"
     bl_context = "mesh_edit"
 
 
 @subscribe
-class VIEW3D_PT_BF_Fix_Toolbar_Object(
-    Panel
-):  # See: properties_data_mesh.py, class DATA_PT_remesh
+class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
+    """!
+    ???
+    """
+    # See: properties_data_mesh.py, class DATA_PT_remesh
+
     bl_idname = "VIEW3D_PT_bf_fix_toolbar_object"
     bl_context = "objectmode"
 
@@ -288,10 +420,19 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(
 
     @classmethod
     def poll(cls, context):
+        """!
+        If this method returns a non-null output, then the panel can be drawn
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return current object
+        """
         ob = context.active_object
         return ob and ob.type == "MESH"
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -317,6 +458,10 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(
 
 @subscribe
 class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
+    """!
+    ???
+    """
+
     bl_idname = "VIEW3D_PT_bf_fix_toolbar_mesh"
     bl_context = "mesh_edit"
 
@@ -328,10 +473,19 @@ class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
 
     @classmethod
     def poll(cls, context):
+        """!
+        If this method returns a non-null output, then the panel can be drawn
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return current object
+        """
         ob = context.active_object
         return ob and ob.type == "MESH"
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
@@ -348,6 +502,10 @@ class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
 
 
 class BF_Geoloc_Toolbar:
+    """!
+    ???
+    """
+
     bl_category = "FDS"
     bl_label = "Geolocation"
     bl_space_type = "VIEW_3D"
@@ -355,6 +513,10 @@ class BF_Geoloc_Toolbar:
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         cursor = context.scene.cursor
         ob = context.active_object
         layout = self.layout
@@ -374,12 +536,18 @@ class BF_Geoloc_Toolbar:
 
 @subscribe
 class VIEW3D_PT_BF_Geoloc_Toolbar_Object(Panel, BF_Geoloc_Toolbar):
+    """!
+    ???
+    """
     bl_idname = "VIEW3D_PT_bf_geoloc_toolbar_object"
     bl_context = "objectmode"
 
 
 @subscribe
 class VIEW3D_PT_BF_Geoloc_Toolbar_Mesh(Panel, BF_Geoloc_Toolbar):
+    """!
+    ???
+    """
     bl_idname = "VIEW3D_PT_bf_geoloc_toolbar_mesh"
     bl_context = "mesh_edit"
 
@@ -388,10 +556,16 @@ class VIEW3D_PT_BF_Geoloc_Toolbar_Mesh(Panel, BF_Geoloc_Toolbar):
 
 
 def register():
+    """!
+    Load the Python classes and functions to blender.
+    """
     for cls in bl_classes:
         bpy.utils.register_class(cls)
 
 
 def unregister():
+    """!
+    Unload the Python classes and functions from blender.
+    """
     for cls in bl_classes:
         bpy.utils.unregister_class(cls)
