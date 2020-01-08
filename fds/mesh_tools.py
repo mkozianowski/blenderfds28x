@@ -11,6 +11,9 @@
 #  |      | mcs  |      | mi  other mesh
 # ---> axis
 
+# Either protect rl or rcs.
+# Instead ml and mcs are changed for alignment.
+
 # After:
 #  |   |   |   |   |
 #  ·---·---·---·---·-------·
@@ -77,15 +80,15 @@ def _align_along_axis(ri, rx0, rx1, mi, mx0, mx1, poisson=False, protect_rl=Fals
     # Calc new coarse cell size from ref cell size
     mcs = rcs * n
     # Calc new coarse cell count,
-    # trying to keep ml as close as possible to original
+    # trying to keep ml as close as possible to the original
     mi = round(ml / mcs)
     if poisson:
         mi = _n_for_poisson(mi)
-    # Align coarse mesh positions to ref mesh
+    # Align coarse mesh positions to the ref mesh
     mx0 = rx0 + round((mx0 - rx0) / mcs) * mcs
     ml = mcs * mi  # extend other mesh due to updated mi
     mx1 = mx0 + ml
-    print("n:", n, "rcs:", rcs, "mcs:", mcs)
+    print("n:", n, "rcs:", rcs, "mcs:", mcs)  # FIXME
     return ri, rx0, rx1, mi, mx0, mx1
 
 
@@ -112,7 +115,7 @@ def _align_along_y(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
         mi=mijk[1],
         mx0=mxbs[2],
         mx1=mxbs[3],
-        poisson=poisson,
+        poisson=poisson,  # needed along y
         protect_rl=protect_rl,
     )
 
@@ -126,7 +129,7 @@ def _align_along_z(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
         mi=mijk[2],
         mx0=mxbs[4],
         mx1=mxbs[5],
-        poisson=poisson,
+        poisson=poisson,  # needed along z
         protect_rl=protect_rl,
     )
 
@@ -140,10 +143,10 @@ def _align_along_z(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
 def _is_far(rxbs, mxbs, deltas):
     return (
         rxbs[0] - mxbs[1] > deltas[0]
-        or mxbs[0] - rxbs[1] > deltas[0]
-        or rxbs[2] - mxbs[3] > deltas[1]  # x
-        or mxbs[2] - rxbs[3] > deltas[1]
-        or rxbs[4] - mxbs[5] > deltas[2]  # y
+        or mxbs[0] - rxbs[1] > deltas[0]  # x
+        or rxbs[2] - mxbs[3] > deltas[1]
+        or mxbs[2] - rxbs[3] > deltas[1]  # y
+        or rxbs[4] - mxbs[5] > deltas[2]
         or mxbs[4] - rxbs[5] > deltas[2]  # z
     )
 
@@ -157,7 +160,7 @@ def align_meshes(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
     )
     # Are meshes far apart?
     if _is_far(rxbs=rxbs, mxbs=mxbs, deltas=deltas):
-        print("Meshes are far apart, no modification")
+        print("Meshes are far apart, no modification")  # FIXME
         return rijk, rxbs, mijk, mxbs
     # If mesh sides are close, then snap them
     # otherwise align their meshes
@@ -188,7 +191,7 @@ def align_meshes(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
     else:
         print("Aligning z")
         _align_along_z(rijk, rxbs, mijk, mxbs, poisson, protect_rl)
-    print("ref:", rijk, rxbs)
+    print("ref:", rijk, rxbs)  # FIXME
     print("oth:", mijk, mxbs)
     return rijk, rxbs, mijk, mxbs
 
@@ -251,4 +254,5 @@ def test():
     )
 
 
-test()
+if __name__ == "__main__":
+    test()
