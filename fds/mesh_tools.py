@@ -209,6 +209,7 @@ def calc_cell_sizes(ijk, xbs):
 
 def calc_ijk(xbs, desired_cs, poisson):
     """Calc MESH IJK from cell sizes."""
+    print(xbs, desired_cs, poisson)  # FIXME
     ijk = (
         round((xbs[1] - xbs[0]) / desired_cs[0]) or 1,
         round((xbs[3] - xbs[2]) / desired_cs[1]) or 1,
