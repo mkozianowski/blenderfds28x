@@ -57,8 +57,7 @@ from .types import (
     FDSCase,
 )
 from .config import default_mas
-from . import gis
-from . import utils
+from . import gis, utils, fds
 
 log = logging.getLogger(__name__)
 
@@ -2158,8 +2157,21 @@ class OP_MESH_IJK(BFParam):
     bpy_prop = IntVectorProperty
     bpy_default = (10, 10, 10)
     bpy_other = {"size": 3, "min": 1}
-    # bpy_export = "bf_mesh_ijk_export"
-    # bpy_export_default = True
+    bpy_export = "bf_mesh_ijk_export"
+    bpy_export_default = True
+
+    def to_fds_param(self, context):
+        ob = self.element
+        if not ob.bf_mesh_ijk_export:
+            return
+        xbs = geometry.utils.get_bbox_xbs(
+            context=context, ob=ob, scale_length=context.scene.unit_settings.scale_length
+        )
+        has_good_ijk, cs, cell_count, cell_aspect_ratio = fds.mesh_tools.calc_cell_infos(
+            ijk=ob.bf_mesh_ijk, xbs=xbs
+        )
+        msg = f"Cell Sizes: {cs[0]:.3f} m, {cs[1]:.3f} m, {cs[2]:.3f} m | Count: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
+        return FDSParam(label="IJK", values=ob.bf_mesh_ijk, msg=msg)
 
 
 @subscribe
