@@ -32,6 +32,7 @@ from bpy.props import (
     FloatProperty,
     IntProperty,
     IntVectorProperty,
+    FloatVectorProperty,
     StringProperty,
     PointerProperty,
     EnumProperty,
@@ -40,7 +41,7 @@ from bpy.props import (
 
 from ..types import BFException, FDSCase
 from .. import config
-from .. import geometry
+from .. import geometry, gis, utils, fds
 from ..lang import OP_XB, OP_XYZ, OP_PB
 from .. import gis, utils
 
@@ -189,7 +190,7 @@ class _show_fds_code:
 
 @subscribe
 class OBJECT_OT_bf_show_fds_code(_show_fds_code, Operator):
-    bl_label = "Show FDS Code From Current Object"
+    bl_label = "Show FDS Code"
     bl_idname = "object.bf_show_fds_code"
     bl_description = "Show FDS code exported from current Object"
 
@@ -203,7 +204,7 @@ class OBJECT_OT_bf_show_fds_code(_show_fds_code, Operator):
 
 @subscribe
 class MATERIAL_OT_bf_show_fds_code(_show_fds_code, Operator):
-    bl_label = "Show FDS Code From Current Material"
+    bl_label = "Show FDS Code"
     bl_idname = "material.bf_show_fds_code"
     bl_description = "Show FDS code exported from current Material"
 
@@ -217,7 +218,7 @@ class MATERIAL_OT_bf_show_fds_code(_show_fds_code, Operator):
 
 @subscribe
 class SCENE_OT_bf_show_fds_code(_show_fds_code, Operator):
-    bl_label = "Show FDS Code From Current Scene"
+    bl_label = "Show FDS Code"
     bl_idname = "scene.bf_show_fds_code"
     bl_description = "Show FDS code exported from Scene"
 
@@ -376,7 +377,7 @@ class OBJECT_OT_bf_hide_fds_geometry(Operator):
 
 @subscribe
 class SCENE_OT_bf_show_text(Operator):
-    bl_label = "Show"
+    bl_label = "Show Free Text"
     bl_idname = "scene.bf_show_text"
     bl_description = "Show free text in the editor"
 
@@ -522,7 +523,7 @@ class SCENE_OT_bf_copy_props_to_scene(Operator):
 
 @subscribe
 class OBJECT_OT_bf_copy_FDS_properties_to_sel_obs(Operator):
-    bl_label = "Copy To Selected Objects"
+    bl_label = "Copy To Selected"
     bl_idname = "object.bf_props_to_sel_obs"
     bl_description = "Copy current object FDS parameters to selected Objects"
     bl_options = {"REGISTER", "UNDO"}
@@ -558,7 +559,7 @@ class OBJECT_OT_bf_copy_FDS_properties_to_sel_obs(Operator):
 
 @subscribe
 class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
-    bl_label = "Assign To Selected Objects"
+    bl_label = "Assign To Selected"
     bl_idname = "material.bf_surf_to_sel_obs"
     bl_description = "Assign current boundary condition to selected Objects"
     bl_options = {"REGISTER", "UNDO"}
@@ -704,10 +705,69 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
         self.layout.prop(self, "bf_devc_prop_id", text="")
 
 
-# FIXME Align MESHes
+# MESH Tools
+
+# FIXME FIXME FIXME
+@subscribe
+class OBJECT_OT_bf_set_mesh_cell_size(Operator):
+    bl_label = "Set Cell Size"
+    bl_idname = "object.bf_set_mesh_cell_size"
+    bl_description = "Set current MESH cell size"
+    bl_options = {"REGISTER", "UNDO"}
+
+    bf_cell_sizes: FloatVectorProperty(
+        name="Desired Cell Sizes [m]",
+        description="Desired MESH cell sizes",
+        default=(0.3, 0.3, 0.3),
+        min=0.001,
+        precision=3,
+        size=3,
+    )
+    bf_poisson_restriction: BoolProperty(
+        name="Poisson Restriction",
+        description="Respect FDS Poisson solver restriction on IJK values while setting desired cell sizes.\nCell sizes may be set smaller than requested.",
+        default=True,
+    )
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        return ob and ob.bf_namelist_cls == "ON_MESH"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "bf_cell_sizes")
+        layout.prop(self, "bf_poisson_restriction")
+
+    def execute(self, context):
+        ob = context.active_object
+        ob.bf_xb, ob.bf_xb_export = "BBOX", True  # FIXME should be impossible to change
+        scale_length = context.scene.unit_settings.scale_length
+        xbs = geometry.utils.get_bbox_xbs(
+            context=context, ob=ob, scale_length=scale_length
+        )
+        ob.bf_mesh_ijk = fds.mesh_tools.calc_ijk(
+            xbs=xbs, desired_cs=self.bf_cell_sizes, poisson=self.bf_poisson_restriction
+        )
+        self.report({"INFO"}, "MESH cell size set")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        ob = context.active_object
+        scale_length = context.scene.unit_settings.scale_length
+        # Set default
+        self.bf_cell_sizes = fds.mesh_tools.calc_cell_sizes(
+            ijk=ob.bf_mesh_ijk,
+            xbs=geometry.utils.get_bbox_xbs(
+                context=context, ob=ob, scale_length=scale_length
+            ),
+        )
+        # Call dialog
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
 
 
-
+# FIXME FIXME FIXME align meshes
 
 # GIS
 
