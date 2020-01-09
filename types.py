@@ -144,7 +144,7 @@ class BFParam:
         Unregister related Blender properties.
         @param cls: class to be unregistered.
         """
-        # if cls.bpy_prop and cls.bpy_idname:
+        # if cls.bpy_prop and cls.bpy_idname:  # FIXME
         #     delattr(cls.bpy_type, cls.bpy_idname)
         # if cls.bpy_export:
         #     delattr(cls.bpy_type, cls.bpy_export)
@@ -213,7 +213,7 @@ class BFParam:
     def draw_operators(self, context, layout):
         """!Draw operators on layout.
         @param context: data in the current active view.
-        @param layout: ???
+        @param layout: Blender panel layout
         """
         pass
 
@@ -221,8 +221,8 @@ class BFParam:
         """!
         Draw self UI on layout.
         @param context: data in the current active view.
-        @param layout: ???
-        @return layout column.
+        @param layout: Blender panel layout
+        @return Blender panel layout.
         """
         if not self.bpy_idname:
             return
@@ -239,7 +239,7 @@ class BFParam:
         self.draw_operators(context, row)
         if self.bpy_export:
             row.prop(self.element, self.bpy_export, text="")
-        # else:
+        # else:  # FIXME
         #     col.prop(self.element, self.bpy_idname, text=self.label)
         #     self.draw_operators(context, row)
         return col
@@ -270,7 +270,7 @@ class BFParam:
     def to_fds(self, context) -> "None or str":
         """!
         Return the FDS str representation.
-        @param context: data in the current active view.
+        @param context: Blender context.
         @return string representation.
         """
         fds_param = self.to_fds_param(context)
@@ -279,7 +279,7 @@ class BFParam:
     def from_fds(self, context, value):
         """!
         Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: data in the current active view.
+        @param context: Blender context.
         @param value: the value to set.
         """
         log.debug(f"{self} {value}")
@@ -328,12 +328,12 @@ class BFParamStr(BFParam):
     def check(self, context):
         """!
         Checking the value validity.
-        @param context: data in the current active view.
+        @param context: Blender context.
         """
         value = self.value
         if "&" in value or "/" in value or "#" in value:
             raise BFException(self, "<&>, </>, and <#> characters not allowed")
-        # if (
+        # if (  # FIXME
         #     "'" in value
         #     or '"' in value
         #     or "`" in value
@@ -359,9 +359,9 @@ class BFParamFYI(BFParamStr):
 
     def draw(self, context, layout):
         """!
-        ???
-        @param context: data in the current active view.
-        @param layout: ???
+        Draw parameter in Blender panel.
+        @param context: Blender context.
+        @param layout: Blender layout.
         """
         col = layout.column()
         try:
