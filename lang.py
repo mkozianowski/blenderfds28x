@@ -1390,7 +1390,6 @@ class OP_XB_export(BFParam):
     bpy_default = True
     bpy_other = {"update": update_bf_xb}
 
-
 @subscribe
 class OP_XB(BFParamXB):
     label = "XB"
@@ -1477,6 +1476,29 @@ class OP_XB(BFParamXB):
             self.element.bf_xb = bf_xb
             self.element.bf_xb_export = True
             self.set_exported(context, True)
+
+@subscribe
+class OP_XB_BBOX(OP_XB):
+    label = "XB as BBox"
+    description = "Export as object bounding box"
+    bpy_idname = None
+    bpy_prop = None
+
+    def to_fds_param(self, context):
+        ob = self.element
+        ob.bf_xb = "BBOX"
+        if not ob.bf_xb_export:
+            return
+        # Compute
+        scale_length = context.scene.unit_settings.scale_length
+        xbs, _ = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
+        return FDSParam(label="XB", values=xbs[0], precision=6)
+
+    def draw(self, context, layout):
+        ob = self.element
+        row = layout.row()
+        row.active = ob.bf_xb_export
+        row.prop(ob, "bf_xb_export", text="XB as BBox")
 
 
 def update_bf_xyz(ob, context):
@@ -2194,7 +2216,7 @@ class ON_MESH(BFNamelistOb):
     description = "Domain of simulation"
     enum_id = 1014
     fds_label = "MESH"
-    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB, OP_other
+    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB_BBOX, OP_other
     bf_other = {"appearance": "WIRE"}
 
 
