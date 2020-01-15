@@ -158,15 +158,10 @@ class OBJECT_PT_bf_namelist(Panel):
     @classmethod
     def poll(cls, context):
         ob = context.object
-        return ob and ob.type == "MESH"
+        return ob and ob.type == "MESH" and not ob.bf_is_tmp  # not tmp!
 
     def draw_header(self, context):
         ob = context.object
-        # Manage tmp Object
-        if ob.bf_is_tmp:
-            self.bl_label = "FDS Temporary Object"
-            return
-        # Manage Object
         bf_namelist = ob.bf_namelist
         self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
         self.layout.prop(ob, "hide_render", emboss=False, icon_only=True)
@@ -177,7 +172,6 @@ class OBJECT_PT_bf_namelist(Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False  # no animation
         flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
-        # Manage Object
         flow.prop(ob, "bf_namelist_cls")  # draw namelist choice
         ob.bf_namelist.draw(context, flow)  # draw namelist
 
@@ -196,7 +190,7 @@ class MATERIAL_PT_bf_namelist(Panel):
 
     def draw_header(self, context):
         ma = context.object.active_material
-        # Manage default Material
+        # Manage predefined Material
         if ma.name in config.default_mas:
             self.bl_label = f"FDS Predefined {ma.name}"
             return
@@ -211,7 +205,7 @@ class MATERIAL_PT_bf_namelist(Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
         flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
-        # Manage default Material
+        # Manage predefined Material
         if ma.name in config.default_mas:
             flow.prop(ma, "diffuse_color")
             return
@@ -231,6 +225,7 @@ class VIEW3D_PT_BF_Scene_Tools(Panel):
     bl_label = "Scene Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_options = {"DEFAULT_CLOSED"}
 
     @classmethod
     def poll(cls, context):
@@ -238,12 +233,6 @@ class VIEW3D_PT_BF_Scene_Tools(Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-        sc = context.scene
-        col = layout.column()
-        col.label(text=f"Active Scene: {sc.name}")  # FIXME
-        # Operators
         col = layout.column(align=True)
         col.operator("scene.bf_show_fds_code", icon="HIDE_OFF")
         col.operator("scene.bf_props_to_scene", icon="COPYDOWN")
@@ -260,37 +249,49 @@ class VIEW3D_PT_BF_Object_Tools(Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object
+        return context.object
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-        ob = context.active_object
-        col = layout.column()
-        col.label(text=f"Active Object: {ob.name}")
-        # Generic operators: geometry, code, copy
+        ob = context.object
         col = layout.column(align=True)
+        # Tmp object
         if ob.bf_is_tmp:
             col.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
             return
+        # Object
+        # Generic operators: geometry, code, copy
         if ob.bf_has_tmp:
             col.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
         else:
             col.operator("object.bf_show_fds_geometry", icon="HIDE_OFF")
         col.operator("object.bf_show_fds_code", icon="HIDE_OFF")
         col.operator("object.bf_props_to_sel_obs", icon="COPYDOWN")
+        # Geolocation
+        col = layout.column(align=True)
+        col.prop(ob, "location")
+        row = col.row(align=True)
+        row.operator("scene.bf_set_ob_geoloc").show = False
+        row.operator("scene.bf_set_ob_geoloc", text="", icon="URL").show = True
         # GEOM operators
         if ob.bf_namelist_cls == "ON_GEOM":
             col = layout.column(align=True)
-            me = ob.data
-            col.label(text=f"Verts: {len(me.vertices)} | Faces: {len(me.polygons)}")
-            col.prop(ob, "bf_geom_protect")
+            col.label(text="FDS GEOM:")
             col.operator("object.bf_geom_check_intersections")
             col.operator("object.bf_geom_check_sanity")
+            box = col.box().column(align=True)
+            box.prop(ob, "bf_geom_protect")
+            me = ob.data
+            material_slots = ob.material_slots
+            box.label(
+                text=f"SURF_ID: {len(material_slots)} | VERTS: {len(me.vertices)} | FACES: {len(me.polygons)}"
+            )
         # MESH operators
         if ob.bf_namelist_cls == "ON_MESH":
             col = layout.column(align=True)
+            col.label(text="FDS MESH:")
+            col.operator("object.bf_set_mesh_cell_size")
+            box = col.box().column(align=True)
             scale_length = context.scene.unit_settings.scale_length
             xbs = geometry.utils.get_bbox_xbs(
                 context=context, ob=ob, scale_length=scale_length
@@ -298,12 +299,10 @@ class VIEW3D_PT_BF_Object_Tools(Panel):
             has_good_ijk, cs, cell_count, cell_aspect_ratio = fds.mesh_tools.calc_cell_infos(
                 ijk=ob.bf_mesh_ijk, xbs=xbs
             )
-            col.label(text=f"Cell Sizes: {cs[0]:.3f} m, {cs[1]:.3f} m, {cs[2]:.3f} m")
-            col.label(
-                text=f"Count: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
+            box.label(text=f"Size: {cs[0]:.3f}m, {cs[1]:.3f}m, {cs[2]:.3f}m")
+            box.label(
+                text=f"Qty: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
             )
-            col = layout.column(align=True)
-            col.operator("object.bf_set_mesh_cell_size")
 
 
 @subscribe
@@ -313,21 +312,15 @@ class VIEW3D_PT_BF_Material_Tools(Panel):
     bl_label = "Material Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_options = {"DEFAULT_CLOSED"}
 
     @classmethod
     def poll(cls, context):
-        ob = context.active_object
+        ob = context.object
         return ob and ob.active_material
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-        ob = context.active_object
-        ma = ob.active_material
-        col = layout.column()
-        col.label(text=f"{ma.name}")
-        # Operators
         col = layout.column(align=True)
         col.operator("material.bf_show_fds_code", icon="HIDE_OFF")
         col.operator("material.bf_surf_to_sel_obs", icon="COPYDOWN")
@@ -338,9 +331,8 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
     # See: properties_data_mesh.py, class DATA_PT_remesh
     bl_idname = "VIEW3D_PT_bf_fix_toolbar_object"
     bl_context = "objectmode"
-
     bl_category = "FDS"
-    bl_label = "Remesh"
+    bl_label = "Object Remesh"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_options = {"DEFAULT_CLOSED"}
@@ -352,8 +344,6 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
         ob = context.active_object
         me = ob.data
         col = layout.column()
@@ -378,9 +368,8 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
 class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
     bl_idname = "VIEW3D_PT_bf_fix_toolbar_mesh"
     bl_context = "mesh_edit"
-
     bl_category = "FDS"
-    bl_label = "Clean Up"
+    bl_label = "Mesh Clean Up"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_options = {"DEFAULT_CLOSED"}
@@ -406,41 +395,23 @@ class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
         col.menu("VIEW3D_MT_edit_mesh_clean")
 
 
-class BF_Geoloc_Toolbar:
-    bl_category = "FDS"
-    bl_label = "Geolocation"
+@subscribe
+class VIEW3D_PT_BF_view3d_cursor(Panel):
+    # See: space_view3d.py, class VIEW3D_PT_view3d_cursor
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_category = "FDS"
+    bl_label = "3D Cursor"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        cursor = context.scene.cursor
-        ob = context.active_object
         layout = self.layout
+        cursor = context.scene.cursor
         col = layout.column(align=True)
-        col.prop(cursor, "location", text="Cursor Location")
-        row = col.row(align=True)
-        row.operator("scene.bf_set_cursor_geoloc").show = False
-        row.operator("scene.bf_set_cursor_geoloc", text="", icon="URL").show = True
-        if not ob:
-            return
-        col = layout.column(align=True)
-        col.prop(ob, "location", text="Object Location")
+        col.prop(cursor, "location", text="Location")
         row = col.row(align=True)
         row.operator("scene.bf_set_ob_geoloc").show = False
         row.operator("scene.bf_set_ob_geoloc", text="", icon="URL").show = True
-
-
-@subscribe
-class VIEW3D_PT_BF_Geoloc_Toolbar_Object(Panel, BF_Geoloc_Toolbar):
-    bl_idname = "VIEW3D_PT_bf_geoloc_toolbar_object"
-    bl_context = "objectmode"
-
-
-@subscribe
-class VIEW3D_PT_BF_Geoloc_Toolbar_Mesh(Panel, BF_Geoloc_Toolbar):
-    bl_idname = "VIEW3D_PT_bf_geoloc_toolbar_mesh"
-    bl_context = "mesh_edit"
 
 
 # Register
