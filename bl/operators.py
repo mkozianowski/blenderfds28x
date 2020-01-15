@@ -362,13 +362,13 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
 
 @subscribe
 class OBJECT_OT_bf_hide_fds_geometry(Operator):
-    bl_label = "Hide FDS Geometry"
+    bl_label = "Hide Tmp Geometry"
     bl_idname = "object.bf_hide_fds_geometry"
-    bl_description = "Hide geometry as exported to FDS"
+    bl_description = "Hide all temporary geometry"
 
     def execute(self, context):
         geometry.utils.rm_tmp_objects(context)
-        self.report({"INFO"}, "FDS geometry hidden")
+        self.report({"INFO"}, "Temporary geometry hidden")
         return {"FINISHED"}
 
 
@@ -651,6 +651,10 @@ class MATERIAL_OT_bf_choose_matl_id(Operator):
         items=_get_matl_items,  # Updating function
     )
 
+    @classmethod
+    def poll(cls, context):
+        return context.active_object and context.active_object.active_material
+
     def execute(self, context):
         ma = context.active_object.active_material
         ma.bf_matl_id = self.bf_matl_id
@@ -685,6 +689,10 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
         description="PROP_ID parameter",
         items=_get_prop_items,  # Updating function
     )
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object
 
     def execute(self, context):
         ob = context.active_object
@@ -736,7 +744,7 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(self, "bf_cell_sizes")
+        layout.prop(self, "bf_cell_sizes", text="")
         layout.prop(self, "bf_poisson_restriction")
 
     def execute(self, context):
@@ -892,6 +900,10 @@ class _bf_set_geoloc:
 class SCENE_OT_bf_set_cursor_geoloc(Operator, _bf_set_geoloc):
     bl_idname = "scene.bf_set_cursor_geoloc"
 
+    @classmethod
+    def poll(cls, context):
+        return context.scene.cursor
+
     def _get_loc(self, context):  # redefine
         return context.scene.cursor.location
 
@@ -902,6 +914,10 @@ class SCENE_OT_bf_set_cursor_geoloc(Operator, _bf_set_geoloc):
 @subscribe
 class SCENE_OT_bf_set_ob_geoloc(Operator, _bf_set_geoloc):
     bl_idname = "scene.bf_set_ob_geoloc"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object
 
     def _get_loc(self, context):  # redefine
         return context.active_object.location
