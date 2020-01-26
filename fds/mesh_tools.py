@@ -1,4 +1,6 @@
-"""BlenderFDS, mesh alignment."""
+"""!
+BlenderFDS, mesh alignment.
+"""
 
 # Mesh alignment:
 #
@@ -30,9 +32,11 @@
 
 
 def _factor(n):
-    """Generator for prime factors of n.
-Many thanks Dhananjay Nene (http://dhananjaynene.com/)
-for publishing this code"""
+    """!
+    Generator for prime factors of n.
+    Many thanks Dhananjay Nene (http://dhananjaynene.com/)
+    for publishing this code
+    """
     yield 1
     i = 2
     limit = n ** 0.5
@@ -48,7 +52,7 @@ for publishing this code"""
 
 
 def _n_for_poisson(n):
-    """Get a good number for poisson solver at least bigger than n."""
+    """!Get a good number for poisson solver at least bigger than n."""
     good = set((1, 2, 3, 5))
     while True:
         if [i for i in _factor(n) if i not in good]:
@@ -59,7 +63,7 @@ def _n_for_poisson(n):
 
 
 def _align_along_axis(ri, rx0, rx1, mi, mx0, mx1, poisson=False, protect_rl=False):
-    """Align coarse MESH to fixed ref MESH along an axis."""
+    """!Align coarse MESH to fixed ref MESH along an axis."""
     # Init
     assert rx0 < rx1 and mx0 < mx1  # coordinate order
     rl, ml = rx1 - rx0, mx1 - mx0  # lengths
@@ -93,7 +97,7 @@ def _align_along_axis(ri, rx0, rx1, mi, mx0, mx1, poisson=False, protect_rl=Fals
 
 
 def _align_along_x(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
-    """Align coarse MESH to fixed ref MESH along axis x."""
+    """!Align coarse MESH to fixed ref MESH along axis x."""
     rijk[0], rxbs[0], rxbs[1], mijk[0], mxbs[0], mxbs[1] = _align_along_axis(
         ri=rijk[0],
         rx0=rxbs[0],
@@ -107,7 +111,7 @@ def _align_along_x(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
 
 
 def _align_along_y(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
-    """Align coarse MESH to fixed ref MESH along axis y."""
+    """!Align coarse MESH to fixed ref MESH along axis y."""
     rijk[1], rxbs[2], rxbs[3], mijk[1], mxbs[2], mxbs[3] = _align_along_axis(
         ri=rijk[1],
         rx0=rxbs[2],
@@ -121,7 +125,7 @@ def _align_along_y(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
 
 
 def _align_along_z(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
-    """Align coarse MESH to fixed ref MESH along axis z."""
+    """!Align coarse MESH to fixed ref MESH along axis z."""
     rijk[2], rxbs[4], rxbs[5], mijk[2], mxbs[4], mxbs[5] = _align_along_axis(
         ri=rijk[2],
         rx0=rxbs[4],
@@ -152,6 +156,16 @@ def _is_far(rxbs, mxbs, deltas):
 
 
 def align_meshes(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
+    """!
+    ???
+    @param rijk: ???
+    @param rxbs: ???
+    @param mijk: ???
+    @param mxbs: ???
+    @param poisson: ???
+    @param protect_rl: ???
+    @return ???
+    """
     # Init
     deltas = (  # rcs
         abs(rxbs[0] - rxbs[1]) / rijk[0],
@@ -197,12 +211,21 @@ def align_meshes(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
 
 
 def calc_poisson_ijk(ijk):
-    """Get an IJK respecting the Poisson constraint, close to the current one"""
+    """!
+    Get an IJK respecting the Poisson constraint, close to the current one.
+    @param ijk: ???
+    @return ???
+    """
     return ijk[0], _n_for_poisson(ijk[1]), _n_for_poisson(ijk[2])
 
 
 def calc_cell_sizes(ijk, xbs):
-    """Calc MESH cell sizes."""
+    """!
+    Calc MESH cell sizes.
+    @param ijk: ???
+    @param xbs: ???
+    @return ???
+    """
     return (
         (xbs[1] - xbs[0]) / ijk[0],
         (xbs[3] - xbs[2]) / ijk[1],
@@ -211,7 +234,13 @@ def calc_cell_sizes(ijk, xbs):
 
 
 def calc_ijk(xbs, desired_cs, poisson):
-    """Calc MESH IJK from cell sizes."""
+    """!
+    Calc MESH IJK from cell sizes.
+    @param xbs: ???
+    @param desired_cs: ???
+    @param poisson: ???
+    @return ???
+    """
     print(xbs, desired_cs, poisson)  # FIXME
     ijk = (
         round((xbs[1] - xbs[0]) / desired_cs[0]) or 1,
@@ -225,7 +254,12 @@ def calc_ijk(xbs, desired_cs, poisson):
 
 
 def calc_cell_infos(ijk, xbs):
-    """Calc many cell infos."""
+    """!
+    Calc many cell infos.
+    @param ijk: ???
+    @param xbs: ???
+    @return ???
+    """
     cs = calc_cell_sizes(ijk, xbs)
     has_good_ijk = tuple(ijk) == calc_poisson_ijk(ijk)
     cell_count = ijk[0] * ijk[1] * ijk[2]

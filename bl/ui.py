@@ -1,5 +1,5 @@
 """!
-???
+BlenderFDS, ui classes
 """
 
 # BlenderFDS, an open tool for the NIST Fire Dynamics Simulator
@@ -68,7 +68,7 @@ classes_rm = (
 @subscribe
 class PROPERTIES_PT_navigation_bar(Panel):
     """!
-    ???
+    Navigation Bar
     """
 
     bl_space_type = "PROPERTIES"
@@ -105,7 +105,7 @@ class PROPERTIES_PT_navigation_bar(Panel):
 @subscribe
 class TOPBAR_MT_editor_menus(Menu):
     """!
-    ???
+    Editor menu
     """
 
     bl_idname = "TOPBAR_MT_editor_menus"

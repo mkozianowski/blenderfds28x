@@ -98,8 +98,8 @@ def _lonlat_to_utm(lon, lat, force_zn=None, force_ne=None):
     Conversion from longitude/latitude to UTM.
     @param lon: longitude in decimal degrees.
     @param lat: latitude in decimal degrees.
-    @param force_zn: ???
-    @param force_ne: ???
+    @param force_zn: UTM zone number (if None, its value will be derived from the entered longitude and latitude).
+    @param force_ne: UTM north emisphere (if None, its value will be derived from the entered latitude).
     @return UTM as zn (UTM zone number), ne (UTM north emisphere True/False), easting and northing
     """
     # Check range

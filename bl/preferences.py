@@ -68,7 +68,7 @@ class BFPreferences(AddonPreferences):
         """!
         Draw UI elements into the panel UI layout.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return ???
+        @return the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
         """
         paths = context.preferences.filepaths
         layout = self.layout

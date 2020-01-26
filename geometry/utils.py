@@ -21,11 +21,6 @@ def get_object_bmesh(context, ob, matrix=None, world=False, triangulate=False, l
     @param lookup: ???
     @return the evaluated bmesh.
     """
-    print("#########################################")
-    print("#########################################")
-    print(type(matrix))
-    print("#########################################")
-    print("#########################################")
     # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
         raise BFException(ob, "Object cannnot be converted into mesh")

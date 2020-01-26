@@ -1,5 +1,5 @@
 """!
-???
+BlenderFDS, <a href="https://docs.blender.org/api/current/bpy.types.Panel.html">panel</a> class extensions
 """
 
 # BlenderFDS, an open tool for the NIST Fire Dynamics Simulator
@@ -46,7 +46,7 @@ def subscribe(cls):
 
 class SCENE_PT_bf_namelist:
     """!
-    ???
+    FDS Panel
     """
 
     bl_space_type = "PROPERTIES"
@@ -98,7 +98,7 @@ class SCENE_PT_bf_namelist:
 @subscribe
 class SCENE_PT_bf_case_config(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    FDS Case Config
     """
 
     bf_namelist_cls = "SN_config"
@@ -108,7 +108,7 @@ class SCENE_PT_bf_case_config(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_config_geoloc(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    Origin Geolocation
     """
 
     bf_namelist_cls = "SN_config_geoloc"
@@ -120,7 +120,7 @@ class SCENE_PT_bf_config_geoloc(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_config_sizes(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    Default Sizes and Thresholds
     """
 
     bf_namelist_cls = "SN_config_sizes"
@@ -132,7 +132,7 @@ class SCENE_PT_bf_config_sizes(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_config_units(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    Units configuration
     """
 
     bf_namelist_cls = "SN_config_units"
@@ -144,7 +144,7 @@ class SCENE_PT_bf_config_units(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_namelist_HEAD(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    FDS HEAD
     """
 
     bf_namelist_cls = "SN_HEAD"
@@ -154,7 +154,7 @@ class SCENE_PT_bf_namelist_HEAD(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_namelist_TIME(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    FDS TIME
     """
 
     bf_namelist_cls = "SN_TIME"
@@ -165,7 +165,7 @@ class SCENE_PT_bf_namelist_TIME(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_namelist_MISC(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    FDS MISC
     """
 
     bf_namelist_cls = "SN_MISC"
@@ -176,7 +176,7 @@ class SCENE_PT_bf_namelist_MISC(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_namelist_REAC(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    FDS REAC
     """
 
     bf_namelist_cls = "SN_REAC"
@@ -187,7 +187,7 @@ class SCENE_PT_bf_namelist_REAC(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_namelist_RADI(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    FDS RADI
     """
 
     bf_namelist_cls = "SN_RADI"
@@ -198,7 +198,7 @@ class SCENE_PT_bf_namelist_RADI(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_namelist_DUMP(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    FDS DUMP
     """
 
     bf_namelist_cls = "SN_DUMP"
@@ -209,7 +209,7 @@ class SCENE_PT_bf_namelist_DUMP(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class SCENE_PT_bf_namelist_CATF(Panel, SCENE_PT_bf_namelist):
     """!
-    ???
+    FDS CATF
     """
 
     bf_namelist_cls = "SN_CATF"
@@ -220,7 +220,7 @@ class SCENE_PT_bf_namelist_CATF(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class OBJECT_PT_bf_namelist(Panel):
     """!
-    ???
+    FDS Geometric Namelist
     """
 
     bl_space_type = "PROPERTIES"
@@ -265,7 +265,7 @@ class OBJECT_PT_bf_namelist(Panel):
 @subscribe
 class MATERIAL_PT_bf_namelist(Panel):
     """!
-    ???
+    FDS SURF
     """
 
     bl_space_type = "PROPERTIES"
@@ -323,7 +323,7 @@ class MATERIAL_PT_bf_namelist(Panel):
 @subscribe
 class VIEW3D_PT_BF_Scene_Tools(Panel):
     """!
-    ???
+    Scene Tools
     """
     bl_idname = "VIEW3D_PT_bf_scene_tools"
     #    bl_context = "objectmode"
@@ -356,7 +356,7 @@ class VIEW3D_PT_BF_Scene_Tools(Panel):
 @subscribe
 class VIEW3D_PT_BF_Object_Tools(Panel):
     """!
-    ???
+    Object Tools
     """
 
     bl_idname = "VIEW3D_PT_bf_object_tools"
@@ -427,7 +427,7 @@ class VIEW3D_PT_BF_Object_Tools(Panel):
 @subscribe
 class VIEW3D_PT_BF_Material_Tools(Panel):
     """!
-    ???
+    Material Tools
     """
 
     bl_idname = "VIEW3D_PT_bf_material_tools"
@@ -440,14 +440,17 @@ class VIEW3D_PT_BF_Material_Tools(Panel):
     @classmethod
     def poll(cls, context):
         """!
-        ???
+        If this method returns a non-null output, then the panel can be drawn
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return current object
         """
         ob = context.object
         return ob and ob.active_material
 
     def draw(self, context):
         """!
-        ???
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         """
         layout = self.layout
         col = layout.column(align=True)
@@ -458,7 +461,7 @@ class VIEW3D_PT_BF_Material_Tools(Panel):
 @subscribe
 class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
     """!
-    ???
+    Object Remesh
     """
     # See: properties_data_mesh.py, class DATA_PT_remesh
 
@@ -509,7 +512,7 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
 @subscribe
 class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
     """!
-    ???
+    Mesh Clean Up
     """
 
     bl_idname = "VIEW3D_PT_bf_fix_toolbar_mesh"
@@ -553,7 +556,7 @@ class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
 @subscribe
 class VIEW3D_PT_BF_view3d_cursor(Panel):
     """!
-    ???
+    3D Cursor
     """
     # See: space_view3d.py, class VIEW3D_PT_view3d_cursor
 

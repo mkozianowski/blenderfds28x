@@ -109,9 +109,16 @@ class WM_UL_bf_other_items(UIList):
     """!
     ???
     """
+
     def draw_item(self, context, layout, data, item, icon, active_data):
         """!
-        ???
+        Draw an item in the list.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a> to draw the item.
+        @param data: data from which to take Collection property.
+        @param item: item of the collection property.
+        @param icon: icon of the item in the collection.
+        @param active_data: data from which to take property for the active element.
         """
         col = layout.column()
         col.active = item.bf_export
@@ -134,7 +141,17 @@ class WM_UL_bf_filepaths_items(UIList):
     """!
     ???
     """
+
     def draw_item(self, context, layout, data, item, icon, active_data):
+        """!
+        Draw an item in the list.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a> to draw the item.
+        @param data: data from which to take Collection property.
+        @param item: item of the collection property.
+        @param icon: icon of the item in the collection.
+        @param active_data: data from which to take property for the active element.
+        """
         col = layout.column()
         col.active = item.bf_export
         col.prop(item, "name", text="", emboss=False, icon_value=icon)
@@ -159,8 +176,8 @@ class SP_config_directory(BFParam):
     bpy_other = {"subtype": "DIR_PATH", "maxlen": 1024}
 
     def check(self, context):
-        """
-        !Check self validity.
+        """!
+        Check self validity.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         """
         value = self.element.bf_config_directory
@@ -237,7 +254,8 @@ class SP_crs(BFParam):
 
 def update_lonlat(self, context):
     """!
-    ???
+    Function to update the UTM of the context starting from longitude and latitude of the scene.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     """
     sc = context.scene
     utm = gis.LonLat(sc.bf_lon, sc.bf_lat).to_UTM()
@@ -249,7 +267,8 @@ def update_lonlat(self, context):
 
 def update_utm(self, context):
     """!
-    ???
+    Function to update the longitude and latitude of the context starting from the UTM of the scene.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     """
     sc = context.scene
     lonlat = gis.UTM(

@@ -1,5 +1,5 @@
 """!
-???
+BlenderFDS, <a href="https://docs.blender.org/api/current/bpy.types.Operator.html">operator</a> class extensions
 """
 
 # BlenderFDS, an open tool for the NIST Fire Dynamics Simulator
@@ -136,7 +136,7 @@ class OBJECT_OT_bf_check_intersections(Operator):
     @classmethod
     def poll(cls, context):
         """!
-        Test if the operator can be called or not
+        Test if the operator can be called or not.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return True if operator can be called, False otherwise.
         """
@@ -186,7 +186,7 @@ class SCENE_OT_bf_check_sanity(Operator):
     @classmethod
     def poll(cls, context):
         """!
-        Test if the operator can be called or not
+        Test if the operator can be called or not.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return True if operator can be called, False otherwise.
         """
@@ -305,7 +305,7 @@ class OBJECT_OT_bf_show_fds_code(_show_fds_code, Operator):
     @classmethod
     def poll(cls, context):
         """!
-        Test if the operator can be called or not
+        Test if the operator can be called or not.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return True if operator can be called, False otherwise.
         """
@@ -333,7 +333,7 @@ class MATERIAL_OT_bf_show_fds_code(_show_fds_code, Operator):
     @classmethod
     def poll(cls, context):
         """!
-        Test if the operator can be called or not
+        Test if the operator can be called or not.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return True if operator can be called, False otherwise.
         """
@@ -361,7 +361,7 @@ class SCENE_OT_bf_show_fds_code(_show_fds_code, Operator):
     @classmethod
     def poll(cls, context):
         """!
-        Test if the operator can be called or not
+        Test if the operator can be called or not.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return True if operator can be called, False otherwise.
         """
@@ -392,7 +392,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
     @classmethod
     def poll(cls, context):
         """!
-        Test if the operator can be called or not
+        Test if the operator can be called or not.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return True if operator can be called, False otherwise.
         """
@@ -567,7 +567,7 @@ class SCENE_OT_bf_show_text(Operator):
     @classmethod
     def poll(cls, context):
         """!
-        Test if the operator can be called or not
+        Test if the operator can be called or not.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return True if operator can be called, False otherwise.
         """
@@ -793,7 +793,7 @@ class OBJECT_OT_bf_copy_FDS_properties_to_sel_obs(Operator):
     @classmethod
     def poll(cls, context):
         """!
-        Test if the operator can be called or not
+        Test if the operator can be called or not.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return True if operator can be called, False otherwise.
         """
@@ -860,7 +860,7 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
     @classmethod
     def poll(cls, context):
         """!
-        Test if the operator can be called or not
+        Test if the operator can be called or not.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @return True if operator can be called, False otherwise.
         """
@@ -982,6 +982,11 @@ class MATERIAL_OT_bf_choose_matl_id(Operator):
 
     @classmethod
     def poll(cls, context):
+        """!
+        Test if the operator can be called or not.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return True if operator can be called, False otherwise.
+        """
         return context.active_object and context.active_object.active_material
 
     def execute(self, context):
@@ -1053,6 +1058,11 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
 
     @classmethod
     def poll(cls, context):
+        """!
+        Test if the operator can be called or not.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return True if operator can be called, False otherwise.
+        """
         return context.active_object
 
     def execute(self, context):
@@ -1104,6 +1114,10 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
 # FIXME FIXME FIXME
 @subscribe
 class OBJECT_OT_bf_set_mesh_cell_size(Operator):
+    """!
+    Set current MESH cell size.
+    """
+
     bl_label = "Set Cell Size"
     bl_idname = "object.bf_set_mesh_cell_size"
     bl_description = "Set current MESH cell size"
@@ -1125,15 +1139,34 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
 
     @classmethod
     def poll(cls, context):
+        """!
+        Test if the operator can be called or not.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return True if operator can be called, False otherwise.
+        """
         ob = context.active_object
         return ob and ob.bf_namelist_cls == "ON_MESH"
 
     def draw(self, context):
+        """!
+        Draw function for the operator.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         layout = self.layout
         layout.prop(self, "bf_cell_sizes", text="")
         layout.prop(self, "bf_poisson_restriction")
 
     def execute(self, context):
+        """!
+        Execute the operator.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return return
+        - "RUNNING_MODAL" keep the operator running with blender.
+        - "CANCELLED" when no action has been taken, operator exits.
+        - "FINISHED" when the operator is complete, operator exits.
+        - "PASS_THROUGH" do nothing and pass the event on.
+        - "INTERFACE" handled but not executed (popup menus).
+        """
         ob = context.active_object
         ob.bf_xb, ob.bf_xb_export = "BBOX", True  # FIXME should be impossible to change
         scale_length = context.scene.unit_settings.scale_length
@@ -1147,6 +1180,17 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
         return {"FINISHED"}
 
     def invoke(self, context, event):
+        """!
+        Invoke the operator.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
+        @return result
+        - "RUNNING_MODAL" keep the operator running with blender.
+        - "CANCELLED" when no action has been taken, operator exits.
+        - "FINISHED" when the operator is complete, operator exits.
+        - "PASS_THROUGH" do nothing and pass the event on.
+        - "INTERFACE" handled but not executed (popup menus).
+        """
         ob = context.active_object
         scale_length = context.scene.unit_settings.scale_length
         # Set default
@@ -1335,7 +1379,9 @@ class SCENE_OT_bf_set_cursor_geoloc(Operator, _bf_set_geoloc):
     @classmethod
     def poll(cls, context):
         """!
-        ???
+        Test if the operator can be called or not..
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return True if operator can be called, False otherwise.
         """
         return context.scene.cursor
 
@@ -1371,7 +1417,9 @@ class SCENE_OT_bf_set_ob_geoloc(Operator, _bf_set_geoloc):
     @classmethod
     def poll(cls, context):
         """!
-        ???
+        Test if the operator can be called or not..
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return True if operator can be called, False otherwise.
         """
         return context.active_object
 

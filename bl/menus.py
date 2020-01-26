@@ -1,5 +1,5 @@
 """!
-???
+BlenderFDS, import/export menu panel
 """
 
 # BlenderFDS, an open tool for the NIST Fire Dynamics Simulator
@@ -115,7 +115,7 @@ class ImportFDS(Operator, ImportHelper):
 
 def menu_func_import_FDS(self, context):
     """!
-    ???
+    Function to import FDS into a new scene.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     """
     self.layout.operator(
@@ -125,7 +125,7 @@ def menu_func_import_FDS(self, context):
 
 def menu_func_import_snippet_FDS(self, context):
     """!
-    ???
+    Function to import FDS into the current scene.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     """
     self.layout.operator(
@@ -232,7 +232,7 @@ class ExportFDS(Operator, ExportHelper):
 
 def menu_func_export_FDS(self, context):
     """!
-    ???
+    Function to export the current scene into a FDS file.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     """
     # Init
