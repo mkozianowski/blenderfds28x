@@ -57,8 +57,7 @@ from .types import (
     FDSCase,
 )
 from .config import default_mas
-from . import gis
-from . import utils
+from . import gis, utils, fds
 
 log = logging.getLogger(__name__)
 
@@ -1779,7 +1778,6 @@ class OP_XB_export(BFParam):
     bpy_default = True
     bpy_other = {"update": update_bf_xb}
 
-
 @subscribe
 class OP_XB(BFParamXB):
     """!
@@ -1885,6 +1883,29 @@ class OP_XB(BFParamXB):
             self.element.bf_xb = bf_xb
             self.element.bf_xb_export = True
             self.set_exported(context, True)
+
+@subscribe
+class OP_XB_BBOX(OP_XB):
+    label = "XB as BBox"
+    description = "Export as object bounding box"
+    bpy_idname = None
+    bpy_prop = None
+
+    def to_fds_param(self, context):
+        ob = self.element
+        ob.bf_xb = "BBOX"
+        if not ob.bf_xb_export:
+            return
+        # Compute
+        scale_length = context.scene.unit_settings.scale_length
+        xbs, _ = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
+        return FDSParam(label="XB", values=xbs[0], precision=6)
+
+    def draw(self, context, layout):
+        ob = self.element
+        row = layout.row()
+        row.active = ob.bf_xb_export
+        row.prop(ob, "bf_xb_export", text="XB as BBox")
 
 
 def update_bf_xyz(ob, context):
@@ -2788,8 +2809,21 @@ class OP_MESH_IJK(BFParam):
     bpy_prop = IntVectorProperty
     bpy_default = (10, 10, 10)
     bpy_other = {"size": 3, "min": 1}
-    # bpy_export = "bf_mesh_ijk_export"
-    # bpy_export_default = True
+    bpy_export = "bf_mesh_ijk_export"
+    bpy_export_default = True
+
+    def to_fds_param(self, context):
+        ob = self.element
+        if not ob.bf_mesh_ijk_export:
+            return
+        xbs = geometry.utils.get_bbox_xbs(
+            context=context, ob=ob, scale_length=context.scene.unit_settings.scale_length
+        )
+        has_good_ijk, cs, cell_count, cell_aspect_ratio = fds.mesh_tools.calc_cell_infos(
+            ijk=ob.bf_mesh_ijk, xbs=xbs
+        )
+        msg = f"Cell Sizes: {cs[0]:.3f} m, {cs[1]:.3f} m, {cs[2]:.3f} m | Count: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
+        return FDSParam(label="IJK", values=ob.bf_mesh_ijk, msg=msg)
 
 
 @subscribe
@@ -2820,7 +2854,7 @@ class ON_MESH(BFNamelistOb):
     description = "Domain of simulation"
     enum_id = 1014
     fds_label = "MESH"
-    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB, OP_other
+    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB_BBOX, OP_other
     bf_other = {"appearance": "WIRE"}
 
 

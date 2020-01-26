@@ -36,6 +36,7 @@ from bpy.props import (
     FloatProperty,
     IntProperty,
     IntVectorProperty,
+    FloatVectorProperty,
     StringProperty,
     PointerProperty,
     EnumProperty,
@@ -44,7 +45,7 @@ from bpy.props import (
 
 from ..types import BFException, FDSCase
 from .. import config
-from .. import geometry
+from .. import geometry, gis, utils, fds
 from ..lang import OP_XB, OP_XYZ, OP_PB
 from .. import gis, utils
 
@@ -297,7 +298,7 @@ class OBJECT_OT_bf_show_fds_code(_show_fds_code, Operator):
     Show FDS code exported from current Object.
     """
 
-    bl_label = "Show FDS Code From Current Object"
+    bl_label = "Show FDS Code"
     bl_idname = "object.bf_show_fds_code"
     bl_description = "Show FDS code exported from current Object"
 
@@ -325,7 +326,7 @@ class MATERIAL_OT_bf_show_fds_code(_show_fds_code, Operator):
     Show FDS code exported from current Material.
     """
 
-    bl_label = "Show FDS Code From Current Material"
+    bl_label = "Show FDS Code"
     bl_idname = "material.bf_show_fds_code"
     bl_description = "Show FDS code exported from current Material"
 
@@ -353,7 +354,7 @@ class SCENE_OT_bf_show_fds_code(_show_fds_code, Operator):
     Show FDS code exported from Scene.
     """
 
-    bl_label = "Show FDS Code From Current Scene"
+    bl_label = "Show FDS Code"
     bl_idname = "scene.bf_show_fds_code"
     bl_description = "Show FDS code exported from Scene"
 
@@ -527,12 +528,12 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
 @subscribe
 class OBJECT_OT_bf_hide_fds_geometry(Operator):
     """!
-    Hide geometry as exported to FDS.
+    Hide all temporary geometry.
     """
 
-    bl_label = "Hide FDS Geometry"
+    bl_label = "Hide Tmp Geometry"
     bl_idname = "object.bf_hide_fds_geometry"
-    bl_description = "Hide geometry as exported to FDS"
+    bl_description = "Hide all temporary geometry"
 
     def execute(self, context):
         """!
@@ -546,7 +547,7 @@ class OBJECT_OT_bf_hide_fds_geometry(Operator):
         - "INTERFACE" handled but not executed (popup menus).
         """
         geometry.utils.rm_tmp_objects(context)
-        self.report({"INFO"}, "FDS geometry hidden")
+        self.report({"INFO"}, "Temporary geometry hidden")
         return {"FINISHED"}
 
 
@@ -559,7 +560,7 @@ class SCENE_OT_bf_show_text(Operator):
     Show free text in the editor.
     """
 
-    bl_label = "Show"
+    bl_label = "Show Free Text"
     bl_idname = "scene.bf_show_text"
     bl_description = "Show free text in the editor"
 
@@ -784,7 +785,7 @@ class OBJECT_OT_bf_copy_FDS_properties_to_sel_obs(Operator):
     Copy current object FDS parameters to selected Objects.
     """
 
-    bl_label = "Copy To Selected Objects"
+    bl_label = "Copy To Selected"
     bl_idname = "object.bf_props_to_sel_obs"
     bl_description = "Copy current object FDS parameters to selected Objects"
     bl_options = {"REGISTER", "UNDO"}
@@ -851,7 +852,7 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
     Assign current boundary condition to selected Objects.
     """
 
-    bl_label = "Assign To Selected Objects"
+    bl_label = "Assign To Selected"
     bl_idname = "material.bf_surf_to_sel_obs"
     bl_description = "Assign current boundary condition to selected Objects"
     bl_options = {"REGISTER", "UNDO"}
@@ -979,6 +980,10 @@ class MATERIAL_OT_bf_choose_matl_id(Operator):
         items=_get_matl_items,  # Updating function
     )
 
+    @classmethod
+    def poll(cls, context):
+        return context.active_object and context.active_object.active_material
+
     def execute(self, context):
         """!
         Execute the operator.
@@ -1046,6 +1051,10 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
         items=_get_prop_items,  # Updating function
     )
 
+    @classmethod
+    def poll(cls, context):
+        return context.active_object
+
     def execute(self, context):
         """!
         Execute the operator.
@@ -1089,6 +1098,70 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
         """
         self.layout.prop(self, "bf_devc_prop_id", text="")
 
+
+# MESH Tools
+
+# FIXME FIXME FIXME
+@subscribe
+class OBJECT_OT_bf_set_mesh_cell_size(Operator):
+    bl_label = "Set Cell Size"
+    bl_idname = "object.bf_set_mesh_cell_size"
+    bl_description = "Set current MESH cell size"
+    bl_options = {"REGISTER", "UNDO"}
+
+    bf_cell_sizes: FloatVectorProperty(
+        name="Desired Cell Sizes [m]",
+        description="Desired MESH cell sizes",
+        default=(0.3, 0.3, 0.3),
+        min=0.001,
+        precision=3,
+        size=3,
+    )
+    bf_poisson_restriction: BoolProperty(
+        name="Poisson Restriction",
+        description="Respect FDS Poisson solver restriction on IJK values while setting desired cell sizes.\nCell sizes may be set smaller than requested.",
+        default=True,
+    )
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        return ob and ob.bf_namelist_cls == "ON_MESH"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "bf_cell_sizes", text="")
+        layout.prop(self, "bf_poisson_restriction")
+
+    def execute(self, context):
+        ob = context.active_object
+        ob.bf_xb, ob.bf_xb_export = "BBOX", True  # FIXME should be impossible to change
+        scale_length = context.scene.unit_settings.scale_length
+        xbs = geometry.utils.get_bbox_xbs(
+            context=context, ob=ob, scale_length=scale_length
+        )
+        ob.bf_mesh_ijk = fds.mesh_tools.calc_ijk(
+            xbs=xbs, desired_cs=self.bf_cell_sizes, poisson=self.bf_poisson_restriction
+        )
+        self.report({"INFO"}, "MESH cell size set")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        ob = context.active_object
+        scale_length = context.scene.unit_settings.scale_length
+        # Set default
+        self.bf_cell_sizes = fds.mesh_tools.calc_cell_sizes(
+            ijk=ob.bf_mesh_ijk,
+            xbs=geometry.utils.get_bbox_xbs(
+                context=context, ob=ob, scale_length=scale_length
+            ),
+        )
+        # Call dialog
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+
+# FIXME FIXME FIXME align meshes
 
 # GIS
 
@@ -1259,6 +1332,13 @@ class SCENE_OT_bf_set_cursor_geoloc(Operator, _bf_set_geoloc):
 
     bl_idname = "scene.bf_set_cursor_geoloc"
 
+    @classmethod
+    def poll(cls, context):
+        """!
+        ???
+        """
+        return context.scene.cursor
+
     def _get_loc(self, context):
         """!
         Get current cursor location.
@@ -1287,6 +1367,13 @@ class SCENE_OT_bf_set_ob_geoloc(Operator, _bf_set_geoloc):
     """
 
     bl_idname = "scene.bf_set_ob_geoloc"
+
+    @classmethod
+    def poll(cls, context):
+        """!
+        ???
+        """
+        return context.active_object
 
     def _get_loc(self, context):
         """!

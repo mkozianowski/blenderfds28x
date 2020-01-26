@@ -144,7 +144,7 @@ class BFParam:
         Unregister related Blender properties.
         @param cls: class to be unregistered.
         """
-        # if cls.bpy_prop and cls.bpy_idname:
+        # if cls.bpy_prop and cls.bpy_idname:  # FIXME
         #     delattr(cls.bpy_type, cls.bpy_idname)
         # if cls.bpy_export:
         #     delattr(cls.bpy_type, cls.bpy_export)
@@ -223,7 +223,7 @@ class BFParam:
         Draw self UI on layout.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        @return layout column.
+        @return Blender panel layout.
         """
         if not self.bpy_idname:
             return
@@ -240,7 +240,7 @@ class BFParam:
         self.draw_operators(context, row)
         if self.bpy_export:
             row.prop(self.element, self.bpy_export, text="")
-        # else:
+        # else:  # FIXME
         #     col.prop(self.element, self.bpy_idname, text=self.label)
         #     self.draw_operators(context, row)
         return col
@@ -334,7 +334,7 @@ class BFParamStr(BFParam):
         value = self.value
         if "&" in value or "/" in value or "#" in value:
             raise BFException(self, "<&>, </>, and <#> characters not allowed")
-        # if (
+        # if (  # FIXME
         #     "'" in value
         #     or '"' in value
         #     or "`" in value
@@ -360,7 +360,7 @@ class BFParamFYI(BFParamStr):
 
     def draw(self, context, layout):
         """!
-        ???
+        Draw parameter in Blender panel.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
         @return layout column.
