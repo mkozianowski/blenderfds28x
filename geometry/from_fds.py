@@ -175,7 +175,7 @@ def xbs_to_ob(xbs, context, ob, scale_length, ma=None, bf_xb=None) -> "bf_xb":
     @param scale_length: the scale to use.
     @param ma: the active material.
     @param bf_xb: the xb parameter between BBOX, VOXELS, FACES, PIXELS, EDGES
-    @return ???
+    @return the new xb parameter between BBOX, VOXELS, FACES, PIXELS, EDGES
     """
     log.debug(ob.name)
     if bf_xb:  # force bf_xb
@@ -220,7 +220,7 @@ def xyzs_to_ob(xyzs, context, ob, scale_length, ma=None) -> "bf_xyz":
     @param ob: the Blender object.
     @param scale_length: the scale to use.
     @param ma: the active material.
-    @return ???
+    @return "VERTICES"
     """
     xyzs_to_mesh(xyzs, context, ob.data, scale_length)
     if ma:
@@ -261,7 +261,7 @@ def pbs_to_ob(pbs, context, ob, scale_length, ma=None) -> "bf_pb":
     @param ob: the Blender object.
     @param scale_length: the scale to use.
     @param ma: the active material.
-    @return ???
+    @return "PLANES"
     """
     pbs_to_mesh(pbs, context, ob.data, scale_length)
     if ma:

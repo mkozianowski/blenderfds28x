@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 @persistent
 def _load_post(self):
     """!
-    ???. Beware: self is None.
+    ???
     """
     # Beware: self is None
     # Check file format version
@@ -49,8 +49,9 @@ def _load_post(self):
 @persistent
 def _save_pre(self):
     """!
-    ???. Beware: self is None.
+    ???
     """
+    # Beware: self is None
     # Remove tmp objecys
     geometry.utils.rm_tmp_objects(bpy.context)
     # Set file format version

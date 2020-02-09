@@ -77,7 +77,7 @@ def check_geom_sanity(context, ob, protect):
     Check that Object is a closed orientable manifold, with no degenerate geometry.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
-    @param protect: ???
+    @param protect: if True raise BFException without context modifications.
     """
     bm = utils.get_object_bmesh(
         context=context, ob=ob, world=False, triangulate=True, lookup=True
@@ -92,7 +92,7 @@ def _check_bm_sanity(context, ob, bm, protect):
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param bm: the object's bmesh.
-    @param protect: ???
+    @param protect: if True raise BFException without context modifications.
     """
     epsilon_len = context.scene.bf_config_min_edge_length
     epsilon_area = context.scene.bf_config_min_face_area
@@ -111,9 +111,9 @@ def _check_bm_manifold_verts(context, ob, bm, epsilon_len, epsilon_area, protect
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param bm: the object's bmesh.
-    @param epsilon_len: ???
-    @param epsilon_area: ???
-    @param protect: ???
+    @param epsilon_len: the minimum edges length.
+    @param epsilon_area: the minimum faces area
+    @param protect: if True raise BFException without context modifications.
     """
     bad_verts = list()
     for vert in bm.verts:
@@ -130,9 +130,9 @@ def _check_bm_manifold_edges(context, ob, bm, epsilon_len, epsilon_area, protect
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param bm: the object's bmesh.
-    @param epsilon_len: ???
-    @param epsilon_area: ???
-    @param protect: ???
+    @param epsilon_len: the minimum edges length.
+    @param epsilon_area: the minimum faces area.
+    @param protect: if True raise BFException without context modifications.
     """
     bad_edges = list()
     for edge in bm.edges:
@@ -149,9 +149,9 @@ def _check_bm_normals(context, ob, bm, epsilon_len, epsilon_area, protect):
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param bm: the object's bmesh.
-    @param epsilon_len: ???
-    @param epsilon_area: ???
-    @param protect: ???
+    @param epsilon_len: the minimum edges length.
+    @param epsilon_area: the minimum faces area.
+    @param protect: if True raise BFException without context modifications.
     """
     bad_edges = list()
     for edge in bm.edges:
@@ -170,9 +170,9 @@ def _check_bm_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area, prote
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param bm: the object's bmesh.
-    @param epsilon_len: ???
-    @param epsilon_area: ???
-    @param protect: ???
+    @param epsilon_len: the minimum edges length.
+    @param epsilon_area: the minimum faces area.
+    @param protect: if True raise BFException without context modifications.
     """
     bad_edges = list()
     for edge in bm.edges:
@@ -189,9 +189,9 @@ def _check_bm_degenerate_faces(context, ob, bm, epsilon_len, epsilon_area, prote
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param bm: the object's bmesh.
-    @param epsilon_len: ???
-    @param epsilon_area: ???
-    @param protect: ???
+    @param epsilon_len: the minimum edges length.
+    @param epsilon_area: the minimum faces area.
+    @param protect: if True raise BFException without context modifications.
     """
     bad_faces = list()
     for face in bm.faces:
@@ -208,9 +208,9 @@ def _check_bm_loose_vertices(context, ob, bm, epsilon_len, epsilon_area, protect
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param bm: the object's bmesh.
-    @param epsilon_len: ???
-    @param epsilon_area: ???
-    @param protect: ???
+    @param epsilon_len: the minimum edges length.
+    @param epsilon_area: the minimum faces area.
+    @param protect: if True raise BFException without context modifications.
     """
     bad_verts = list()
     for vert in bm.verts:
@@ -227,9 +227,9 @@ def _check_bm_duplicate_vertices(context, ob, bm, epsilon_len, epsilon_area, pro
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param bm: the object's bmesh.
-    @param epsilon_len: ???
-    @param epsilon_area: ???
-    @param protect: ???
+    @param epsilon_len: the minimum edges length.
+    @param epsilon_area: the minimum faces area.
+    @param protect: if True raise BFException without context modifications.
     """
     bad_verts = list()
     size = len(bm.verts)
@@ -258,7 +258,7 @@ def check_intersections(context, ob, other_obs=None, protect=True):
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param other_obs: the list of objects to evaluate the intersection with ob.
-    @param protect: ???
+    @param protect: if True raise BFException without context modifications.
     """
     log.debug(f"Check intersections in Object <{ob.name}>")
     if context.object:
