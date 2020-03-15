@@ -74,20 +74,47 @@ class BFParam:
     Blender representation of an FDS parameter.
     """
 
-    label = "No Label"  # Object label
-    description = None  # Object description
-    enum_id = None  # Unique integer id for EnumProperty
-    bf_other = {}  # Other BlenderFDS parameters, eg: {'draw_type': 'WIRE', ...}
-    bf_params = tuple()  # tuple of sub params of type BFParam
-    fds_label = None  # FDS label, eg. "OBST", "ID", ...
-    fds_default = None  # FDS default value
-    bpy_type = None  # type in bpy.types for Blender property, eg. Object
-    bpy_idname = None  # idname of related bpy.types Blender property, eg. "bf_id"
-    bpy_prop = None  # prop in bpy.props of Blender property, eg. StringProperty
-    bpy_default = None  # Blender property default
-    bpy_other = {}  # Other optional Blender property parameters, eg. {"min": 3., ...}
-    bpy_export = None  # idname of export toggle Blender property
-    bpy_export_default = False  # idname of export toggle Blender property
+    ## Object label
+    label = "No Label"
+
+    ## Object description
+    description = None
+
+    ## Unique integer id for EnumProperty
+    enum_id = None
+
+    ## Other BlenderFDS parameters, eg: {'draw_type': 'WIRE', ...}
+    bf_other = {}
+
+    ## tuple of sub params of type BFParam
+    bf_params = tuple()
+
+    ## FDS label, eg. "OBST", "ID", ...
+    fds_label = None
+
+    ## FDS default value
+    fds_default = None
+
+    ## type in bpy.types for Blender property, eg. Object
+    bpy_type = None
+
+    ## idname of related bpy.types Blender property, eg. "bf_id"
+    bpy_idname = None
+
+    ## prop in bpy.props of Blender property, eg. StringProperty
+    bpy_prop = None
+
+    ## Blender property default
+    bpy_default = None
+
+    ## Other optional Blender property parameters, eg. {"min": 3., ...}
+    bpy_other = {}
+
+    ## idname of export toggle Blender property
+    bpy_export = None
+
+    ## idname of export toggle Blender property
+    bpy_export_default = False
 
     def __init__(self, element):
         """!
