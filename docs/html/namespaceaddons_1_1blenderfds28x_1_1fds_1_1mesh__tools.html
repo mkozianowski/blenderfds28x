@@ -75,7 +75,7 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a409d7fde5bf528ae4bedfc16c5a0ee6a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaddons_1_1blenderfds28x_1_1fds_1_1mesh__tools.html#a409d7fde5bf528ae4bedfc16c5a0ee6a">align_meshes</a> (rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False)</td></tr>
-<tr class="memdesc:a409d7fde5bf528ae4bedfc16c5a0ee6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">???  <a href="#a409d7fde5bf528ae4bedfc16c5a0ee6a">More...</a><br /></td></tr>
+<tr class="memdesc:a409d7fde5bf528ae4bedfc16c5a0ee6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to align meshes.  <a href="#a409d7fde5bf528ae4bedfc16c5a0ee6a">More...</a><br /></td></tr>
 <tr class="separator:a409d7fde5bf528ae4bedfc16c5a0ee6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae439ae21d06065b28228605e6440c6fd"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaddons_1_1blenderfds28x_1_1fds_1_1mesh__tools.html#ae439ae21d06065b28228605e6440c6fd">calc_poisson_ijk</a> (ijk)</td></tr>
 <tr class="memdesc:ae439ae21d06065b28228605e6440c6fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get an IJK respecting the Poisson constraint, close to the current one.  <a href="#ae439ae21d06065b28228605e6440c6fd">More...</a><br /></td></tr>
@@ -87,7 +87,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:aef34c7a8a8fab887d9a811d357aa2878"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calc MESH IJK from cell sizes.  <a href="#aef34c7a8a8fab887d9a811d357aa2878">More...</a><br /></td></tr>
 <tr class="separator:aef34c7a8a8fab887d9a811d357aa2878"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe9999ad22d36bd95bd34dcd4a006201"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaddons_1_1blenderfds28x_1_1fds_1_1mesh__tools.html#afe9999ad22d36bd95bd34dcd4a006201">calc_cell_infos</a> (ijk, xbs)</td></tr>
-<tr class="memdesc:afe9999ad22d36bd95bd34dcd4a006201"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calc many cell infos.  <a href="#afe9999ad22d36bd95bd34dcd4a006201">More...</a><br /></td></tr>
+<tr class="memdesc:afe9999ad22d36bd95bd34dcd4a006201"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calc many cell infos: cell ijk goodness, sizes, count and aspect ratio.  <a href="#afe9999ad22d36bd95bd34dcd4a006201">More...</a><br /></td></tr>
 <tr class="separator:afe9999ad22d36bd95bd34dcd4a006201"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7ea0814f6cf13d3760b06a7788b18f0"><td class="memItemLeft" align="right" valign="top"><a id="af7ea0814f6cf13d3760b06a7788b18f0"></a>
 def&#160;</td><td class="memItemRight" valign="bottom"><b>test</b> ()</td></tr>
@@ -146,19 +146,19 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>test</b> ()</td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>??? </p>
+<p>Function to align meshes. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">rijk</td><td>??? </td></tr>
-    <tr><td class="paramname">rxbs</td><td>??? </td></tr>
-    <tr><td class="paramname">mijk</td><td>??? </td></tr>
-    <tr><td class="paramname">mxbs</td><td>??? </td></tr>
-    <tr><td class="paramname">poisson</td><td>??? </td></tr>
-    <tr><td class="paramname">protect_rl</td><td>??? </td></tr>
+    <tr><td class="paramname">rijk</td><td>ijk of the ref mesh. </td></tr>
+    <tr><td class="paramname">rxbs</td><td>xbs of the ref mesh. </td></tr>
+    <tr><td class="paramname">mijk</td><td>ijk of the other mesh. </td></tr>
+    <tr><td class="paramname">mxbs</td><td>xbs of the other mesh. </td></tr>
+    <tr><td class="paramname">poisson</td><td>True for respecting the Poisson constraint. </td></tr>
+    <tr><td class="paramname">protect_rl</td><td>True to protect ref length. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>??? </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>return new rijk, rxbs, mijk and mxbs. </dd></dl>
 
 </div>
 </div>
@@ -188,15 +188,15 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>test</b> ()</td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Calc many cell infos. </p>
+<p>Calc many cell infos: cell ijk goodness, sizes, count and aspect ratio. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">ijk</td><td>??? </td></tr>
-    <tr><td class="paramname">xbs</td><td>??? </td></tr>
+    <tr><td class="paramname">ijk</td><td>ijk of the mesh. </td></tr>
+    <tr><td class="paramname">xbs</td><td>xbs of the mesh. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>??? </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>return if cell infos. </dd></dl>
 
 </div>
 </div>
@@ -229,12 +229,12 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>test</b> ()</td></tr>
 <p>Calc MESH cell sizes. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">ijk</td><td>??? </td></tr>
-    <tr><td class="paramname">xbs</td><td>??? </td></tr>
+    <tr><td class="paramname">ijk</td><td>ijk of the mesh. </td></tr>
+    <tr><td class="paramname">xbs</td><td>xbs of the mesh. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>??? </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>return the MESH cell sizes. </dd></dl>
 
 </div>
 </div>
@@ -273,13 +273,13 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>test</b> ()</td></tr>
 <p>Calc MESH IJK from cell sizes. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">xbs</td><td>??? </td></tr>
-    <tr><td class="paramname">desired_cs</td><td>??? </td></tr>
-    <tr><td class="paramname">poisson</td><td>??? </td></tr>
+    <tr><td class="paramname">xbs</td><td>xbs of the mesh. </td></tr>
+    <tr><td class="paramname">desired_cs</td><td>desired cell sizes. </td></tr>
+    <tr><td class="paramname">poisson</td><td>True for respecting the Poisson constraint. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>??? </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>return the MESH IJK from cell sizes. </dd></dl>
 
 </div>
 </div>
@@ -302,11 +302,11 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>test</b> ()</td></tr>
 <p>Get an IJK respecting the Poisson constraint, close to the current one. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">ijk</td><td>??? </td></tr>
+    <tr><td class="paramname">ijk</td><td>ijk of the mesh. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>??? </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>return new ijk values. </dd></dl>
 
 </div>
 </div>
