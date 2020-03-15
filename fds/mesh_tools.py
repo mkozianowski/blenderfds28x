@@ -157,14 +157,14 @@ def _is_far(rxbs, mxbs, deltas):
 
 def align_meshes(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
     """!
-    ???
-    @param rijk: ???
-    @param rxbs: ???
-    @param mijk: ???
-    @param mxbs: ???
-    @param poisson: ???
-    @param protect_rl: ???
-    @return ???
+    Function to align meshes.
+    @param rijk:  ijk of the ref mesh.
+    @param rxbs: xbs of the ref mesh.
+    @param mijk: ijk of the other mesh.
+    @param mxbs: xbs of the other mesh.
+    @param poisson: True for respecting the Poisson constraint.
+    @param protect_rl: True to protect ref length.
+    @return return new rijk, rxbs, mijk and mxbs.
     """
     # Init
     deltas = (  # rcs
@@ -213,8 +213,8 @@ def align_meshes(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
 def calc_poisson_ijk(ijk):
     """!
     Get an IJK respecting the Poisson constraint, close to the current one.
-    @param ijk: ???
-    @return ???
+    @param ijk: ijk of the mesh.
+    @return return new ijk values.
     """
     return ijk[0], _n_for_poisson(ijk[1]), _n_for_poisson(ijk[2])
 
@@ -222,9 +222,9 @@ def calc_poisson_ijk(ijk):
 def calc_cell_sizes(ijk, xbs):
     """!
     Calc MESH cell sizes.
-    @param ijk: ???
-    @param xbs: ???
-    @return ???
+    @param ijk: ijk of the mesh.
+    @param xbs: xbs of the mesh.
+    @return return the MESH cell sizes.
     """
     return (
         (xbs[1] - xbs[0]) / ijk[0],
@@ -236,10 +236,10 @@ def calc_cell_sizes(ijk, xbs):
 def calc_ijk(xbs, desired_cs, poisson):
     """!
     Calc MESH IJK from cell sizes.
-    @param xbs: ???
-    @param desired_cs: ???
-    @param poisson: ???
-    @return ???
+    @param xbs: xbs of the mesh.
+    @param desired_cs: desired cell sizes.
+    @param poisson: True for respecting the Poisson constraint.
+    @return return the MESH IJK from cell sizes.
     """
     print(xbs, desired_cs, poisson)  # FIXME
     ijk = (
@@ -255,10 +255,10 @@ def calc_ijk(xbs, desired_cs, poisson):
 
 def calc_cell_infos(ijk, xbs):
     """!
-    Calc many cell infos.
-    @param ijk: ???
-    @param xbs: ???
-    @return ???
+    Calc many cell infos: cell ijk goodness, sizes, count and aspect ratio.
+    @param ijk: ijk of the mesh.
+    @param xbs: xbs of the mesh.
+    @return return if cell infos.
     """
     cs = calc_cell_sizes(ijk, xbs)
     has_good_ijk = tuple(ijk) == calc_poisson_ijk(ijk)
