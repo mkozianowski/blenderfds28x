@@ -98,7 +98,7 @@ def subscribe(cls):
 @subscribe
 class WM_PG_bf_other(PropertyGroup):
     """!
-    ???
+    Blender representation for the other parameters.
     """
     bf_export: BoolProperty(name="Export", default=True)
     name: StringProperty(name="Name")
@@ -107,7 +107,7 @@ class WM_PG_bf_other(PropertyGroup):
 @subscribe
 class WM_UL_bf_other_items(UIList):
     """!
-    ???
+    Blender representation to list other parameters.
     """
 
     def draw_item(self, context, layout, data, item, icon, active_data):
@@ -130,7 +130,7 @@ class WM_UL_bf_other_items(UIList):
 @subscribe
 class WM_PG_bf_filepaths(PropertyGroup):
     """!
-    ???
+    Blender representation for the filepaths.
     """
     bf_export: BoolProperty(name="Export", default=False)
     name: StringProperty(name="Name", subtype="FILE_PATH")
@@ -139,7 +139,7 @@ class WM_PG_bf_filepaths(PropertyGroup):
 @subscribe
 class WM_UL_bf_filepaths_items(UIList):
     """!
-    ???
+    Blender representation to list filepaths.
     """
 
     def draw_item(self, context, layout, data, item, icon, active_data):
@@ -727,7 +727,7 @@ class SN_TIME(BFNamelistSc):
 @subscribe
 class SP_MISC_FYI(BFParamFYI):
     """!
-    ???
+    Blender representation of the FYI parameter.
     """
     bpy_type = Scene
     bpy_idname = "bf_misc_fyi"
@@ -813,7 +813,7 @@ class SP_REAC_ID(BFParamStr):
 @subscribe
 class SP_REAC_FYI(BFParamFYI):
     """!
-    ???
+    Blender representation of the FYI parameter.
     """
     bpy_type = Scene
     bpy_idname = "bf_reac_fyi"
@@ -965,7 +965,7 @@ class SN_REAC(BFNamelistSc):
 @subscribe
 class SP_RADI_FYI(BFParamFYI):
     """!
-    ???
+    Blender representation of the FYI parameter.
     """
     bpy_type = Scene
     bpy_idname = "bf_radi_fyi"
@@ -1091,7 +1091,7 @@ class SN_RADI(BFNamelistSc):
 @subscribe
 class SP_DUMP_FYI(BFParamFYI):
     """!
-    ???
+    Blender representation of the FYI parameter.
     """
     bpy_type = Scene
     bpy_idname = "bf_dump_fyi"
@@ -1368,7 +1368,7 @@ class MP_ID(BFParamStr):
 @subscribe
 class MP_FYI(BFParamFYI):
     """!
-    ???
+    Blender representation of the FYI parameter for materials.
     """
     bpy_type = Material
     bpy_idname = "bf_fyi"
@@ -1708,7 +1708,7 @@ class OP_ID(BFParamStr):
 @subscribe
 class OP_FYI(BFParamFYI):
     """!
-    ???
+    Blender representation of the FYI parameter for objects.
     """
     bpy_type = Object
     bpy_idname = "bf_fyi"
