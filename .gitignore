@@ -106,8 +106,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# html Doxygen
-docs
-
 # verification settings
 verification/verification.sh
