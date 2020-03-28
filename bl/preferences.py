@@ -1,4 +1,6 @@
-"""BlenderFDS, preferences panel"""
+"""!
+BlenderFDS, preferences panel
+"""
 
 import bpy
 import logging
@@ -23,6 +25,10 @@ log = logging.getLogger(__name__)
 
 
 class BFPreferences(AddonPreferences):
+    """!
+    BlenderFDS, preferences panel
+    """
+
     bl_idname = __package__.split(".")[0]
 
     bf_pref_simplify_ui: BoolProperty(
@@ -38,6 +44,10 @@ class BFPreferences(AddonPreferences):
     )
 
     def update_loglevel(self, context):
+        """!
+        Update the BlenderFDS log level (DEBUG, INFO, WARNING, ERROR or CRITICAL).
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         log.setLevel(self.bf_loglevel)
 
     bf_loglevel: EnumProperty(
@@ -55,6 +65,11 @@ class BFPreferences(AddonPreferences):
     )
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
+        """
         paths = context.preferences.filepaths
         layout = self.layout
         box = layout.box()
@@ -72,8 +87,14 @@ class BFPreferences(AddonPreferences):
 
 
 def register():
+    """!
+    Load the Python classes and functions to blender.
+    """
     bpy.utils.register_class(BFPreferences)
 
 
 def unregister():
+    """!
+    Unload the Python classes and functions from blender.
+    """
     bpy.utils.unregister_class(BFPreferences)

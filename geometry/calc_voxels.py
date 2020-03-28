@@ -1,4 +1,6 @@
-"""BlenderFDS, voxelization algorithms."""
+"""!
+BlenderFDS, voxelization algorithms.
+"""
 
 import bpy, bmesh, logging
 from math import floor, ceil
@@ -16,7 +18,13 @@ log = logging.getLogger(__name__)
 
 
 def get_voxels(context, ob, scale_length):
-    """Get voxels from object in xbs format."""
+    """!
+    Get voxels from object in xbs format.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return the voxels in xbs format.
+    """
     log.debug(ob.name)
     # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
@@ -73,7 +81,11 @@ def get_voxels(context, ob, scale_length):
 
 
 def _sort_faces_by_normal(bm):
-    """Sort bmesh faces according to normal."""
+    """!
+    Sort bmesh faces according to normal.
+    @param bm: the bmesh to handle.
+    @return the x, y and z faces lists.
+    """
     x_faces, y_faces, z_faces = list(), list(), list()
     for face in bm.faces:
         normal = face.normal
@@ -101,7 +113,18 @@ def _sort_faces_by_normal(bm):
 
 
 def _init_remesh_mod(context, ob, voxel_size) -> "octree_depth, scale":
-    """Calc remesh modifier parameters from voxel_size."""
+    """!
+    Calc remesh modifier parameters from voxel_size.
+    When appling a remesh modifier to a Blender Object in BLOCKS mode,
+    the object max dimension is scaled up and divided in
+    (2 ** octree_depth voxels - 1) cubic voxels.
+    This function reverses the procedures and calculate octree_depth
+    and scale that generate the desired voxel_size.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param voxel_size: the voxel size of the object.
+    @return the octree_depth and scale that generate the desired voxel_size.
+    """
     dimension, octree_depth = max(ob.dimensions), 0.0
     while True:
         octree_depth += 1.0
@@ -116,7 +139,13 @@ def _init_remesh_mod(context, ob, voxel_size) -> "octree_depth, scale":
 
 
 def _add_remesh_mod(context, ob, voxel_size) -> "modifier":
-    """Add new blocks remesh modifier."""
+    """!
+    Add new blocks remesh modifier.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param voxel_size: the voxel size of the object.
+    @return the modifier.
+    """
     octree_depth, scale = _init_remesh_mod(context, ob, voxel_size)
     mo = ob.modifiers.new("remesh_tmp", "REMESH")
     mo.mode, mo.use_remove_disconnected = "BLOCKS", False
@@ -125,7 +154,12 @@ def _add_remesh_mod(context, ob, voxel_size) -> "modifier":
 
 
 def _get_voxel_size(context, ob) -> "voxel_size":
-    """Get voxel_size of an object."""
+    """!
+    Get voxel_size of an object.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @return the voxel size.
+    """
     if ob.bf_xb_custom_voxel:
         return ob.bf_xb_voxel_size
     else:
@@ -138,7 +172,12 @@ def _get_voxel_size(context, ob) -> "voxel_size":
 
 
 def _align_remesh_to_world_origin(context, ob, voxel_size):
-    """Modify object mesh for remesh voxel alignment to world origin."""
+    """!
+    Modify object mesh for remesh voxel alignment to world origin.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param voxel_size: the voxel size of the object.
+    """
     bb = utils.get_bbox_xbs(context, ob, scale_length=1.0)  # in world coo
     # Calc new bbox (in Blender units)
     #      +---+ pv1
@@ -181,7 +220,11 @@ def _align_remesh_to_world_origin(context, ob, voxel_size):
 
 
 def _insert_verts_into_mesh(me, verts):
-    """Insert vertices into mesh."""
+    """!
+    Insert vertices into mesh.
+    @param me: the Blender mesh.
+    @param verts: the vertices.
+    """
     bm = bmesh.new()
     bm.from_mesh(me)
     for v in verts:
@@ -216,13 +259,22 @@ def _insert_verts_into_mesh(me, verts):
 
 
 def _get_face_center(face):
-    """Get bmesh face center point."""
+    """!
+    Get bmesh face center point.
+    @param face: the modifier face.
+    @param verts: the center coordinates.
+    """
     xs, ys, zs = zip(*(v.co for v in face.verts))
     return sum(xs) / len(xs), sum(ys) / len(ys), sum(zs) / len(zs)
 
 
 def _get_boxes_along_x(faces, voxel_size) -> "boxes, origin":
-    """Get minimal boxes from faces by raytracing along x axis."""
+    """!
+    Get minimal boxes from faces by raytracing along x axis.
+    @param faces: the modifier faces.
+    @param voxel_size: the voxel size of the object.
+    @return the minimal boxes and their origins.
+    """
     log.debug("x boxes")
     # First face center becomes origin of the integer grid for faces
     f_origin = _get_face_center(faces[0])
@@ -255,7 +307,12 @@ def _get_boxes_along_x(faces, voxel_size) -> "boxes, origin":
 
 
 def _get_boxes_along_y(faces, voxel_size) -> "boxes, origin":
-    """Get minimal boxes from faces by raytracing along y axis."""
+    """!
+    Get minimal boxes from faces by raytracing along y axis.
+    @param faces: the modifier faces.
+    @param voxel_size: the voxel size of the object.
+    @return the minimal boxes and their origins.
+    """
     log.debug("y boxes")
     # First face center becomes origin of the integer grid for faces
     f_origin = _get_face_center(faces[0])
@@ -288,7 +345,12 @@ def _get_boxes_along_y(faces, voxel_size) -> "boxes, origin":
 
 
 def _get_boxes_along_z(faces, voxel_size) -> "boxes, origin":
-    """Get minimal boxes from faces by raytracing along z axis."""
+    """!
+    Get minimal boxes from faces by raytracing along z axis.
+    @param faces: the modifier faces.
+    @param voxel_size: the voxel size of the object.
+    @return the minimal boxes and their origins.
+    """
     log.debug("z boxes")
     # First face center becomes origin of the integer grid for faces
     f_origin = _get_face_center(faces[0])
@@ -325,7 +387,12 @@ def _get_boxes_along_z(faces, voxel_size) -> "boxes, origin":
 
 
 def _grow_boxes_along_x(boxes, sort_by):
-    """Grow boxes by merging neighbours along x axis."""
+    """!
+    Grow boxes by merging neighbours along x axis.
+    @param boxes: the boxes to handle.
+    @param sort_by: ???
+    @return the grown boxes.
+    """
     log.debug("grow x")
     # Sort boxes
     boxes.sort(key=lambda box: (box[sort_by], box[0]))
@@ -352,7 +419,12 @@ def _grow_boxes_along_x(boxes, sort_by):
 
 
 def _grow_boxes_along_y(boxes, sort_by):
-    """Grow boxes by merging neighbours along y axis."""
+    """!
+    Grow boxes by merging neighbours along y axis.
+    @param boxes: the boxes to handle.
+    @param sort_by: ???
+    @return the grown boxes.
+    """
     log.debug("grow y")
     # Sort boxes
     boxes.sort(key=lambda box: (box[sort_by], box[2]))
@@ -379,7 +451,12 @@ def _grow_boxes_along_y(boxes, sort_by):
 
 
 def _grow_boxes_along_z(boxes, sort_by):
-    """Grow boxes by merging neighbours along z axis."""
+    """!
+    Grow boxes by merging neighbours along z axis.
+    @param boxes: the boxes to handle.
+    @param sort_by: ???
+    @return the grown boxes.
+    """
     log.debug("grow z")
     # Sort boxes
     boxes.sort(key=lambda box: (box[sort_by], box[4]))
@@ -409,7 +486,14 @@ def _grow_boxes_along_z(boxes, sort_by):
 
 
 def _get_box_xbs(boxes, origin, voxel_size, scale_length) -> "xbs":
-    """Transform boxes to xbs in world coordinates."""
+    """!
+    Transform boxes to xbs in world coordinates.
+    @param boxes: the boxes to handle.
+    @param origin: ???
+    @param voxel_size: the voxel size of the object.
+    @param scale_length: the scale to use.
+    @return the xbs.
+    """
     epsilon = 1e-5
     return (
         (
@@ -428,7 +512,13 @@ def _get_box_xbs(boxes, origin, voxel_size, scale_length) -> "xbs":
 
 
 def get_pixels(context, ob, scale_length):
-    """Get pixels from flat object in xbs format."""
+    """!
+    Get pixels from flat object in xbs format.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return the xbs and the voxel size.
+    """
     log.debug(ob.name)
     # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
@@ -467,7 +557,13 @@ def get_pixels(context, ob, scale_length):
 
 
 def _add_solidify_mod(context, ob, voxel_size) -> "modifier":
-    """Add new solidify modifier."""
+    """!
+    Add new solidify modifier.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param voxel_size: the voxel size of the object.
+    @return the modifier.
+    """
     mo = ob.modifiers.new("solidify_tmp", "SOLIDIFY")
     mo.thickness = voxel_size
     mo.offset = 0.0  # centered
@@ -475,7 +571,12 @@ def _add_solidify_mod(context, ob, voxel_size) -> "modifier":
 
 
 def _get_flat_axis(ob, voxel_size):
-    """Get object flat axis."""
+    """!
+    Get object flat axis.
+    @param ob: the Blender object.
+    @param voxel_size: the voxel size of the object.
+    @return the object flat axis.
+    """
     dimensions = ob.dimensions
     choices = [
         (dimensions[0], 0),  # object faces are normal to x axis
@@ -487,15 +588,30 @@ def _get_flat_axis(ob, voxel_size):
 
 
 def _x_flatten_xbs(xbs, flat_origin) -> "[(l0, l0, y0, y1, z0, z1), ...]":
-    """Flatten voxels to obtain pixels (normal to x axis) at flat_origin height."""
+    """!
+    Flatten voxels to obtain pixels (normal to x axis) at flat_origin height.
+    @param xbs: ???
+    @param flat_origin: ???
+    @return ???
+    """
     return [[flat_origin[0], flat_origin[0], xb[2], xb[3], xb[4], xb[5]] for xb in xbs]
 
 
 def _y_flatten_xbs(xbs, flat_origin) -> "[(x0, x1, l0, l0, z0, z1), ...]":
-    """Flatten voxels to obtain pixels (normal to y axis) at flat_origin height."""
+    """!
+    Flatten voxels to obtain pixels (normal to y axis) at flat_origin height.
+    @param xbs: ???
+    @param flat_origin: ???
+    @return ???
+    """
     return [[xb[0], xb[1], flat_origin[1], flat_origin[1], xb[4], xb[5]] for xb in xbs]
 
 
 def _z_flatten_xbs(xbs, flat_origin) -> "[(x0, x1, y0, y1, l0, l0), ...]":
-    """Flatten voxels to obtain pixels (normal to z axis) at flat_origin height."""
+    """!
+    Flatten voxels to obtain pixels (normal to z axis) at flat_origin height.
+    @param xbs: ???
+    @param flat_origin: ???
+    @return ???
+    """
     return [[xb[0], xb[1], xb[2], xb[3], flat_origin[2], flat_origin[2]] for xb in xbs]

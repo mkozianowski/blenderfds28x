@@ -36,15 +36,17 @@ def fds_run( file_fds ):
             f.write(line)
 
       if ( addMesh ):
-          f.write( "&MESH /\n\n")
+          f.write( "\n\n&MESH /")
 
-      f.write( "&TIME T_END=1.0 /\n\n" )
+      f.write( "\n\n&TIME T_END=1.0 /" )
 
-      f.write( "&TAIL /")
+      f.write( "\n\n&TAIL /")
 
 
    #TODO set ulimit -s unlimited to allow RAM usage
    myCmd = 'fds ' + file_fds
+
+   print ( "Executing command " + myCmd )
 
    #Process execution
    p = subprocess.Popen( myCmd, cwd='/tmp/', \

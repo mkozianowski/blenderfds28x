@@ -18,7 +18,8 @@ import os
 
 
 def is_iterable(var):
-    """Check if var is iterable or not
+    """!
+    Check if var is iterable or not
 
     >>> is_iterable("hello"), is_iterable((1,2,3)), is_iterable({1,2,3})
     (False, True, True)

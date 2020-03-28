@@ -1,4 +1,6 @@
-"""BlenderFDS, translate Blender object geometry to FDS notation."""
+"""!
+BlenderFDS, translate Blender object geometry to FDS notation.
+"""
 
 import bpy, logging
 from time import time
@@ -13,9 +15,15 @@ log = logging.getLogger(__name__)
 # to GEOM
 
 
-def _ob_to_geom(
-    context, ob, scale_length, check=True
-) -> "mas, fds_verts, fds_faces, 'Msg'":
+def _ob_to_geom(context, ob, scale_length, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
+    """!
+    Transform Object geometry to FDS mas, verts, faces notation.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @param check: True to check the bmesh sanity.
+    @return FDS mas, verts, faces notation as lists and any error message.
+    """
     t0 = time()
     mas, verts, faces = calc_trisurfaces.get_trisurface(
         context, ob, scale_length, check
@@ -27,10 +35,15 @@ def _ob_to_geom(
     return mas, fds_verts, fds_faces, msg
 
 
-def ob_to_geom(
-    context, ob, scale_length, check=True
-) -> "mas, fds_verts, fds_faces, 'Msg'":
-    """Transform Object geometry to FDS mas, verts, faces notation."""
+def ob_to_geom(context, ob, scale_length, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
+    """!
+    Transform Object geometry to FDS mas, verts, faces notation.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @param check: True to check the bmesh sanity.
+    @return FDS mas, verts, faces notation as lists and any error message.
+    """
     log.debug(ob.name)
     if ob.get("ob_to_geom_cache") is None:  # recalc
         log.debug(f"Update <{ob.name}> geom cache")
@@ -41,10 +54,14 @@ def ob_to_geom(
 # to XB
 
 
-def _ob_to_xbs_voxels(
-    context, ob, scale_length
-) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform Object solid geometry to xbs notation (voxelization)."""
+def _ob_to_xbs_voxels(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+    """!
+    Transform Object solid geometry to xbs notation (voxelization).
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return xbs notation and any error message.
+    """
     t0 = time()
     xbs, voxel_size = calc_voxels.get_voxels(context, ob, scale_length)
     dt = time() - t0
@@ -52,10 +69,14 @@ def _ob_to_xbs_voxels(
     return xbs, msg
 
 
-def _ob_to_xbs_pixels(
-    context, ob, scale_length
-) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
-    """Transform Object flat geometry to xbs notation (flat voxelization)."""
+def _ob_to_xbs_pixels(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
+    """!
+    Transform Object flat geometry to xbs notation (flat voxelization).
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return xbs notation (flat voxelization) and any error message.
+    """
     t0 = time()
     xbs, voxel_size = calc_voxels.get_pixels(context, ob, scale_length)
     res = voxel_size * scale_length
@@ -65,14 +86,26 @@ def _ob_to_xbs_pixels(
 
 
 def _ob_to_xbs_bbox(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform Object solid geometry to xbs notation (bounding box)."""
+    """!
+    Transform Object solid geometry to xbs notation (bounding box).
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return xbs notation (bounding box) and any error message.
+    """
     xbs = list((utils.get_bbox_xbs(context, ob, scale_length, world=True),))
     msg = str()
     return xbs, msg
 
 
 def _ob_to_xbs_faces(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform Object flat faces to xbs notation (faces)."""
+    """!
+    Transform Object flat faces to xbs notation (faces).
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return xbs notation (faces) and any error message.
+    """
     xbs = list()
     bm = utils.get_object_bmesh(context, ob, world=True)
     bm.faces.ensure_lookup_table()
@@ -107,7 +140,13 @@ def _ob_to_xbs_faces(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...),
 
 
 def _ob_to_xbs_edges(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform Object edges in XBs notation (edges)."""
+    """!
+    Transform Object edges in xbs notation (edges).
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return xbs notation (edges) and any error message.
+    """
     xbs = list()
     bm = utils.get_object_bmesh(context, ob, world=True)
     bm.edges.ensure_lookup_table()
@@ -142,7 +181,13 @@ _choice_to_xbs = {
 
 
 def ob_to_xbs(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
-    """Transform Object geometry according to ob.bf_xb to FDS notation."""
+    """!
+    Transform Object geometry according to ob.bf_xb (None, BBOX, VOXELS, FACES, PIXELS, EDGES) to FDS notation.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return the FDS notation and any error message.
+    """
     log.debug(ob.name)
     if ob.get("ob_to_xbs_cache") is None:  # recalc
         log.debug(f"Update <{ob.name}> xbs cache")
@@ -154,7 +199,13 @@ def ob_to_xbs(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'"
 
 
 def _ob_to_xyzs_vertices(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
-    """Transform Object vertices to xyzs notation."""
+    """!
+    Transform Object vertices to xyzs notation.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return the xyzs notation and any error message.
+    """
     xyzs = list()
     bm = utils.get_object_bmesh(context, ob, world=True)
     # For each vertex...
@@ -171,7 +222,13 @@ def _ob_to_xyzs_vertices(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg
 
 
 def _ob_to_xyzs_center(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
-    """Transform Object center to xyzs notation."""
+    """!
+    Transform Object center to xyzs notation.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return the xyzs notation and any error message.
+    """
     xyzs = [
         (
             ob.location[0] * scale_length,
@@ -187,7 +244,13 @@ _choice_to_xyzs = {"CENTER": _ob_to_xyzs_center, "VERTICES": _ob_to_xyzs_vertice
 
 
 def ob_to_xyzs(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
-    """Transform Object geometry according to ob.bf_xyz to xyzs notation."""
+    """!
+    Transform Object geometry according to ob.bf_xyz (None, CENTER, VERTICES) to xyzs notation.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return the xyzs notation and any error message.
+    """
     log.debug(ob.name)
     if ob.get("ob_to_xyzs_cache") is None:  # recalc
         log.debug(f"Update <{ob.name}> xyzs cache")
@@ -198,10 +261,14 @@ def ob_to_xyzs(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
 # to PB in Blender units
 
 
-def _ob_to_pbs_planes(
-    context, ob, scale_length
-) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
-    """Transform Object faces to pbs notation."""
+def _ob_to_pbs_planes(context, ob, scale_length) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
+    """!
+    Transform Object faces to pbs notation.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return the pbs notation and any error message.
+    """
     pbs = list()
     xbs, msg = _ob_to_xbs_faces(context, ob, scale_length)
     epsilon = 1e-5
@@ -225,7 +292,13 @@ def _ob_to_pbs_planes(
 
 
 def ob_to_pbs(context, ob, scale_length) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
-    """Transform Object geometry according to ob.bf_pb to pbs notation."""
+    """!
+    Transform Object geometry according to ob.bf_pb (None, PLANES) to pbs notation.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @return the pbs notation and any error message.
+    """
     log.debug(ob.name)
     if ob.get("ob_to_pbs_cache") is None:  # recalc
         log.debug(f"Update <{ob.name}> pbs cache")
