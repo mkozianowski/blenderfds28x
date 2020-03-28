@@ -1,3 +1,7 @@
+"""!
+BlenderFDS, ui classes
+"""
+
 # BlenderFDS, an open tool for the NIST Fire Dynamics Simulator
 # Copyright (C) 2013  Emanuele Gissi, http://www.blenderfds.org
 #
@@ -25,6 +29,11 @@ classes = list()
 
 
 def subscribe(cls):
+    """!
+    Subscribe class to related collection.
+    @param cls: the class to subscribe.
+    @return the class subscribed.
+    """
     classes.append(cls)
     return cls
 
@@ -58,12 +67,20 @@ classes_rm = (
 
 @subscribe
 class PROPERTIES_PT_navigation_bar(Panel):
+    """!
+    Navigation Bar
+    """
+
     bl_space_type = "PROPERTIES"
     bl_region_type = "NAVIGATION_BAR"
     bl_label = "Navigation Bar"
     bl_options = {"HIDE_HEADER"}
 
     def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         layout = self.layout
         view = context.space_data
         layout.scale_x = 1.4
@@ -87,10 +104,18 @@ class PROPERTIES_PT_navigation_bar(Panel):
 
 @subscribe
 class TOPBAR_MT_editor_menus(Menu):
+    """!
+    Editor menu
+    """
+
     bl_idname = "TOPBAR_MT_editor_menus"
     bl_label = ""
 
     def draw(self, _context):
+        """!
+        Draw UI elements into the menu UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
         layout = self.layout
         layout.menu("TOPBAR_MT_app", text="", icon="BLENDER")
         layout.menu("TOPBAR_MT_file")
@@ -103,6 +128,9 @@ class TOPBAR_MT_editor_menus(Menu):
 
 
 def register():
+    """!
+    Register classes and functions to bpy.
+    """
     from bpy.utils import register_class, unregister_class
 
     for cls in classes_rm:
@@ -117,5 +145,9 @@ def register():
         register_class(cls)
 
 
-def unregister():  # reload Blender
+def unregister():
+    """!
+    Unregister classes and functions to bpy.
+    """
+    # reload Blender
     pass

@@ -1,4 +1,6 @@
-"""BlenderFDS, geometric utilities."""
+"""!
+BlenderFDS, geometric utilities.
+"""
 
 import bpy, bmesh
 
@@ -8,10 +10,17 @@ from ..types import BFException
 # Working on Blender objects
 
 
-def get_object_bmesh(
-    context, ob, matrix=None, world=False, triangulate=False, lookup=False
-) -> "BMesh":
-    """Return evaluated object bmesh."""
+def get_object_bmesh(context, ob, matrix=None, world=False, triangulate=False, lookup=False) -> "BMesh":
+    """!
+    Return evaluated object bmesh.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param matrix: ???
+    @param world: ???
+    @param triangulate: ???
+    @param lookup: ???
+    @return the evaluated bmesh.
+    """
     # Check object and init
     if ob.type not in {"MESH", "CURVE", "SURFACE", "FONT", "META"}:
         raise BFException(ob, "Object cannnot be converted into mesh")
@@ -35,7 +44,13 @@ def get_object_bmesh(
 
 
 def get_tmp_object(context, ob, name="tmp"):
-    """Get a new tmp Object from ob."""
+    """!
+    Get a new tmp Object from ob.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param name: the new object name.
+    @return the temp object.
+    """
     # Create new tmp Object
     co_tmp = context.collection
     me_tmp = bpy.data.meshes.new(name)
@@ -49,6 +64,10 @@ def get_tmp_object(context, ob, name="tmp"):
 
 
 def rm_tmp_objects(context):
+    """!
+    ???
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    """
     mes = bpy.data.meshes
     for ob in context.scene.objects:
         if ob.bf_is_tmp:
@@ -65,18 +84,33 @@ def rm_tmp_objects(context):
 
 
 def get_new_material(context, name) -> "Material":
-    """Create new material, named name."""
+    """!
+    Create new material, named name.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param name: the new material name.
+    @return the new material.
+    """
     return bpy.data.materials.new(name)
 
 
 def get_material_by_name(context, name) -> "Material or None":
-    """Get a material by name and return it"""
+    """!
+    Get a material by name and return it.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param name: the material name.
+    @return the material if exist. None otherwise.
+    """
     if name and name in bpy.data.materials:
         return bpy.data.materials[name]
 
 
 def get_material(context, name) -> "Material or None":
-    """Get an existing material by name or create a new one, and return it"""
+    """!
+    Get an existing material by name or create a new one, and return it.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param name: the material name.
+    @return the material.
+    """
     if name and name in bpy.data.materials:
         return bpy.data.materials[name]
     return bpy.data.materials.new(name)
@@ -86,7 +120,14 @@ def get_material(context, name) -> "Material or None":
 
 
 def get_bbox_xbs(context, ob, scale_length, world=False) -> "x0, x1, y0, y1, z0, z1":
-    """Get object’s bounding box in xbs format."""
+    """!
+    Get object’s bounding box in xbs format.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @param world: ???
+    @return the object’s bounding box.
+    """
     if world:
         bm = get_object_bmesh(context, ob, world=True)
         bm.verts.ensure_lookup_table()

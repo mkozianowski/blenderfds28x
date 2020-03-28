@@ -1,4 +1,6 @@
-"""BlenderFDS, translate geometry from FDS notation to a Blender mesh."""
+"""!
+BlenderFDS, translate geometry from FDS notation to a Blender mesh.
+"""
 
 import bpy, logging
 from time import time
@@ -11,7 +13,15 @@ epsilon = 1e-5  # TODO unify epsilon mgmt
 
 
 def geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, me, scale_length):
-    """Import GEOM vertices ((x0,y0,z0,), ...) and faces ((1,2,3,), ...) into existing Blender Mesh."""
+    """!
+    Import GEOM vertices ((x0,y0,z0,), ...) and faces ((1,2,3,), ...) into existing Blender Mesh.
+    @param fds_surfids: the fds surf id.
+    @param fds_verts: the fds vertices.
+    @param fds_faces: the fds faces.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param me: the Blender Mesh.
+    @param scale_length: the scale to use.
+    """
     # Append material slots
     for i, surfid in enumerate(fds_surfids):
         found = False
@@ -53,7 +63,15 @@ def geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, me, scale_length):
 
 
 def geom_to_ob(fds_surfids, fds_verts, fds_faces, context, ob, scale_length):
-    """Import GEOM vertices ((x0,y0,z0,), ...) and faces ((1,2,3,), ...) into existing Blender Object."""
+    """!
+    Import GEOM vertices ((x0,y0,z0,), ...) and faces ((1,2,3,), ...) into existing Blender Mesh.
+    @param fds_surfids: the fds surf id.
+    @param fds_verts: the fds vertices.
+    @param fds_faces: the fds faces.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender Object.
+    @param scale_length: the scale to use.
+    """
     log.debug(ob.name)
     geom_to_mesh(fds_surfids, fds_verts, fds_faces, context, ob.data, scale_length)
 
@@ -62,7 +80,13 @@ def geom_to_ob(fds_surfids, fds_verts, fds_faces, context, ob, scale_length):
 
 
 def xbs_edges_to_mesh(xbs, context, me, scale_length):
-    """Import xbs edges ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Mesh."""
+    """!
+    Import xbs edges ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Mesh.
+    @param xbs: the xbs edges.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param me: the Blender Mesh.
+    @param scale_length: the scale to use.
+    """
     verts, edges, faces = list(), list(), list()
     for i, xb in enumerate(xbs):
         x0, x1, y0, y1, z0, z1 = (coo / scale_length for coo in xb)
@@ -73,7 +97,13 @@ def xbs_edges_to_mesh(xbs, context, me, scale_length):
 
 
 def xbs_faces_to_mesh(xbs, context, me, scale_length):
-    """Import xbs faces ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Mesh."""
+    """!
+    Import xbs faces ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Mesh.
+    @param xbs: the xbs edges.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param me: the Blender Mesh.
+    @param scale_length: the scale to use.
+    """
     verts, edges, faces = list(), list(), list()
     for i, xb in enumerate(xbs):
         x0, x1, y0, y1, z0, z1 = (coo / scale_length for coo in xb)
@@ -91,7 +121,13 @@ def xbs_faces_to_mesh(xbs, context, me, scale_length):
 
 
 def xbs_bbox_to_mesh(xbs, context, me, scale_length):
-    """Import xbs bboxes ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Mesh."""
+    """!
+    Import xbs bboxes ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Mesh.
+    @param xbs: the xbs edges.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param me: the Blender Mesh.
+    @param scale_length: the scale to use.
+    """
     verts, edges, faces = list(), list(), list()
     for i, xb in enumerate(xbs):
         x0, x1, y0, y1, z0, z1 = (coo / scale_length for coo in xb)
@@ -131,7 +167,16 @@ xbs_to_mesh = {
 
 
 def xbs_to_ob(xbs, context, ob, scale_length, ma=None, bf_xb=None) -> "bf_xb":
-    """Import xbs geometry ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Object."""
+    """!
+    Import xbs geometry ((x0,x1,y0,y1,z0,z1,), ...) into existing Blender Object.
+    @param xbs: the xbs edges.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @param ma: the active material.
+    @param bf_xb: the xb parameter between BBOX, VOXELS, FACES, PIXELS, EDGES
+    @return the new xb parameter between BBOX, VOXELS, FACES, PIXELS, EDGES
+    """
     log.debug(ob.name)
     if bf_xb:  # force bf_xb
         xbs_to_mesh[bf_xb](xbs, context, ob.data, scale_length)
@@ -151,7 +196,13 @@ def xbs_to_ob(xbs, context, ob, scale_length, ma=None, bf_xb=None) -> "bf_xb":
 
 
 def xyzs_to_mesh(xyzs, context, me, scale_length):
-    """Import xyzs vertices ((x0,y0,z0,), ...) into existing Blender Mesh."""
+    """!
+    Import xyzs vertices ((x0,y0,z0,), ...) into existing Blender Mesh.
+    @param xyzs: the xyzs vertices.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param me: the Blender Mesh.
+    @param scale_length: the scale to use.
+    """
     xyzs = tuple(
         (
             (xyz[0] / scale_length, xyz[1] / scale_length, xyz[2] / scale_length)
@@ -162,7 +213,15 @@ def xyzs_to_mesh(xyzs, context, me, scale_length):
 
 
 def xyzs_to_ob(xyzs, context, ob, scale_length, ma=None) -> "bf_xyz":
-    """Import xyzs vertices ((x0,y0,z0,), ...) into existing Blender Object."""
+    """!
+    Import xyzs vertices ((x0,y0,z0,), ...) into existing Blender Object.
+    @param xyzs: the xyzs vertices.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @param ma: the active material.
+    @return "VERTICES"
+    """
     xyzs_to_mesh(xyzs, context, ob.data, scale_length)
     if ma:
         ob.active_material = ma
@@ -173,7 +232,13 @@ def xyzs_to_ob(xyzs, context, ob, scale_length, ma=None) -> "bf_xyz":
 
 
 def pbs_to_mesh(pbs, context, me, scale_length):
-    """Import pbs planes ((0,x3,), (0,x7,), (1,y9,), ...) into existing Blender Mesh."""
+    """!
+    Import pbs planes ((0,x3,), (0,x7,), (1,y9,), ...) into existing Blender Mesh.
+    @param pbs: the pbs planes.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param me: the Blender Mesh.
+    @param scale_length: the scale to use.
+    """
     xbs = list()
     for pb in pbs:
         sl = scale_length
@@ -189,7 +254,15 @@ def pbs_to_mesh(pbs, context, me, scale_length):
 
 
 def pbs_to_ob(pbs, context, ob, scale_length, ma=None) -> "bf_pb":
-    """Import pbs planes ((0,x3,), (0,x7,), (1,y9,), ...) into existing Blender Object."""
+    """!
+    Import pbs planes ((0,x3,), (0,x7,), (1,y9,), ...) into existing Blender Object.
+    @param pbs: the pbs planes.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    @param ob: the Blender object.
+    @param scale_length: the scale to use.
+    @param ma: the active material.
+    @return "PLANES"
+    """
     pbs_to_mesh(pbs, context, ob.data, scale_length)
     if ma:
         ob.active_material = ma
