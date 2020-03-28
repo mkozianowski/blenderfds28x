@@ -777,6 +777,43 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
 
 # FIXME FIXME FIXME align meshes
 
+@subscribe
+class OBJECT_OT_bf_align_selected_meshes(Operator):
+    bl_label = "Align Selected"
+    bl_idname = "object.bf_align_selected_meshes"
+    bl_description = "Align selected MESHes to the current Object MESH"  # FIXME improve
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        return ob and ob.bf_namelist =="ON_MESH"  # FIXME
+
+    def invoke(self, context, event):  # Ask for confirmation
+        wm = context.window_manager
+        return wm.invoke_confirm(self, event)
+
+    def execute(self, context):
+        bpy.ops.object.mode_set(mode="OBJECT")
+        # Get source and destination objects
+        source_element = context.active_object
+        destination_elements = set(
+            ob
+            for ob in context.selected_objects
+            if ob.type == "MESH" and ob != source_element and ob.bf_namelist =="ON_MESH"
+        )
+        if not destination_elements:
+            self.report({"WARNING"}, "No destination Object")
+            return {"CANCELLED"}
+        if not source_element:
+            self.report({"WARNING"}, "No source Object")
+            return {"CANCELLED"}
+        # Align
+#        _bf_props_copy(context, source_element, destination_elements)
+        self.report({"INFO"}, "MESH Objects aligned")  # FIXME improve
+        return {"FINISHED"}
+
+
 # GIS
 
 

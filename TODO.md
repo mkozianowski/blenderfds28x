@@ -1,5 +1,7 @@
 # TODO
 
+Toolbox: MESH, mesh alignment
+
 Is copy working?
 
 unit testing (WUIFI-21)
@@ -7,8 +9,6 @@ unit testing (WUIFI-21)
 New Blender 2.8x website with MAECI logo
 
 Insert GEOREF in MISC, set a checkbox to avoid exporting
-
-Toolbox: MESH, mesh alignment
 
 automatic developer's doc with doxygen (WUIFI-21)
 

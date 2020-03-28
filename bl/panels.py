@@ -303,6 +303,7 @@ class VIEW3D_PT_BF_Object_Tools(Panel):
             box.label(
                 text=f"Qty: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
             )
+            col.operator("object.bf_align_selected_meshes")
 
 
 @subscribe
