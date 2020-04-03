@@ -365,22 +365,13 @@ class VIEW3D_PT_BF_Object_Tools(Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object
+        ob = context.object
+        return ob and not ob.bf_is_tmp
 
     def draw(self, context):
         layout = self.layout
         ob = context.object
         col = layout.column(align=True)
-        # Tmp object
-        if ob.bf_is_tmp:
-            col.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")  # FIXME
-            return
-        # Geolocation
-        col = layout.column(align=True)
-        col.prop(ob, "location")
-        row = col.row(align=True)
-        row.operator("scene.bf_set_ob_geoloc").show = False
-        row.operator("scene.bf_set_ob_geoloc", text="", icon="URL").show = True
         # GEOM operators
         if ob.bf_namelist_cls == "ON_GEOM":
             col = layout.column(align=True)
@@ -412,6 +403,34 @@ class VIEW3D_PT_BF_Object_Tools(Panel):
                 text=f"Qty: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
             )
             col.operator("object.bf_align_selected_meshes")
+
+
+@subscribe
+class VIEW3D_PT_BF_Object_Geolocation(Panel):
+    """!
+    Object Geolocation
+    """
+
+    bl_idname = "VIEW3D_PT_bf_object_geolocation"
+    bl_context = "objectmode"
+    bl_category = "FDS"
+    bl_label = "Object Geolocation"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.object
+        return ob and not ob.bf_is_tmp
+
+    def draw(self, context):
+        layout = self.layout
+        ob = context.object
+        col = layout.column(align=True)
+        col.prop(ob, "location")
+        row = col.row(align=True)
+        row.operator("scene.bf_set_ob_geoloc").show = False
+        row.operator("scene.bf_set_ob_geoloc", text="", icon="URL").show = True
 
 
 @subscribe

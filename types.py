@@ -244,7 +244,7 @@ class BFParam:
         """
         pass
 
-    def draw_operators(self, context, layout):  # FIXME used?
+    def draw_operators(self, context, layout):
         """!
         Draw operators on layout.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -274,9 +274,6 @@ class BFParam:
         self.draw_operators(context, row)
         if self.bpy_export:
             row.prop(self.element, self.bpy_export, text="")
-        # else:  # FIXME used?
-        #     col.prop(self.element, self.bpy_idname, text=self.label)
-        #     self.draw_operators(context, row)
         return col
 
     def to_fds_param(self, context) -> "None, FDSParam, or ((FDSParam, ...), ...)":

@@ -201,6 +201,12 @@ class SP_config_text(BFParam):
     bpy_prop = PointerProperty
     bpy_other = {"type": bpy.types.Text}
 
+    def draw_operators(self, context, layout):
+        """!
+        ???
+        """
+        layout.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")
+
 
 @subscribe
 class SN_config(BFNamelistSc):
@@ -209,21 +215,7 @@ class SN_config(BFNamelistSc):
     """
 
     label = "FDS Case Config"
-
-    def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        """
-        sc = self.element
-        col = layout.column()
-        col.prop(sc, "bf_config_directory")
-        row = col.row(align=True)
-        row.prop(sc, "bf_config_text")
-        row.operator(
-            "scene.bf_show_text", text="", icon="GREASEPENCIL"
-        )  # TODO port to draw_operators
+    bf_params = (SP_config_directory, SP_config_text)
 
 
 # Config origin geolocation
