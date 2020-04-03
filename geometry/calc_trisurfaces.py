@@ -95,17 +95,14 @@ def _get_epsilons(context):  # FIXME test
     """
     sc = context.scene
     prefs = context.preferences.addons[__package__.split(".")[0]].preferences
-    min_edge_length = (
+    return (
         sc.bf_config_min_edge_length_export
         and sc.bf_config_min_edge_length
-        or prefs.min_edge_length
-    )
-    min_face_area = (
+        or prefs.min_edge_length,
         sc.bf_config_min_face_area_export
         and sc.bf_config_min_face_area
         or prefs.min_face_area,
-    )
-    return min_edge_length, min_face_area
+    )  # min_edge_length, min_face_area
 
 
 def _check_bm_sanity(context, ob, bm, protect):

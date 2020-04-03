@@ -108,7 +108,9 @@ class WM_OT_bf_load_blenderfds_settings(Operator):
         - "INTERFACE" handled but not executed (popup menus).
         """
         # Set default startup.blend
-        filepath = os.path.dirname(sys.modules[__package__].__file__) + "/../startup.blend"
+        filepath = (
+            os.path.dirname(sys.modules[__package__].__file__) + "/../startup.blend"
+        )
         bpy.ops.wm.open_mainfile(filepath=filepath, load_ui=True, use_scripts=True)
         bpy.ops.wm.save_homefile()
         # Save user preferences
@@ -546,7 +548,7 @@ class OBJECT_OT_bf_hide_fds_geometry(Operator):
         - "PASS_THROUGH" do nothing and pass the event on.
         - "INTERFACE" handled but not executed (popup menus).
         """
-        geometry.utils.rm_tmp_objects(context)
+        geometry.utils.rm_tmp_objects()
         self.report({"INFO"}, "Temporary geometry hidden")
         return {"FINISHED"}
 
@@ -1207,6 +1209,7 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
 
 # FIXME FIXME FIXME align meshes
 
+
 @subscribe
 class OBJECT_OT_bf_align_selected_meshes(Operator):
     bl_label = "Align Selected"
@@ -1217,7 +1220,7 @@ class OBJECT_OT_bf_align_selected_meshes(Operator):
     @classmethod
     def poll(cls, context):
         ob = context.active_object
-        return ob and ob.bf_namelist =="ON_MESH"  # FIXME
+        return ob and ob.bf_namelist == "ON_MESH"  # FIXME
 
     def invoke(self, context, event):  # Ask for confirmation
         wm = context.window_manager
@@ -1230,7 +1233,9 @@ class OBJECT_OT_bf_align_selected_meshes(Operator):
         destination_elements = set(
             ob
             for ob in context.selected_objects
-            if ob.type == "MESH" and ob != source_element and ob.bf_namelist =="ON_MESH"
+            if ob.type == "MESH"
+            and ob != source_element
+            and ob.bf_namelist == "ON_MESH"
         )
         if not destination_elements:
             self.report({"WARNING"}, "No destination Object")
@@ -1239,7 +1244,7 @@ class OBJECT_OT_bf_align_selected_meshes(Operator):
             self.report({"WARNING"}, "No source Object")
             return {"CANCELLED"}
         # Align
-#        _bf_props_copy(context, source_element, destination_elements)
+        #        _bf_props_copy(context, source_element, destination_elements)
         self.report({"INFO"}, "MESH Objects aligned")  # FIXME improve
         return {"FINISHED"}
 

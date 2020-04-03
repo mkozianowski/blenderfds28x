@@ -531,8 +531,6 @@ class SN_config_sizes(BFNamelistSc):
     )
 
 
-# FIXME cache geometry
-
 # Config units
 
 
@@ -1709,13 +1707,8 @@ def update_OP_namelist_cls(ob, context):
     """!
     ???
     """
-    # Remove cache and tmp objects
-    ob["ob_to_geom_cache"] = None
-    ob["ob_to_xbs_cache"] = None
-    ob["ob_to_xyzs_cache"] = None
-    ob["ob_to_pbs_cache"] = None
-    geometry.utils.rm_tmp_objects(context)
-    # Set default appearance
+    geometry.utils.rm_geometric_cache(ob=ob)
+    geometry.utils.rm_tmp_objects()
     ob.set_default_appearance(context)
 
 
@@ -1771,7 +1764,7 @@ def update_bf_xb(ob, context):
     """
     # Remove cache and tmp objects
     ob["ob_to_xbs_cache"] = None
-    geometry.utils.rm_tmp_objects(context)
+    geometry.utils.rm_tmp_objects()
     # Prevent double multiparam
     if ob.bf_xb in ("VOXELS", "FACES", "PIXELS", "EDGES") and ob.bf_xb_export:
         if ob.bf_xyz == "VERTICES":
@@ -1986,7 +1979,7 @@ def update_bf_xyz(ob, context):
     """
     # Remove cache and tmp objects
     ob["ob_to_xyzs_cache"] = None
-    geometry.utils.rm_tmp_objects(context)
+    geometry.utils.rm_tmp_objects()
     # Prevent double multiparam
     if ob.bf_xyz == "VERTICES" and ob.bf_xyz_export:
         if ob.bf_xb in ("VOXELS", "FACES", "PIXELS", "EDGES"):
@@ -2114,8 +2107,8 @@ class OP_XYZ_center(OP_XYZ):
 
 def update_bf_pb(ob, context):
     # Remove cache and tmp objects
-    geometry.utils.rm_tmp_objects(context)
     ob["ob_to_pbs_cache"] = None
+    geometry.utils.rm_tmp_objects()
     # Prevent double multiparam
     if ob.bf_pb == "PLANES" and ob.bf_pb_export:
         if ob.bf_xb in ("VOXELS", "FACES", "PIXELS", "EDGES"):
@@ -2174,7 +2167,9 @@ class OP_PB(BFParamPB):
         scale_length = context.scene.unit_settings.scale_length
         pbs, msg = geometry.to_fds.ob_to_pbs(context, ob, scale_length)
         # Prepare labels
-        labels = tuple(f"PB{('X','Y','Z')[axis]}" for axis, _ in pbs)
+        labels = tuple(
+            f"PB{('X','Y','Z')[int(axis)]}" for axis, _ in pbs
+        )  # FIXME int to protect from float
         # Single param
         if len(pbs) == 1:
             return FDSParam(label=labels[0], values=(pbs[0][1],), precision=6)

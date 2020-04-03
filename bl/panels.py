@@ -325,6 +325,7 @@ class VIEW3D_PT_BF_Scene_Tools(Panel):
     """!
     Scene Tools
     """
+
     bl_idname = "VIEW3D_PT_bf_scene_tools"
     #    bl_context = "objectmode"
     bl_category = "FDS"
@@ -464,6 +465,7 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
     """!
     Object Remesh
     """
+
     # See: properties_data_mesh.py, class DATA_PT_remesh
 
     bl_idname = "VIEW3D_PT_bf_fix_toolbar_object"
@@ -501,10 +503,10 @@ class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
         if me.remesh_mode == "VOXEL":
             col.prop(me, "remesh_voxel_size")
             col.prop(me, "remesh_voxel_adaptivity")
-            col.prop(me, "remesh_fix_poles")
-            col.prop(me, "remesh_smooth_normals")
-            col.prop(me, "remesh_preserve_volume")
-            # col.prop(me, "remesh_preserve_paint_mask")
+            col.prop(me, "use_remesh_fix_poles")
+            col.prop(me, "use_remesh_smooth_normals")
+            col.prop(me, "use_remesh_preserve_volume")
+            # col.prop(me, "use_remesh_preserve_paint_mask")
             col.operator("object.voxel_remesh", text="Voxel Remesh")
         else:
             col.operator("object.quadriflow_remesh", text="QuadriFlow Remesh")
@@ -559,6 +561,7 @@ class VIEW3D_PT_BF_view3d_cursor(Panel):
     """!
     3D Cursor
     """
+
     # See: space_view3d.py, class VIEW3D_PT_view3d_cursor
 
     bl_space_type = "VIEW_3D"
