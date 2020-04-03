@@ -3306,10 +3306,12 @@ class BFScene:
         ???
         TODO
         """
-        addon = context.preferences.addons[__package__]
-        if not addon:  # when called at start, the addon is not existing
+        preferences = getattr(context, "preferences", None)
+        if (
+            not preferences
+        ):  # when called at start, the preferences are not existing yet
             return
-        prefs = addon.preferences
+        prefs = preferences.addons[__package__].preferences
         if not prefs.bf_pref_appearance:
             return
         # TODO define default appearance for Scene
