@@ -108,7 +108,7 @@ class WM_OT_bf_load_blenderfds_settings(Operator):
         - "INTERFACE" handled but not executed (popup menus).
         """
         # Set default startup.blend
-        filepath = os.path.dirname(sys.modules[__package__].__file__) + "/default.blend"
+        filepath = os.path.dirname(sys.modules[__package__].__file__) + "/../startup.blend"
         bpy.ops.wm.open_mainfile(filepath=filepath, load_ui=True, use_scripts=True)
         bpy.ops.wm.save_homefile()
         # Save user preferences
