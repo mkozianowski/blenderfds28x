@@ -2451,9 +2451,24 @@ class OP_GEOM_check_sanity(BFParam):
     bpy_prop = BoolProperty
     bpy_default = True
 
+    def draw(self, context, layout):
+        """!
+        Draw self UI on layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
+        """
+        ob = self.element
+        me = ob.data
+        material_slots = ob.material_slots
+        row = layout.row()
+        row.label(
+            text=f"SURF_ID: {len(material_slots)} | VERTS: {len(me.vertices)} | FACES: {len(me.polygons)}"
+        )
+        layout.prop(ob, "bf_geom_check_sanity")
+
 
 @subscribe
-class OP_GEOM_protect(BFParam):
+class OP_GEOM_protect(BFParam):  # FIXME should not be here
     """!
     Blender representation to protect original Object geometry while checking its sanity.
     """
@@ -2874,6 +2889,22 @@ class OP_MESH_IJK(BFParam):
     bpy_export = "bf_mesh_ijk_export"
     bpy_export_default = True
 
+    def draw(self, context, layout):
+        ob = context.object
+        col = layout.column()
+        scale_length = context.scene.unit_settings.scale_length
+        xbs = geometry.utils.get_bbox_xbs(
+            context=context, ob=ob, scale_length=scale_length
+        )
+        has_good_ijk, cs, cell_count, cell_aspect_ratio = fds.mesh_tools.calc_cell_infos(
+            ijk=ob.bf_mesh_ijk, xbs=xbs
+        )
+        col.label(text=f"Cell Size: {cs[0]:.3f}m x {cs[1]:.3f}m x {cs[2]:.3f}m")
+        col.label(
+            text=f"Cell Qty: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
+        )
+        super().draw(context, layout)
+
     def to_fds_param(self, context):
         ob = self.element
         if not ob.bf_mesh_ijk_export:
@@ -2886,7 +2917,7 @@ class OP_MESH_IJK(BFParam):
         has_good_ijk, cs, cell_count, cell_aspect_ratio = fds.mesh_tools.calc_cell_infos(
             ijk=ob.bf_mesh_ijk, xbs=xbs
         )
-        msg = f"Cell Sizes: {cs[0]:.3f} m, {cs[1]:.3f} m, {cs[2]:.3f} m | Count: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
+        msg = f"Cell Size: {cs[0]:.3f} m, {cs[1]:.3f} m, {cs[2]:.3f} m | Qty: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
         return FDSParam(label="IJK", values=ob.bf_mesh_ijk, msg=msg)
 
 
