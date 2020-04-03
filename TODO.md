@@ -1,5 +1,9 @@
 # TODO
 
+GEOM minimum face area default lower
+
+GEOM MOVE
+
 Toolbox: MESH, mesh alignment
 
 Is copy working?

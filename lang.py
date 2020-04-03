@@ -61,7 +61,7 @@ from . import gis, utils, fds
 
 log = logging.getLogger(__name__)
 
-# Collections
+# General collections
 
 bf_namelists = list()
 bf_params = list()
@@ -76,7 +76,7 @@ def subscribe(cls):
     """!
     Subscribe class to related collection.
     """
-    
+
     if issubclass(cls, BFNamelist):
         bf_namelists.append(cls)
         bf_namelists_by_cls[cls.__name__] = cls
@@ -91,6 +91,7 @@ def subscribe(cls):
     return cls
 
 
+# Prepare for "Other" and "List of filepaths" parameters
 # PropertyGroup and UIList
 # The PG properties should always be: bf_export, name
 
@@ -100,6 +101,7 @@ class WM_PG_bf_other(PropertyGroup):
     """!
     Blender representation for the other parameters.
     """
+
     bf_export: BoolProperty(name="Export", default=True)
     name: StringProperty(name="Name")
 
@@ -132,6 +134,7 @@ class WM_PG_bf_filepaths(PropertyGroup):
     """!
     Blender representation for the filepaths.
     """
+
     bf_export: BoolProperty(name="Export", default=False)
     name: StringProperty(name="Name", subtype="FILE_PATH")
 
@@ -167,7 +170,7 @@ class SP_config_directory(BFParam):
     """!
     Blender representation for the destination directory of the exported case.
     """
-    
+
     label = "Case Directory"
     description = "Destination directory for exported case"
     bpy_type = Scene
@@ -190,7 +193,7 @@ class SP_config_text(BFParam):
     """!
     Blender representation for the internal free text, included verbatim.
     """
-    
+
     label = "Free Text"
     description = "Internal free text, included verbatim"
     bpy_type = Scene
@@ -204,7 +207,7 @@ class SN_config(BFNamelistSc):
     """!
     Blender representation for the FDS Case Config.
     """
-    
+
     label = "FDS Case Config"
 
     def draw(self, context, layout):
@@ -218,7 +221,9 @@ class SN_config(BFNamelistSc):
         col.prop(sc, "bf_config_directory")
         row = col.row(align=True)
         row.prop(sc, "bf_config_text")
-        row.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")  # TODO port to draw_operators
+        row.operator(
+            "scene.bf_show_text", text="", icon="GREASEPENCIL"
+        )  # TODO port to draw_operators
 
 
 # Config origin geolocation
@@ -229,7 +234,7 @@ class SP_crs(BFParam):
     """!
     Blender representation for the coordinate reference system.
     """
-    
+
     label = "Coordinate Reference System"
     description = "Coordinate reference system"
     bpy_type = Scene
@@ -283,7 +288,7 @@ class SP_geoname(BFParam):
     """!
     Blender representation for the origin location geographic name.
     """
-    
+
     label = "Origin Geoname"
     description = "Origin location geographic name"
     bpy_type = Scene
@@ -297,7 +302,7 @@ class SP_lon(BFParam):
     """!
     Blender representation for the longitude (WGS84, EPSG:4326) of world origin in decimal degrees.
     """
-    
+
     label = "Origin Longitude"
     description = "Longitude (WGS84, EPSG:4326) of world origin in decimal degrees"
     bpy_type = Scene
@@ -312,7 +317,7 @@ class SP_lat(BFParam):
     """!
     Blender representation for the latitude (WGS84, EPSG:4326) of world origin in decimal degrees.
     """
-    
+
     label = "Origin Latitude"
     description = "Latitude (WGS84, EPSG:4326) of world origin in decimal degrees"
     bpy_type = Scene
@@ -327,7 +332,7 @@ class SP_utm_zn(BFParam):
     """!
     Blender representation for the UTM Zone Number (WGS84) of world origin.
     """
-    
+
     label = "Origin UTM Zone Number"
     description = "UTM Zone Number (WGS84) of world origin"
     bpy_type = Scene
@@ -342,7 +347,7 @@ class SP_utm_ne(BFParam):
     """!
     Blender representation for the UTM northern emisphere (WGS84) of world origin.
     """
-    
+
     label = "Origin UTM Northern Emisphere"
     description = "UTM northern emisphere (WGS84) of world origin"
     bpy_type = Scene
@@ -357,7 +362,7 @@ class SP_utm_easting(BFParam):
     """!
     Blender representation for the UTM easting (WGS84) of world origin.
     """
-    
+
     label = "Origin UTM Easting"
     description = "UTM easting (WGS84) of world origin"
     bpy_type = Scene
@@ -372,7 +377,7 @@ class SP_utm_northing(BFParam):
     """!
     Blender representation for the UTM northing (WGS84) of world origin.
     """
-    
+
     label = "Origin UTM Northing"
     description = "UTM northing (WGS84) of world origin"
     bpy_type = Scene
@@ -387,7 +392,7 @@ class SP_elevation(BFParam):
     """!
     Blender representation for the Elevation of world origin.
     """
-    
+
     label = "Origin Elevation"
     description = "Elevation of world origin"
     bpy_type = Scene
@@ -402,7 +407,7 @@ class SN_config_geoloc(BFNamelistSc):
     """!
     Blender representation for the origin geolocation.
     """
-    
+
     label = "Origin Geolocation"
 
     def draw(self, context, layout):
@@ -434,6 +439,21 @@ class SN_config_geoloc(BFNamelistSc):
 
 
 # Config sizes
+# FIXME move to preferences
+
+
+@subscribe
+class SP_config_min_edge_length_export(BFParam):
+    """!
+    Blender representation to use custom min allowed edge length.
+    """
+
+    label = "Use Custom Min Edge Length"
+    description = "Use custom min allowed edge length for current case"
+    bpy_type = Scene
+    bpy_idname = "bf_config_min_edge_length_export"
+    bpy_prop = BoolProperty
+    bpy_default = False
 
 
 @subscribe
@@ -441,14 +461,29 @@ class SP_config_min_edge_length(BFParam):
     """!
     Blender representation for the min allowed edge length.
     """
-    
+
     label = "Min Edge Length"
-    description = "Min allowed edge length"
+    description = "Min allowed edge length for current case"
     bpy_type = Scene
     bpy_idname = "bf_config_min_edge_length"
     bpy_prop = FloatProperty
     bpy_default = 1e-05
     bpy_other = {"unit": "LENGTH"}
+    bpy_export = "bf_config_min_edge_length_export"
+
+
+@subscribe
+class SP_config_min_face_area_export(BFParam):
+    """!
+    Blender representation to use custom min allowed face area.
+    """
+
+    label = "Use Custom Min Face Area"
+    description = "Use custom min allowed face area for current case"
+    bpy_type = Scene
+    bpy_idname = "bf_config_min_face_area_export"
+    bpy_prop = BoolProperty
+    bpy_default = False
 
 
 @subscribe
@@ -456,14 +491,15 @@ class SP_config_min_face_area(BFParam):
     """!
     Blender representation for the min allowed face area.
     """
-    
+
     label = "Min Face Area"
-    description = "Min allowed face area"
+    description = "Min allowed face area for current case"
     bpy_type = Scene
     bpy_idname = "bf_config_min_face_area"
     bpy_prop = FloatProperty
-    bpy_default = 1e-05
+    bpy_default = 1e-07
     bpy_other = {"unit": "AREA"}
+    bpy_export = "bf_config_min_face_area_export"
 
 
 @subscribe
@@ -471,7 +507,7 @@ class SP_config_default_voxel_size(BFParam):
     """!
     Blender representation for the default voxel/pixel resolution.
     """
-    
+
     label = "Voxel/Pixel Size"
     description = "Default voxel/pixel resolution"
     bpy_type = Scene
@@ -486,20 +522,14 @@ class SN_config_sizes(BFNamelistSc):
     """!
     Blender representation for the default Sizes and Thresholds.
     """
-    
-    label = "Default Sizes and Thresholds"
 
-    def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        """
-        sc = self.element
-        col = layout.column()
-        col.prop(sc, "bf_default_voxel_size")
-        col.prop(sc, "bf_config_min_edge_length")
-        col.prop(sc, "bf_config_min_face_area")
+    label = "Default Sizes and Thresholds"
+    bf_params = (
+        SP_config_min_edge_length,
+        SP_config_min_face_area,
+        SP_config_default_voxel_size,
+    )
+
 
 # FIXME cache geometry
 
@@ -511,7 +541,7 @@ class SN_config_units(BFNamelistSc):
     """!
     Blender representation for the units.
     """
-    
+
     label = "Units"
 
     def draw(self, context, layout):
@@ -699,6 +729,7 @@ class SP_TIME_other(BFParamOther):
     """!
     ???
     """
+
     bpy_type = Scene
     bpy_idname = "bf_time_other"
     bpy_pg = WM_PG_bf_other
@@ -729,6 +760,7 @@ class SP_MISC_FYI(BFParamFYI):
     """!
     Blender representation of the FYI parameter.
     """
+
     bpy_type = Scene
     bpy_idname = "bf_misc_fyi"
 
@@ -768,6 +800,7 @@ class SP_MISC_other(BFParamOther):
     """!
     ???
     """
+
     bpy_type = Scene
     bpy_idname = "bf_misc_other"
     bpy_pg = WM_PG_bf_other
@@ -794,9 +827,11 @@ class SN_MISC(BFNamelistSc):
     )
     maxlen = 0
 
+
 # FIXME MOVE namelist
 
 # REAC
+
 
 @subscribe
 class SP_REAC_ID(BFParamStr):
@@ -810,16 +845,19 @@ class SP_REAC_ID(BFParamStr):
     bpy_type = Scene
     bpy_idname = "bf_reac_id"
 
+
 @subscribe
 class SP_REAC_FYI(BFParamFYI):
     """!
     Blender representation of the FYI parameter.
     """
+
     bpy_type = Scene
     bpy_idname = "bf_reac_fyi"
 
+
 @subscribe
-class SP_REAC_FUEL(BFParamStr): 
+class SP_REAC_FUEL(BFParamStr):
     """!
     Blender representation of the FUEL string parameter, the identificator of fuel species.
     FIXME from table
@@ -904,6 +942,7 @@ class SP_REAC_IDEAL(BFParam):
     bpy_prop = BoolProperty
     bpy_idname = "bf_reac_ideal"
 
+
 @subscribe
 class SP_REAC_RADIATIVE_FRACTION(BFParam):
     """!
@@ -922,11 +961,13 @@ class SP_REAC_RADIATIVE_FRACTION(BFParam):
     bpy_prop = FloatProperty
     bpy_other = {"precision": 2, "min": 0.0, "max": 1.0}
 
+
 @subscribe
 class SP_REAC_other(BFParamOther):
     """!
     ???
     """
+
     bpy_type = Scene
     bpy_idname = "bf_reac_other"
     bpy_pg = WM_PG_bf_other
@@ -944,6 +985,7 @@ class SN_REAC(BFNamelistSc):
     enum_id = 3004
     fds_label = "REAC"
     bpy_export = "bf_reac_export"
+    bpy_export_default = False
     bf_params = (
         SP_REAC_ID,
         SP_REAC_FUEL,
@@ -967,6 +1009,7 @@ class SP_RADI_FYI(BFParamFYI):
     """!
     Blender representation of the FYI parameter.
     """
+
     bpy_type = Scene
     bpy_idname = "bf_radi_fyi"
 
@@ -1055,6 +1098,7 @@ class SP_RADI_other(BFParamOther):
     """!
     ???
     """
+
     bpy_type = Scene
     bpy_idname = "bf_radi_other"
     bpy_pg = WM_PG_bf_other
@@ -1093,6 +1137,7 @@ class SP_DUMP_FYI(BFParamFYI):
     """!
     Blender representation of the FYI parameter.
     """
+
     bpy_type = Scene
     bpy_idname = "bf_dump_fyi"
 
@@ -1127,7 +1172,8 @@ class SP_DUMP_render_file(BFParam):
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param value: value to set.
         """
-        self.element.bf_dump_render_file = bool(value)         
+        self.element.bf_dump_render_file = bool(value)
+
 
 @subscribe
 class SP_DUMP_STATUS_FILES(BFParam):
@@ -1195,6 +1241,7 @@ class SP_DUMP_other(BFParamOther):
     """!
     ???
     """
+
     bpy_type = Scene
     bpy_idname = "bf_dump_other"
     bpy_pg = WM_PG_bf_other
@@ -1296,6 +1343,7 @@ class SP_CATF_files(BFParamOther):
             for v in value:
                 self.set_value(context, v)
 
+
 @subscribe
 class SN_CATF(BFNamelistSc):
     """!
@@ -1370,6 +1418,7 @@ class MP_FYI(BFParamFYI):
     """!
     Blender representation of the FYI parameter for materials.
     """
+
     bpy_type = Material
     bpy_idname = "bf_fyi"
 
@@ -1609,6 +1658,7 @@ class MP_other(BFParamOther):
     """!
     ???
     """
+
     bpy_type = Material
     bpy_idname = "bf_other"
     bpy_pg = WM_PG_bf_other
@@ -1710,6 +1760,7 @@ class OP_FYI(BFParamFYI):
     """!
     Blender representation of the FYI parameter for objects.
     """
+
     bpy_type = Object
     bpy_idname = "bf_fyi"
 
@@ -1796,6 +1847,7 @@ class OP_XB_export(BFParam):
     bpy_prop = BoolProperty
     bpy_default = True
     bpy_other = {"update": update_bf_xb}
+
 
 @subscribe
 class OP_XB(BFParamXB):
@@ -1902,6 +1954,7 @@ class OP_XB(BFParamXB):
             self.element.bf_xb = bf_xb
             self.element.bf_xb_export = True
             self.set_exported(context, True)
+
 
 @subscribe
 class OP_XB_BBOX(OP_XB):
@@ -2315,6 +2368,7 @@ class OP_other(BFParamOther):
     """!
     ???
     """
+
     bpy_type = Object
     bpy_idname = "bf_other"
     bpy_pg = WM_PG_bf_other
@@ -2366,6 +2420,7 @@ class ON_other(BFNamelistOb):
     """!
     ???
     """
+
     label = "Other"
     description = "Other namelist"
     enum_id = 1007
@@ -2479,7 +2534,7 @@ class OP_GEOM(BFParam):
 
 
 @subscribe
-class OP_GEOM_IS_TERRAIN(BFParam):  
+class OP_GEOM_IS_TERRAIN(BFParam):
     """!
     Blender representation of the IS_TERRAIN parameter to set if it represents a terrain.
     FIXME.
@@ -2560,6 +2615,7 @@ class ON_HOLE(BFNamelistOb):
 
 # VENT
 
+
 @subscribe
 class OP_VENT_OBST_ID(BFParam):
     """!
@@ -2587,7 +2643,7 @@ class OP_VENT_OBST_ID(BFParam):
 
     def set_value(self, context, value):
         """!
-        Set value. If value is None, set defaul.
+        Set value. If value is None, set default.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param value: value to set.
         """
@@ -2836,7 +2892,9 @@ class OP_MESH_IJK(BFParam):
         if not ob.bf_mesh_ijk_export:
             return
         xbs = geometry.utils.get_bbox_xbs(
-            context=context, ob=ob, scale_length=context.scene.unit_settings.scale_length
+            context=context,
+            ob=ob,
+            scale_length=context.scene.unit_settings.scale_length,
         )
         has_good_ijk, cs, cell_count, cell_aspect_ratio = fds.mesh_tools.calc_cell_infos(
             ijk=ob.bf_mesh_ijk, xbs=xbs
@@ -3060,7 +3118,7 @@ class BFMaterial:
     """!
     Extension of Blender Material.
     """
-    
+
     @property
     def bf_namelist(self):
         """!
@@ -3198,7 +3256,7 @@ class BFScene:
             hid = f"New {fds_namelist.label}"
             ma = bpy.data.materials.new(hid)
             ma.from_fds(context, fds_namelist=fds_namelist)
-            ma.use_fake_user = True # prevent del (eg. used by PART)
+            ma.use_fake_user = True  # prevent del (eg. used by PART)
             ma.set_default_appearance(context)
         # Then the rest FIXME improve
         for fds_namelist in fds_case.fds_namelists:
@@ -3248,10 +3306,13 @@ class BFScene:
         ???
         TODO
         """
-        prefs = context.preferences.addons[__package__].preferences
+        addon = context.preferences.addons[__package__]
+        if not addon:  # when called at start, the addon is not existing
+            return
+        prefs = addon.preferences
         if not prefs.bf_pref_appearance:
             return
-        pass
+        # TODO define default appearance for Scene
 
     @classmethod
     def register(cls):
@@ -3344,9 +3405,7 @@ def register():
         description="Set if this Object has tmp companions",
         default=False,
     )
-    Scene.bf_file_version = IntVectorProperty(
-        name="BlenderFDS File Version", size=3,
-    )
+    Scene.bf_file_version = IntVectorProperty(name="BlenderFDS File Version", size=3)
     # params and namelists
     for cls in bf_params:
         cls.register()
