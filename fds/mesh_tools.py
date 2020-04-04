@@ -92,7 +92,6 @@ def _align_along_axis(ri, rx0, rx1, mi, mx0, mx1, poisson=False, protect_rl=Fals
     mx0 = rx0 + round((mx0 - rx0) / mcs) * mcs
     ml = mcs * mi  # extend other mesh due to updated mi
     mx1 = mx0 + ml
-    print("n:", n, "rcs:", rcs, "mcs:", mcs)  # FIXME
     return ri, rx0, rx1, mi, mx0, mx1
 
 
@@ -172,42 +171,47 @@ def align_meshes(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
         abs(rxbs[2] - rxbs[3]) / rijk[1],
         abs(rxbs[4] - rxbs[5]) / rijk[2],
     )
+    msgs = list()
     # Are meshes far apart?
     if _is_far(rxbs=rxbs, mxbs=mxbs, deltas=deltas):
-        print("Meshes are far apart, no modification")  # FIXME
-        return rijk, rxbs, mijk, mxbs
+        msgs.append("Far apart, alignment not needed")
+        return rijk, rxbs, mijk, mxbs, msgs
+    else:
+        msgs.append("Close enough, alignment needed")
+    if protect_rl:
+        msgs.append("Ref MESH cell size updated, Object size untouched")  # FIXME
+    else:
+        msgs.append("Ref MESH size updated, cell size untouched")
     # If mesh sides are close, then snap them
     # otherwise align their meshes
     if abs(rxbs[0] - mxbs[1]) <= deltas[0]:  # -x close?
-        print("Snapping -x")
+        msgs.append(f"Close enough at ref x0, snapped")
         mxbs[1] = rxbs[0]
     elif abs(mxbs[0] - rxbs[1]) <= deltas[0]:  # +x close?
-        print("Snapping +x")
+        msgs.append(f"Close enough at ref x1, snapped")
         mxbs[0] = rxbs[1]
     else:
-        print("Aligning x")
+        msgs.append("Aligned along x axis")
         _align_along_x(rijk, rxbs, mijk, mxbs, poisson, protect_rl)
     if abs(rxbs[2] - mxbs[3]) <= deltas[1]:  # -y close?
-        print("Snapping -y")
+        msgs.append(f"Close enough at ref y0, snapped")
         mxbs[3] = rxbs[2]
     elif abs(mxbs[2] - rxbs[3]) <= deltas[1]:  # +y close?
-        print("Snapping +y")
+        msgs.append(f"Close enough at ref y1, snapped")
         mxbs[2] = rxbs[3]
     else:
-        print("Aligning y")
+        msgs.append("Aligned along y axis")
         _align_along_y(rijk, rxbs, mijk, mxbs, poisson, protect_rl)
     if abs(rxbs[4] - mxbs[5]) <= deltas[2]:  # -z close?
-        print("Snapping -z")
+        msgs.append(f"Close enough at ref z0, snapped")
         mxbs[5] = rxbs[4]
     elif abs(mxbs[4] - rxbs[5]) <= deltas[2]:  # +z close?
-        print("Snapping +z")
+        msgs.append(f"Close enough at ref z1, snapped")
         mxbs[4] = rxbs[5]
     else:
-        print("Aligning z")
+        msgs.append("Aligned along z axis")
         _align_along_z(rijk, rxbs, mijk, mxbs, poisson, protect_rl)
-    print("ref:", rijk, rxbs)  # FIXME
-    print("oth:", mijk, mxbs)
-    return rijk, rxbs, mijk, mxbs
+    return rijk, rxbs, mijk, mxbs, msgs
 
 
 def calc_poisson_ijk(ijk):
@@ -278,14 +282,15 @@ def calc_cell_infos(ijk, xbs):
 
 def test():
     print("Test")
-    align_meshes(
+    rijk, rxbs, mijk, mxbs, msgs = align_meshes(
         rijk=[15, 37, 51],
         rxbs=[0, 5, 0, 5, 0, 5],
         mijk=[9, 38, 20],
-        mxbs=[0, 5, -5, 0, -5, 0],
+        mxbs=[0, 5, 0, 5, 5, 10],
         poisson=True,
         protect_rl=True,
     )
+    print(rijk, rxbs, mijk, mxbs, msgs)
 
 
 if __name__ == "__main__":

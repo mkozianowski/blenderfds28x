@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 
 class BFException(Exception):
     """!
-    Exception raised by methods in case of a BF error.
+    Exception raised by BlenderFDS methods in case of an error.
     """
 
     def __init__(self, sender, msg):
@@ -114,16 +114,16 @@ class BFParam:
     bpy_export = None
 
     ## idname of export toggle Blender property
-    bpy_export_default = False
+    bpy_export_default = None  # FIXME test
 
     def __init__(self, element):
         """!
         Class constructor.
-        @param element: FDS element to represent.
+        @param element: FDS element represented by this class instance.
         """
         self.element = element
 
-    @classmethod
+    @classmethod  # FIXME what if property exists? as in Blender restart?
     def register(cls):
         """!
         Register related Blender properties.
@@ -153,20 +153,27 @@ class BFParam:
                 cls.bpy_prop(name=cls.label, description=cls.description, **bpy_other),
             )
         # Create bpy_export
-        if cls.bpy_export and not hasattr(cls.bpy_type, cls.bpy_export):
-            log.debug(f"Setting <{cls.bpy_export}> Blender property")
-            setattr(
-                cls.bpy_type,
-                cls.bpy_export,
-                BoolProperty(
-                    name=f"Export {cls.label}",
-                    description=f"Set if {cls.label} shall be exported to FDS",
-                    default=cls.bpy_export_default,
-                ),
-            )
+        if cls.bpy_export:
+            if hasattr(cls.bpy_type, cls.bpy_export):
+                log.debug(f"Using <{cls.bpy_export}> Blender property as export ref")
+                if cls.bpy_export_default is not None:
+                    raise Exception(
+                        f"Unused bpy_export_default in class <{cls.__name__}>"
+                    )
+            else:
+                log.debug(f"Setting <{cls.bpy_export}> Blender property")
+                setattr(
+                    cls.bpy_type,
+                    cls.bpy_export,
+                    BoolProperty(
+                        name=f"Export {cls.label}",
+                        description=f"Set if {cls.label} shall be exported to FDS",
+                        default=cls.bpy_export_default,
+                    ),
+                )
 
     @classmethod
-    def unregister(cls):
+    def unregister(cls):  # FIXME
         """!
         Unregister related Blender properties.
         @param cls: class to be unregistered.
@@ -187,7 +194,7 @@ class BFParam:
 
     def set_value(self, context, value=None):
         """!
-        Set value. If value is None, set defaul.
+        Set value. If value is None, set default.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param value: value to set.
         """
@@ -201,7 +208,7 @@ class BFParam:
     @property
     def exported(self) -> "bool":
         """!
-        Get if self is exported.
+        Get if self is exported to FDS.
         @return True if is exported, False otherwise.
         """
         # Check if empty
@@ -220,7 +227,7 @@ class BFParam:
 
     def set_exported(self, context, value=None):
         """!
-        Set if self is exported. If value is None, set defaul
+        Set if self is exported to FDS. If value is None, set default.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param value: value to set.
         """
@@ -231,15 +238,15 @@ class BFParam:
                 setattr(self.element, self.bpy_export, value)
 
     def check(self, context):
-        """
-        !Check self validity.
+        """!
+        Check self validity for FDS.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         """
         pass
 
     def draw_operators(self, context, layout):
         """!
-        Draw operators on layout.
+        Draw operators on panel layout.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
         """
@@ -247,7 +254,7 @@ class BFParam:
 
     def draw(self, context, layout) -> "layout":
         """!
-        Draw self UI on layout.
+        Draw self UI on panel layout.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
         @return Blender panel layout.
@@ -267,9 +274,6 @@ class BFParam:
         self.draw_operators(context, row)
         if self.bpy_export:
             row.prop(self.element, self.bpy_export, text="")
-        # else:  # FIXME
-        #     col.prop(self.element, self.bpy_idname, text=self.label)
-        #     self.draw_operators(context, row)
         return col
 
     def to_fds_param(self, context) -> "None, FDSParam, or ((FDSParam, ...), ...)":
@@ -499,7 +503,7 @@ class BFNamelist(BFParam):
     Blender representation of an FDS namelist group.
     """
 
-    maxlen = 80  # max columns when exporting
+    maxlen = 80  # max number of columns when exporting
 
     def __init__(self, element):
         """!

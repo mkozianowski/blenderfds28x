@@ -108,7 +108,9 @@ class WM_OT_bf_load_blenderfds_settings(Operator):
         - "INTERFACE" handled but not executed (popup menus).
         """
         # Set default startup.blend
-        filepath = os.path.dirname(sys.modules[__package__].__file__) + "/default.blend"
+        filepath = (
+            os.path.dirname(sys.modules[__package__].__file__) + "/../startup.blend"
+        )
         bpy.ops.wm.open_mainfile(filepath=filepath, load_ui=True, use_scripts=True)
         bpy.ops.wm.save_homefile()
         # Save user preferences
@@ -298,7 +300,7 @@ class OBJECT_OT_bf_show_fds_code(_show_fds_code, Operator):
     Show FDS code exported from current Object.
     """
 
-    bl_label = "Show FDS Code"
+    bl_label = "FDS Code"
     bl_idname = "object.bf_show_fds_code"
     bl_description = "Show FDS code exported from current Object"
 
@@ -326,7 +328,7 @@ class MATERIAL_OT_bf_show_fds_code(_show_fds_code, Operator):
     Show FDS code exported from current Material.
     """
 
-    bl_label = "Show FDS Code"
+    bl_label = "FDS Code"
     bl_idname = "material.bf_show_fds_code"
     bl_description = "Show FDS code exported from current Material"
 
@@ -354,7 +356,7 @@ class SCENE_OT_bf_show_fds_code(_show_fds_code, Operator):
     Show FDS code exported from Scene.
     """
 
-    bl_label = "Show FDS Code"
+    bl_label = "FDS Code"
     bl_idname = "scene.bf_show_fds_code"
     bl_description = "Show FDS code exported from Scene"
 
@@ -385,7 +387,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
     Show geometry as exported to FDS.
     """
 
-    bl_label = "Show FDS Geometry"
+    bl_label = "FDS Geometry"
     bl_idname = "object.bf_show_fds_geometry"
     bl_description = "Show geometry as exported to FDS"
 
@@ -526,12 +528,12 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
 
 
 @subscribe
-class OBJECT_OT_bf_hide_fds_geometry(Operator):
+class OBJECT_OT_bf_hide_fds_geometry(Operator):  # FIXME merge with show
     """!
     Hide all temporary geometry.
     """
 
-    bl_label = "Hide Tmp Geometry"
+    bl_label = "FDS Geometry"
     bl_idname = "object.bf_hide_fds_geometry"
     bl_description = "Hide all temporary geometry"
 
@@ -546,7 +548,7 @@ class OBJECT_OT_bf_hide_fds_geometry(Operator):
         - "PASS_THROUGH" do nothing and pass the event on.
         - "INTERFACE" handled but not executed (popup menus).
         """
-        geometry.utils.rm_tmp_objects(context)
+        geometry.utils.rm_tmp_objects()
         self.report({"INFO"}, "Temporary geometry hidden")
         return {"FINISHED"}
 
@@ -717,7 +719,7 @@ class SCENE_OT_bf_copy_props_to_scene(Operator):
     Copy all current scene FDS parameters to another Scene.
     """
 
-    bl_label = "Copy To Scene"
+    bl_label = "Copy To"
     bl_idname = "scene.bf_props_to_scene"
     bl_description = "Copy all current scene FDS parameters to another Scene"
     bl_options = {"REGISTER", "UNDO"}
@@ -785,7 +787,7 @@ class OBJECT_OT_bf_copy_FDS_properties_to_sel_obs(Operator):
     Copy current object FDS parameters to selected Objects.
     """
 
-    bl_label = "Copy To Selected"
+    bl_label = "Copy To"
     bl_idname = "object.bf_props_to_sel_obs"
     bl_description = "Copy current object FDS parameters to selected Objects"
     bl_options = {"REGISTER", "UNDO"}
@@ -852,7 +854,7 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
     Assign current boundary condition to selected Objects.
     """
 
-    bl_label = "Assign To Selected"
+    bl_label = "Assign To"
     bl_idname = "material.bf_surf_to_sel_obs"
     bl_description = "Assign current boundary condition to selected Objects"
     bl_options = {"REGISTER", "UNDO"}
@@ -1206,6 +1208,46 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
 
 
 # FIXME FIXME FIXME align meshes
+
+
+@subscribe
+class OBJECT_OT_bf_align_selected_meshes(Operator):
+    bl_label = "Align Selected"
+    bl_idname = "object.bf_align_selected_meshes"
+    bl_description = "Align selected MESHes to the current Object MESH"  # FIXME improve
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        return ob and ob.bf_namelist == "ON_MESH"  # FIXME
+
+    def invoke(self, context, event):  # Ask for confirmation
+        wm = context.window_manager
+        return wm.invoke_confirm(self, event)
+
+    def execute(self, context):
+        bpy.ops.object.mode_set(mode="OBJECT")
+        # Get source and destination objects
+        source_element = context.active_object
+        destination_elements = set(
+            ob
+            for ob in context.selected_objects
+            if ob.type == "MESH"
+            and ob != source_element
+            and ob.bf_namelist == "ON_MESH"
+        )
+        if not destination_elements:
+            self.report({"WARNING"}, "No destination Object")
+            return {"CANCELLED"}
+        if not source_element:
+            self.report({"WARNING"}, "No source Object")
+            return {"CANCELLED"}
+        # Align
+        #        _bf_props_copy(context, source_element, destination_elements)
+        self.report({"INFO"}, "MESH Objects aligned")  # FIXME improve
+        return {"FINISHED"}
+
 
 # GIS
 

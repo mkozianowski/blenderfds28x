@@ -104,6 +104,22 @@ class SCENE_PT_bf_case_config(Panel, SCENE_PT_bf_namelist):
     bf_namelist_cls = "SN_config"
     bl_label = "FDS Case Config"
 
+    def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
+        sc = context.scene
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+        row = layout.row(align=True)  # general operators
+        row.operator("scene.bf_show_fds_code", icon="HIDE_OFF")
+        row.operator("scene.bf_props_to_scene", icon="COPYDOWN")
+        bf_namelist = lang.bf_namelists_by_cls[self.bf_namelist_cls]
+        flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
+        bf_namelist(sc).draw(context, flow)
+
 
 @subscribe
 class SCENE_PT_bf_config_geoloc(Panel, SCENE_PT_bf_namelist):
@@ -236,7 +252,7 @@ class OBJECT_PT_bf_namelist(Panel):
         @return current object
         """
         ob = context.object
-        return ob and ob.type == "MESH" and not ob.bf_is_tmp  # not tmp!
+        return ob and ob.type == "MESH"
 
     def draw_header(self, context):
         """!
@@ -244,6 +260,9 @@ class OBJECT_PT_bf_namelist(Panel):
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         """
         ob = context.object
+        if ob.bf_is_tmp:
+            self.bl_label = f"FDS Temp Geometry"
+            return
         bf_namelist = ob.bf_namelist
         self.bl_label = f"FDS {bf_namelist.label} ({bf_namelist.description})"
         self.layout.prop(ob, "hide_render", emboss=False, icon_only=True)
@@ -257,6 +276,16 @@ class OBJECT_PT_bf_namelist(Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # no animation
+        row = layout.row(align=True)  # general operators
+        if ob.bf_is_tmp:
+            row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
+            return
+        if ob.bf_has_tmp:
+            row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
+        else:
+            row.operator("object.bf_show_fds_geometry", icon="HIDE_OFF")
+        row.operator("object.bf_show_fds_code", icon="HIDE_OFF")
+        row.operator("object.bf_props_to_sel_obs", icon="COPYDOWN")
         flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
         flow.prop(ob, "bf_namelist_cls")  # draw namelist choice
         ob.bf_namelist.draw(context, flow)  # draw namelist
@@ -306,13 +335,14 @@ class MATERIAL_PT_bf_namelist(Panel):
         ma = context.object.active_material
         layout = self.layout
         layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-        flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
-        # Manage predefined Material
+        layout.use_property_decorate = False  # no animation
+        row = layout.row(align=True)  # general operators
         if ma.name in config.default_mas:
-            flow.prop(ma, "diffuse_color")
+            row.prop(ma, "diffuse_color")
             return
-        # Manage Material
+        row.operator("material.bf_show_fds_code", icon="HIDE_OFF")
+        row.operator("material.bf_surf_to_sel_obs", icon="COPYDOWN")
+        flow = layout.grid_flow(row_major=True, columns=1, even_columns=True)
         flow.prop(ma, "bf_namelist_cls")  # draw namelist choice
         ma.bf_namelist.draw(context, flow)  # draw namelist
 
@@ -321,204 +351,72 @@ class MATERIAL_PT_bf_namelist(Panel):
 
 
 @subscribe
-class VIEW3D_PT_BF_Scene_Tools(Panel):
-    """!
-    Scene Tools
-    """
-    bl_idname = "VIEW3D_PT_bf_scene_tools"
-    #    bl_context = "objectmode"
-    bl_category = "FDS"
-    bl_label = "Scene Tools"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_options = {"DEFAULT_CLOSED"}
-
-    @classmethod
-    def poll(cls, context):
-        """!
-        If this method returns a non-null output, then the panel can be drawn
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return current scene
-        """
-        return context.scene
-
-    def draw(self, context):
-        """!
-        Draw UI elements into the panel UI layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
-        layout = self.layout
-        col = layout.column(align=True)
-        col.operator("scene.bf_show_fds_code", icon="HIDE_OFF")
-        col.operator("scene.bf_props_to_scene", icon="COPYDOWN")
-
-
-@subscribe
-class VIEW3D_PT_BF_Object_Tools(Panel):
+class VIEW3D_PT_BF_MESH_Tools(Panel):
     """!
     Object Tools
     """
 
-    bl_idname = "VIEW3D_PT_bf_object_tools"
+    bl_idname = "VIEW3D_PT_bf_mesh_tools"
     bl_context = "objectmode"
     bl_category = "FDS"
-    bl_label = "Object Tools"
+    bl_label = "FDS MESH Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
     @classmethod
     def poll(cls, context):
-        return context.object
-
-    def draw(self, context):
-        layout = self.layout
         ob = context.object
-        col = layout.column(align=True)
-        # Tmp object
-        if ob.bf_is_tmp:
-            col.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
-            return
-        # Object
-        # Generic operators: geometry, code, copy
-        if ob.bf_has_tmp:
-            col.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
-        else:
-            col.operator("object.bf_show_fds_geometry", icon="HIDE_OFF")
-        col.operator("object.bf_show_fds_code", icon="HIDE_OFF")
-        col.operator("object.bf_props_to_sel_obs", icon="COPYDOWN")
-        # Geolocation
-        col = layout.column(align=True)
-        col.prop(ob, "location")
-        row = col.row(align=True)
-        row.operator("scene.bf_set_ob_geoloc").show = False
-        row.operator("scene.bf_set_ob_geoloc", text="", icon="URL").show = True
-        # GEOM operators
-        if ob.bf_namelist_cls == "ON_GEOM":
-            col = layout.column(align=True)
-            col.label(text="FDS GEOM:")
-            col.operator("object.bf_geom_check_intersections")
-            col.operator("object.bf_geom_check_sanity")
-            box = col.box().column(align=True)
-            box.prop(ob, "bf_geom_protect")
-            me = ob.data
-            material_slots = ob.material_slots
-            box.label(
-                text=f"SURF_ID: {len(material_slots)} | VERTS: {len(me.vertices)} | FACES: {len(me.polygons)}"
-            )
-        # MESH operators
-        if ob.bf_namelist_cls == "ON_MESH":
-            col = layout.column(align=True)
-            col.label(text="FDS MESH:")
-            col.operator("object.bf_set_mesh_cell_size")
-            box = col.box().column(align=True)
-            scale_length = context.scene.unit_settings.scale_length
-            xbs = geometry.utils.get_bbox_xbs(
-                context=context, ob=ob, scale_length=scale_length
-            )
-            has_good_ijk, cs, cell_count, cell_aspect_ratio = fds.mesh_tools.calc_cell_infos(
-                ijk=ob.bf_mesh_ijk, xbs=xbs
-            )
-            box.label(text=f"Size: {cs[0]:.3f}m, {cs[1]:.3f}m, {cs[2]:.3f}m")
-            box.label(
-                text=f"Qty: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
-            )
-
-
-@subscribe
-class VIEW3D_PT_BF_Material_Tools(Panel):
-    """!
-    Material Tools
-    """
-
-    bl_idname = "VIEW3D_PT_bf_material_tools"
-    bl_category = "FDS"
-    bl_label = "Material Tools"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_options = {"DEFAULT_CLOSED"}
-
-    @classmethod
-    def poll(cls, context):
-        """!
-        If this method returns a non-null output, then the panel can be drawn
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return current object
-        """
-        ob = context.object
-        return ob and ob.active_material
+        return ob and not ob.bf_is_tmp and ob.bf_namelist_cls == "ON_MESH"
 
     def draw(self, context):
-        """!
-        Draw UI elements into the panel UI layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         layout = self.layout
-        col = layout.column(align=True)
-        col.operator("material.bf_show_fds_code", icon="HIDE_OFF")
-        col.operator("material.bf_surf_to_sel_obs", icon="COPYDOWN")
-
-
-@subscribe
-class VIEW3D_PT_BF_Fix_Toolbar_Object(Panel):
-    """!
-    Object Remesh
-    """
-    # See: properties_data_mesh.py, class DATA_PT_remesh
-
-    bl_idname = "VIEW3D_PT_bf_fix_toolbar_object"
-    bl_context = "objectmode"
-    bl_category = "FDS"
-    bl_label = "Object Remesh"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_options = {"DEFAULT_CLOSED"}
-
-    @classmethod
-    def poll(cls, context):
-        """!
-        If this method returns a non-null output, then the panel can be drawn
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return current object
-        """
-        ob = context.active_object
-        return ob and ob.type == "MESH"
-
-    def draw(self, context):
-        """!
-        Draw UI elements into the panel UI layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
-        layout = self.layout
-        ob = context.active_object
-        me = ob.data
+        layout.use_property_split = True
+        layout.use_property_decorate = False
         col = layout.column()
-        col.label(
-            text=f"{ob.name} | Verts: {len(me.vertices)} | Faces: {len(me.polygons)}"
-        )
-        row = col.row()
-        row.prop(me, "remesh_mode", text="Mode", expand=True)
-        if me.remesh_mode == "VOXEL":
-            col.prop(me, "remesh_voxel_size")
-            col.prop(me, "remesh_voxel_adaptivity")
-            col.prop(me, "remesh_fix_poles")
-            col.prop(me, "remesh_smooth_normals")
-            col.prop(me, "remesh_preserve_volume")
-            # col.prop(me, "remesh_preserve_paint_mask")
-            col.operator("object.voxel_remesh", text="Voxel Remesh")
-        else:
-            col.operator("object.quadriflow_remesh", text="QuadriFlow Remesh")
+        col.operator("object.bf_set_mesh_cell_size")
+        col.operator("object.bf_align_selected_meshes")
 
 
 @subscribe
-class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
+class VIEW3D_PT_BF_GEOM_Tools(Panel):
     """!
-    Mesh Clean Up
+    FDS GEOM Tools
     """
 
-    bl_idname = "VIEW3D_PT_bf_fix_toolbar_mesh"
-    bl_context = "mesh_edit"
+    bl_idname = "VIEW3D_PT_bf_geom_tools"
+    bl_context = "objectmode"
     bl_category = "FDS"
-    bl_label = "Mesh Clean Up"
+    bl_label = "FDS GEOM Tools"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.object
+        return ob and not ob.bf_is_tmp and ob.bf_namelist_cls == "ON_GEOM"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        ob = context.object
+        col = layout.column(align=True)
+        col = layout.column()
+        col.prop(ob, "bf_geom_protect")
+        col.operator("object.bf_geom_check_sanity")
+        col.operator("object.bf_geom_check_intersections")
+
+
+@subscribe
+class VIEW3D_PT_BF_Remesh(Panel):
+    """!
+    Object remesh panel
+    """
+
+    bl_idname = "VIEW3D_PT_bf_remesh"
+    bl_context = "objectmode"
+    bl_category = "FDS"
+    bl_label = "Remesh"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_options = {"DEFAULT_CLOSED"}
@@ -540,7 +438,59 @@ class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
         """
         layout = self.layout
         layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
+        layout.use_property_decorate = False
+        me = context.active_object.data
+        col = layout.column()
+        row = col.row()
+        # See: properties_data_mesh.py, class DATA_PT_remesh
+        row.prop(me, "remesh_mode", text="Mode", expand=True)
+        if me.remesh_mode == "VOXEL":
+            row = col.row(align=True)
+            row.prop(me, "remesh_voxel_size")
+            row.operator(
+                "sculpt.sample_detail_size", text="", icon="EYEDROPPER"
+            ).mode = "VOXEL"
+            col.prop(me, "remesh_voxel_adaptivity")
+            col.prop(me, "use_remesh_fix_poles")
+            col.prop(me, "use_remesh_smooth_normals")
+            col.prop(me, "use_remesh_preserve_volume")
+            col.operator("object.voxel_remesh", text="Voxel Remesh")
+        else:
+            col.operator("object.quadriflow_remesh", text="QuadriFlow Remesh")
+
+
+@subscribe
+class VIEW3D_PT_BF_mesh_clean_up(Panel):
+    """!
+    Mesh clean up panel
+    """
+
+    bl_idname = "VIEW3D_PT_bf_mesh_clean_up"
+    bl_context = "mesh_edit"
+    bl_category = "FDS"
+    bl_label = "Clean Up"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        """!
+        If this method returns a non-null output, then the panel can be drawn
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @return current object
+        """
+        ob = context.active_object
+        return ob and ob.type == "MESH"
+
+    def draw(self, context):
+        """!
+        Draw UI elements into the panel UI layout.
+        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        """
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
         ob = context.active_object
         me = ob.data
         col = layout.column()
@@ -554,27 +504,32 @@ class VIEW3D_PT_BF_Fix_Toolbar_Mesh(Panel):
 
 
 @subscribe
-class VIEW3D_PT_BF_view3d_cursor(Panel):
+class VIEW3D_PT_BF_Geolocation(Panel):
     """!
-    3D Cursor
+    Geolocation panel
     """
-    # See: space_view3d.py, class VIEW3D_PT_view3d_cursor
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "FDS"
-    bl_label = "3D Cursor"
+    bl_label = "Geolocation"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        """!
-        Draw UI elements into the panel UI layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         layout = self.layout
+        # Object geolocation
+        ob = context.object
+        if ob and not ob.bf_is_tmp:
+            ob = context.object
+            col = layout.column(align=True)
+            col.prop(ob, "location", text="Object")
+            row = col.row(align=True)
+            row.operator("scene.bf_set_ob_geoloc").show = False
+            row.operator("scene.bf_set_ob_geoloc", text="", icon="URL").show = True
+        # 3D Cursor geolocation
         cursor = context.scene.cursor
         col = layout.column(align=True)
-        col.prop(cursor, "location", text="Location")
+        col.prop(cursor, "location", text="3D Cursor")
         row = col.row(align=True)
         row.operator("scene.bf_set_ob_geoloc").show = False
         row.operator("scene.bf_set_ob_geoloc", text="", icon="URL").show = True

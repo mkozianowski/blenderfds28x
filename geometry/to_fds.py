@@ -15,7 +15,9 @@ log = logging.getLogger(__name__)
 # to GEOM
 
 
-def _ob_to_geom(context, ob, scale_length, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
+def _ob_to_geom(
+    context, ob, scale_length, check=True
+) -> "mas, fds_verts, fds_faces, 'Msg'":
     """!
     Transform Object geometry to FDS mas, verts, faces notation.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -35,7 +37,9 @@ def _ob_to_geom(context, ob, scale_length, check=True) -> "mas, fds_verts, fds_f
     return mas, fds_verts, fds_faces, msg
 
 
-def ob_to_geom(context, ob, scale_length, check=True) -> "mas, fds_verts, fds_faces, 'Msg'":
+def ob_to_geom(
+    context, ob, scale_length, check=True
+) -> "mas, fds_verts, fds_faces, 'Msg'":
     """!
     Transform Object geometry to FDS mas, verts, faces notation.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -54,7 +58,9 @@ def ob_to_geom(context, ob, scale_length, check=True) -> "mas, fds_verts, fds_fa
 # to XB
 
 
-def _ob_to_xbs_voxels(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
+def _ob_to_xbs_voxels(
+    context, ob, scale_length
+) -> "((x0,x1,y0,y1,z0,z1,), ...), 'Msg'":
     """!
     Transform Object solid geometry to xbs notation (voxelization).
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -69,7 +75,9 @@ def _ob_to_xbs_voxels(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z1,), ...)
     return xbs, msg
 
 
-def _ob_to_xbs_pixels(context, ob, scale_length) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
+def _ob_to_xbs_pixels(
+    context, ob, scale_length
+) -> "((x0,x1,y0,y1,z0,z0,), ...), 'Msg'":
     """!
     Transform Object flat geometry to xbs notation (flat voxelization).
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -261,7 +269,9 @@ def ob_to_xyzs(context, ob, scale_length) -> "((x0,y0,z0,), ...), 'Msg'":
 # to PB in Blender units
 
 
-def _ob_to_pbs_planes(context, ob, scale_length) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
+def _ob_to_pbs_planes(
+    context, ob, scale_length
+) -> "((0,x3,), (1,x7,), (1,y9,), ...), 'Msg'":
     """!
     Transform Object faces to pbs notation.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -303,4 +313,8 @@ def ob_to_pbs(context, ob, scale_length) -> "((0,x3,), (1,x7,), (1,y9,), ...), '
     if ob.get("ob_to_pbs_cache") is None:  # recalc
         log.debug(f"Update <{ob.name}> pbs cache")
         ob["ob_to_pbs_cache"] = _ob_to_pbs_planes(context, ob, scale_length)
+        print("ob['ob_to_pbs_cache'][0][0]:", tuple(ob["ob_to_pbs_cache"][0][0]))
     return ob["ob_to_pbs_cache"]
+    # res = _ob_to_pbs_planes(context, ob, scale_length)
+    # print("ob_to_pbs:", res)
+    # return res # FIXME restore caching

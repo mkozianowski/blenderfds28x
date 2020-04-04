@@ -15,7 +15,9 @@ log = logging.getLogger(__name__)
 # Get triangulated surface
 
 
-def get_trisurface(context, ob, scale_length, check=True, terrain=False) -> "mas, verts, faces":
+def get_trisurface(
+    context, ob, scale_length, check=True, terrain=False
+) -> "mas, verts, faces":
     """!
     Get triangulated surface from object in xbs format.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -86,6 +88,23 @@ def check_geom_sanity(context, ob, protect):
     bm.free()
 
 
+def _get_epsilons(context):  # FIXME test
+    """!
+    Get epsilons for geometry sanity checks.
+    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    """
+    sc = context.scene
+    prefs = context.preferences.addons[__package__.split(".")[0]].preferences
+    return (
+        sc.bf_config_min_edge_length_export
+        and sc.bf_config_min_edge_length
+        or prefs.min_edge_length,
+        sc.bf_config_min_face_area_export
+        and sc.bf_config_min_face_area
+        or prefs.min_face_area,
+    )  # min_edge_length, min_face_area
+
+
 def _check_bm_sanity(context, ob, bm, protect):
     """!
     Check that bmesh is a closed orientable manifold, with no degenerate geometry.
@@ -94,8 +113,7 @@ def _check_bm_sanity(context, ob, bm, protect):
     @param bm: the object's bmesh.
     @param protect: if True raise BFException without context modifications.
     """
-    epsilon_len = context.scene.bf_config_min_edge_length
-    epsilon_area = context.scene.bf_config_min_face_area
+    epsilon_len, epsilon_area = _get_epsilons(context)
     _check_bm_manifold_verts(context, ob, bm, epsilon_len, epsilon_area, protect)
     _check_bm_manifold_edges(context, ob, bm, epsilon_len, epsilon_area, protect)
     _check_bm_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area, protect)
@@ -183,7 +201,9 @@ def _check_bm_degenerate_edges(context, ob, bm, epsilon_len, epsilon_area, prote
         _raise_bad_geometry(context, ob, bm, msg, protect, bad_edges=bad_edges)
 
 
-def _check_bm_degenerate_faces(context, ob, bm, epsilon_len, epsilon_area, protect=True):
+def _check_bm_degenerate_faces(
+    context, ob, bm, epsilon_len, epsilon_area, protect=True
+):
     """!
     Check degenerate faces, zero area faces.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -303,7 +323,9 @@ def _get_bm_intersected_faces(bm, tree, other_tree):
 # Raise bad geometry
 
 
-def _raise_bad_geometry(context, ob, bm, msg, protect, bad_verts=None, bad_edges=None, bad_faces=None):
+def _raise_bad_geometry(
+    context, ob, bm, msg, protect, bad_verts=None, bad_edges=None, bad_faces=None
+):
     """!
     Select bad elements, show them, raise BFException.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.

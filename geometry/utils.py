@@ -10,7 +10,9 @@ from ..types import BFException
 # Working on Blender objects
 
 
-def get_object_bmesh(context, ob, matrix=None, world=False, triangulate=False, lookup=False) -> "BMesh":
+def get_object_bmesh(
+    context, ob, matrix=None, world=False, triangulate=False, lookup=False
+) -> "BMesh":
     """!
     Return evaluated object bmesh.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -63,13 +65,12 @@ def get_tmp_object(context, ob, name="tmp"):
     return ob_tmp
 
 
-def rm_tmp_objects(context):
+def rm_tmp_objects():
     """!
-    ???
-    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    Remove all tmp objects from bpy.data
     """
     mes = bpy.data.meshes
-    for ob in context.scene.objects:
+    for ob in bpy.data.objects:
         if ob.bf_is_tmp:
             mes.remove(
                 ob.data, do_unlink=True
@@ -78,6 +79,28 @@ def rm_tmp_objects(context):
             ob.bf_has_tmp = False
             ob.hide_set(False)
             ob.select_set(True)
+
+
+def rm_geometric_cache(ob):
+    """!
+    Remove geometric caches for XB, XYZ, PB*, GEOM from object
+    @param ob: Blender Object.
+    """
+    ob["ob_to_geom_cache"] = None
+    ob["ob_to_xbs_cache"] = None
+    ob["ob_to_xyzs_cache"] = None
+    ob["ob_to_pbs_cache"] = None
+
+
+def rm_geometric_caches():
+    """!
+    Remove geometric caches for XB, XYZ, PB*, GEOM from all objects in bpy.data
+    """
+    for ob in bpy.data.objects:
+        ob["ob_to_geom_cache"] = None
+        ob["ob_to_xbs_cache"] = None
+        ob["ob_to_xyzs_cache"] = None
+        ob["ob_to_pbs_cache"] = None
 
 
 # Working on Blender materials
@@ -153,4 +176,3 @@ def get_bbox_xbs(context, ob, scale_length, world=False) -> "x0, x1, y0, y1, z0,
             bb[0][2] * scale_length,
             bb[6][2] * scale_length,
         )
-

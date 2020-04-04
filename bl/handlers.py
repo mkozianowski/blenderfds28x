@@ -34,6 +34,9 @@ def _load_post(self):
         bpy.ops.wm.bf_dialog(
             "INVOKE_DEFAULT", msg=msg, description=description, type="ERROR"
         )
+    # Remove all caches and tmp objects, clean up to remove stale caches
+    geometry.utils.rm_geometric_caches()
+    geometry.utils.rm_tmp_objects()
     # Init FDS default materials
     for k, v in config.default_mas.items():
         if not bpy.data.materials.get(k):  # check existance
@@ -52,8 +55,9 @@ def _save_pre(self):
     ???
     """
     # Beware: self is None
-    # Remove tmp objecys
-    geometry.utils.rm_tmp_objects(bpy.context)
+    # Remove all caches and tmp objects, clean up to prevent stale caches
+    geometry.utils.rm_geometric_caches()
+    geometry.utils.rm_tmp_objects()
     # Set file format version
     for sc in bpy.data.scenes:
         sc.bf_file_version = config.supported_file_version
