@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #system variables
-BLENDER_PATH="/opt/blender"
+BLENDER_PATH="/opt/blender/blender"
 FDS_PATH="/opt/FDS/FDS6/bin"	
 
 # usage: bash /path/to/verification.sh
