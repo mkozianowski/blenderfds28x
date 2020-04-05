@@ -148,112 +148,97 @@ class ExportFDS(Operator, ExportHelper):
 
     filename_ext = ".fds"
     filter_glob: StringProperty(default="*.fds", options={"HIDDEN"})
+    directory: StringProperty(
+        name="Directory",
+        description="Directory used for exporting the file",
+        maxlen=1024,
+        subtype="DIR_PATH",
+        options={"HIDDEN"},
+    )
+    all_scenes: BoolProperty(name="All Scenes", default=False)
 
     @classmethod
     def poll(cls, context):
-        """!
-        Test if the operator can be called or not
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return True if operator can be called, False otherwise.
-        """
-        return context.scene is not None
+        return context.scene is not None  # at least one available scene
 
-    def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
-        # Init
+    def _set_default_filepath(self, context, sc):
+        self.filepath = (
+            bpy.path.abspath(sc.bf_config_directory)
+            or os.path.dirname(bpy.data.filepath)
+        ) + "{0}.fds".format(bpy.path.clean_name(sc.name))
+
+    def _write_fds_file(self, context, sc, filepath):
         w = context.window_manager.windows[0]
+        # Write .fds file
+        log.debug(f"Exporting Blender Scene <{sc.name}>")
         w.cursor_modal_set("WAIT")
-        sc = context.scene
-        # Prepare FDS filepath
-        filepath = self.filepath
-        if not filepath.lower().endswith(".fds"):
-            filepath += ".fds"
-        filepath = bpy.path.abspath(filepath)
-        log.debug(f"Exporting Blender Scene <{sc.name}> to <{filepath}>...")
-        # Test FDS filepath is writable, before calculations
-        if not utils.write_to_file(filepath):
-            w.cursor_modal_restore()
-            self.report({"ERROR"}, "Filepath not writable, cannot export")
-            return {"CANCELLED"}
-        # Prepare FDS file
         try:
-            fds_file = sc.to_fds(context=context, full=True)
+            utils.write_to_file(filepath, sc.to_fds(context=context, full=True))
         except BFException as err:
-            w.cursor_modal_restore()
             self.report({"ERROR"}, f"Error while assembling FDS file:\n<{str(err)}>")
             return {"CANCELLED"}
-        # Write FDS file
-        try:
-            utils.write_to_file(filepath, fds_file)
         except IOError:
-            w.cursor_modal_restore()
-            self.report({"ERROR"}, "FDS case filepath not writable, cannot export")
+            self.report({"ERROR"}, "Filepath not writable, cannot export FDS file")
             return {"CANCELLED"}
-        # GE1 description file requested?
+        except Exception as err:
+            self.report({"ERROR"}, f"Unexpected error, cannot export:\n<{str(err)}>")
+            return {"CANCELLED"}
+        finally:
+            w.cursor_modal_restore()
         if sc.bf_dump_render_file:
-            # Prepare GE1 filepath
-            filepath = filepath[:-4] + ".ge1"
-            # Prepare GE1 file
+            # Write .ge1 file
+            w.cursor_modal_set("WAIT")
             try:
-                ge1_file = sc.to_ge1(context=context)
+                utils.write_to_file(filepath[:-4] + ".ge1", sc.to_ge1(context=context))
             except BFException as err:
-                w.cursor_modal_restore()
                 self.report(
                     {"ERROR"}, f"Error while assembling GE1 file:\n<{str(err)}>"
                 )
                 return {"CANCELLED"}
-            # Write GE1 file
-            if not utils.write_to_file(filepath, ge1_file):
-                w.cursor_modal_restore()
-                self.report({"ERROR"}, "GE1 filepath not writable, cannot export")
+            except IOError:
+                self.report({"ERROR"}, "Filepath not writable, cannot export GE1 file")
                 return {"CANCELLED"}
-        # End
-        w.cursor_modal_restore()
-        log.debug(f"Exporting done!")
-        self.report({"INFO"}, "FDS case exported")
+            except Exception as err:
+                self.report(
+                    {"ERROR"}, f"Unexpected error, cannot export:\n<{str(err)}>"
+                )
+                return {"CANCELLED"}
+            finally:
+                w.cursor_modal_restore()
+        self.report({"INFO"}, f"FDS export ok")
         return {"FINISHED"}
 
-    def draw(self, context):
-        """!
-        Draw function for the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
-        pass
+    def invoke(self, context, event):
+        # Set default filepath
+        sc = context.scene
+        directory = bpy.path.abspath(
+            sc.bf_config_directory or os.path.dirname(bpy.data.filepath)
+        )
+        basename = f"{bpy.path.clean_name(sc.name)}.fds"
+        self.filepath = "/".join((directory, basename))
+        print("self.filepath:", self.filepath)
+        return super().invoke(context, event)
+
+    def execute(self, context):
+        if not self.all_scenes:
+            return self._write_fds_file(
+                context=context, sc=context.scene, filepath=self.filepath
+            )
+        else:
+            for sc in bpy.data.scenes:
+                # Set filepath
+                directory = bpy.path.abspath(sc.bf_config_directory or self.directory)
+                basename = f"{bpy.path.clean_name(sc.name)}.fds"
+                filepath = "/".join((directory, basename))
+                print("filepath:", filepath)
+                res = self._write_fds_file(context=context, sc=sc, filepath=filepath)
+                if res != {"FINISHED"}:
+                    break
+            return res
 
 
-def menu_func_export_FDS(self, context):
-    """!
-    Function to export the current scene into a FDS file.
-    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-    """
-    # Init
-    sc = context.scene
-    basename = "{0}.fds".format(bpy.path.clean_name(sc.name))
-    directory = ""
-    # Prepare default filepath
-    if bpy.data.filepath:
-        directory = os.path.dirname(bpy.data.filepath)
-    # If the context scene contains path and basename, use them
-    if sc.bf_config_directory:
-        directory = sc.bf_config_directory
-    # Call the exporter operator
-    if directory:
-        self.layout.operator(
-            "export_scene.fds", text="NIST FDS (.fds)"
-        ).filepath = f"{directory}/{basename}"
-    else:
-        self.layout.operator(
-            "export_scene.fds", text="NIST FDS (.fds)"
-        ).filepath = basename
+def menu_func_export_to_fds(self, context):
+    self.layout.operator(ExportFDS.bl_idname, text="NIST FDS (.fds)")
 
 
 # Register
@@ -269,7 +254,7 @@ def register():
         register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import_FDS)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import_snippet_FDS)
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_export_FDS)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export_to_fds)
 
 
 def unregister():
