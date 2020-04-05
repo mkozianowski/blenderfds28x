@@ -3252,7 +3252,7 @@ class BFScene:
                 for ma in mas:
                     lines.append(ma.to_fds(context))
             # Objects
-            lines.append(context.scene.collection.to_fds(context))
+            lines.append(self.collection.to_fds(context))
             # Tail
             if self.bf_head_export:
                 lines.append("\n&TAIL /")
