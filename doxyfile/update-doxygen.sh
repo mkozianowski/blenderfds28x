@@ -2,7 +2,7 @@
 
 #generation of new doxygen
 echo "Doxygen generation ..."
-doxygen doxyfile > doxygen.log
+doxygen doxyfile > doxygen.log 2>&1
 
 #moving to branch gh-pages
 echo "Pulling gh-pages branch ..."
