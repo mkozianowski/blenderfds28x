@@ -103,9 +103,17 @@ Functions</h2></td></tr>
 <tr class="memitem:a00a9fdcc5ec2b81f432e0830a6b6c061"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceblenderfds28x_1_1geometry_1_1utils.html#a00a9fdcc5ec2b81f432e0830a6b6c061">get_tmp_object</a> (context, ob, name=&quot;tmp&quot;)</td></tr>
 <tr class="memdesc:a00a9fdcc5ec2b81f432e0830a6b6c061"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a new tmp Object from ob.  <a href="#a00a9fdcc5ec2b81f432e0830a6b6c061">More...</a><br /></td></tr>
 <tr class="separator:a00a9fdcc5ec2b81f432e0830a6b6c061"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72cefa0284b0fe55d901cc56702b91e2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceblenderfds28x_1_1geometry_1_1utils.html#a72cefa0284b0fe55d901cc56702b91e2">rm_tmp_objects</a> (context)</td></tr>
-<tr class="memdesc:a72cefa0284b0fe55d901cc56702b91e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">???  <a href="#a72cefa0284b0fe55d901cc56702b91e2">More...</a><br /></td></tr>
-<tr class="separator:a72cefa0284b0fe55d901cc56702b91e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2c672ccb024a09295c90a65bbb22121"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa2c672ccb024a09295c90a65bbb22121"></a>
+def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceblenderfds28x_1_1geometry_1_1utils.html#aa2c672ccb024a09295c90a65bbb22121">rm_tmp_objects</a> ()</td></tr>
+<tr class="memdesc:aa2c672ccb024a09295c90a65bbb22121"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all tmp objects from bpy.data. <br /></td></tr>
+<tr class="separator:aa2c672ccb024a09295c90a65bbb22121"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1aacf5bd6e3522111b03bd510522e8ea"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceblenderfds28x_1_1geometry_1_1utils.html#a1aacf5bd6e3522111b03bd510522e8ea">rm_geometric_cache</a> (ob)</td></tr>
+<tr class="memdesc:a1aacf5bd6e3522111b03bd510522e8ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove geometric caches for XB, XYZ, PB*, GEOM from object.  <a href="#a1aacf5bd6e3522111b03bd510522e8ea">More...</a><br /></td></tr>
+<tr class="separator:a1aacf5bd6e3522111b03bd510522e8ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56c8078dc73c9c75f5b4794a0b43a28b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56c8078dc73c9c75f5b4794a0b43a28b"></a>
+def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceblenderfds28x_1_1geometry_1_1utils.html#a56c8078dc73c9c75f5b4794a0b43a28b">rm_geometric_caches</a> ()</td></tr>
+<tr class="memdesc:a56c8078dc73c9c75f5b4794a0b43a28b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove geometric caches for XB, XYZ, PB*, GEOM from all objects in bpy.data. <br /></td></tr>
+<tr class="separator:a56c8078dc73c9c75f5b4794a0b43a28b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b49a2161c59e00fe817559922e135fc"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceblenderfds28x_1_1geometry_1_1utils.html#a0b49a2161c59e00fe817559922e135fc">get_new_material</a> (context, name)</td></tr>
 <tr class="memdesc:a0b49a2161c59e00fe817559922e135fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create new material, named name.  <a href="#a0b49a2161c59e00fe817559922e135fc">More...</a><br /></td></tr>
 <tr class="separator:a0b49a2161c59e00fe817559922e135fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -200,7 +208,7 @@ Functions</h2></td></tr>
     <tr><td class="paramname">context</td><td>the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>. </td></tr>
     <tr><td class="paramname">ob</td><td>the Blender object. </td></tr>
     <tr><td class="paramname">scale_length</td><td>the scale to use. </td></tr>
-    <tr><td class="paramname">world</td><td>??? </td></tr>
+    <tr><td class="paramname">world</td><td>TODO </td></tr>
   </table>
   </dd>
 </dl>
@@ -417,10 +425,10 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">context</td><td>the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>. </td></tr>
     <tr><td class="paramname">ob</td><td>the Blender object. </td></tr>
-    <tr><td class="paramname">matrix</td><td>??? </td></tr>
-    <tr><td class="paramname">world</td><td>??? </td></tr>
-    <tr><td class="paramname">triangulate</td><td>??? </td></tr>
-    <tr><td class="paramname">lookup</td><td>??? </td></tr>
+    <tr><td class="paramname">matrix</td><td>TODO </td></tr>
+    <tr><td class="paramname">world</td><td>TODO </td></tr>
+    <tr><td class="paramname">triangulate</td><td>TODO </td></tr>
+    <tr><td class="paramname">lookup</td><td>TODO </td></tr>
   </table>
   </dd>
 </dl>
@@ -471,24 +479,24 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a72cefa0284b0fe55d901cc56702b91e2"></a>
+<a class="anchor" id="a1aacf5bd6e3522111b03bd510522e8ea"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">def blenderfds28x.geometry.utils.rm_tmp_objects </td>
+          <td class="memname">def blenderfds28x.geometry.utils.rm_geometric_cache </td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>context</em></td><td>)</td>
+          <td class="paramname"><em>ob</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>??? </p>
+<p>Remove geometric caches for XB, XYZ, PB*, GEOM from object. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">context</td><td>the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>. </td></tr>
+    <tr><td class="paramname">ob</td><td>Blender Object. </td></tr>
   </table>
   </dd>
 </dl>

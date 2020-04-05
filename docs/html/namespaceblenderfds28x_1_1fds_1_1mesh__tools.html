@@ -112,6 +112,9 @@ Functions</h2></td></tr>
 <tr class="memitem:af3341293dd67dd81b3d8f210dfd1d40d"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceblenderfds28x_1_1fds_1_1mesh__tools.html#af3341293dd67dd81b3d8f210dfd1d40d">calc_cell_infos</a> (ijk, xbs)</td></tr>
 <tr class="memdesc:af3341293dd67dd81b3d8f210dfd1d40d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calc many cell infos: cell ijk goodness, sizes, count and aspect ratio.  <a href="#af3341293dd67dd81b3d8f210dfd1d40d">More...</a><br /></td></tr>
 <tr class="separator:af3341293dd67dd81b3d8f210dfd1d40d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2b0632a23a5913ad445b1a87f9b9ede"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceblenderfds28x_1_1fds_1_1mesh__tools.html#ac2b0632a23a5913ad445b1a87f9b9ede">split_mesh</a> (axis, ijk, xbs)</td></tr>
+<tr class="memdesc:ac2b0632a23a5913ad445b1a87f9b9ede"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to split a mesh.  <a href="#ac2b0632a23a5913ad445b1a87f9b9ede">More...</a><br /></td></tr>
+<tr class="separator:ac2b0632a23a5913ad445b1a87f9b9ede"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a9567fbce275538f8a0fb23ee0e000e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a9567fbce275538f8a0fb23ee0e000e"></a>
 def&#160;</td><td class="memItemRight" valign="bottom"><b>test</b> ()</td></tr>
 <tr class="separator:a9a9567fbce275538f8a0fb23ee0e000e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -320,6 +323,49 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>test</b> ()</td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>return new ijk values. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ac2b0632a23a5913ad445b1a87f9b9ede"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def blenderfds28x.fds.mesh_tools.split_mesh </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>axis</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>ijk</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>xbs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Function to split a mesh. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">axis</td><td>an integer between 0, 1 and 2 to represent the axis on which to perform the split.. </td></tr>
+    <tr><td class="paramname">ijk</td><td>the ijk of the initial mesh. </td></tr>
+    <tr><td class="paramname">xbs</td><td>the xbs of the initial mesh. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>return the ijk and xbs values of the two new meshes. </dd></dl>
 
 </div>
 </div>
