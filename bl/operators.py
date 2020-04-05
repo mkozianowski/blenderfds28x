@@ -227,7 +227,7 @@ class SCENE_OT_bf_check_sanity(Operator):
 
 class _show_fds_code:
     """!
-    ???
+    TODO
     """
 
     def draw(self, context):
@@ -262,9 +262,9 @@ class _show_fds_code:
 
     def _get_lines(self, context):
         """!
-        ???
+        TODO
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return ???
+        @return TODO
         """
         return str()
 
@@ -315,9 +315,9 @@ class OBJECT_OT_bf_show_fds_code(_show_fds_code, Operator):
 
     def _get_lines(self, context):
         """!
-        ???
+        TODO
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return ???
+        @return TODO
         """
         return context.active_object.to_fds(context)
 
@@ -343,9 +343,9 @@ class MATERIAL_OT_bf_show_fds_code(_show_fds_code, Operator):
 
     def _get_lines(self, context):
         """!
-        ???
+        TODO
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return ???
+        @return TODO
         """
         return context.active_object.active_material.to_fds(context)
 
@@ -371,9 +371,9 @@ class SCENE_OT_bf_show_fds_code(_show_fds_code, Operator):
 
     def _get_lines(self, context):
         """!
-        ???
+        TODO
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return ???
+        @return TODO
         """
         return context.scene.to_fds(context)
 
@@ -961,7 +961,7 @@ def _get_namelist_items(self, context, label) -> "items":
 
 def _get_matl_items(self, context):
     """!
-    ???
+    TODO
     """
     return _get_namelist_items(self, context, "MATL")
 
@@ -1037,7 +1037,7 @@ class MATERIAL_OT_bf_choose_matl_id(Operator):
 
 def _get_prop_items(self, context):
     """!
-    ???
+    TODO
     """
     return _get_namelist_items(self, context, "PROP")
 
@@ -1318,7 +1318,7 @@ class _bf_set_geoloc:
 
     def _get_loc(self, context):
         """!
-        ???
+        TODO
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
         """
         # redefine
@@ -1326,11 +1326,11 @@ class _bf_set_geoloc:
 
     def _set_loc(self, context, x, y, z):
         """!
-        ???
+        TODO
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param x: ???
-        @param y: ???
-        @param z: ???
+        @param x: TODO
+        @param y: TODO
+        @param z: TODO
         """
         # redefine
         pass
