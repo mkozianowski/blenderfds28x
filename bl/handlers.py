@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 @persistent
 def _load_post(self):
     """!
-    ???
+    TODO
     """
     # Beware: self is None
     # Check file format version
@@ -52,7 +52,7 @@ def _load_post(self):
 @persistent
 def _save_pre(self):
     """!
-    ???
+    TODO
     """
     # Beware: self is None
     # Remove all caches and tmp objects, clean up to prevent stale caches

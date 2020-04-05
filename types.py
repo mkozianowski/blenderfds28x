@@ -660,10 +660,17 @@ class BFNamelist(BFParam):
 
 
 class BFNamelistSc(BFNamelist):
+    """!
+    TODO
+    """
     bpy_type = Scene
 
 
 class BFNamelistOb(BFNamelist):
+    """!
+    TODO
+    """
+
     bpy_type = Object
 
     @property
@@ -680,6 +687,9 @@ class BFNamelistOb(BFNamelist):
 
 
 class BFNamelistMa(BFNamelist):
+    """!
+    TODO
+    """
     bpy_type = Material
 
 
@@ -697,7 +707,7 @@ class FDSParam:
         @param label: namelist parameter label.
         @param values: list of parameter values of type float, int, str, bool.
         @param precision: float precision, number of decimal digits.
-        @param exponential: ???
+        @param exponential: TODO
         @param msg: comment msg.
         """
         self.label = label
@@ -917,7 +927,7 @@ class FDSCase:
         """!
         Import from f90 namelists.
         @param f90_namelists: f90 namelists string (eg. "&OBST ... /\n&DEVC ... /").
-        @param reset: ???
+        @param reset: TODO
         """
         if reset:
             self.fds_namelists = list()
