@@ -108,3 +108,4 @@ venv.bak/
 
 # verification settings
 verification/verification.sh
+doxyfile/html
