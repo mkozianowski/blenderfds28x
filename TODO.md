@@ -1,7 +1,5 @@
 # TODO
 
-GEOM minimum face area default lower
-
 GEOM MOVE
 
 Toolbox: MESH, mesh alignment
@@ -37,6 +35,8 @@ progress_update(value)
 progress_end()
 
 # DONE
+
+GEOM minimum face area default lower
 
 Use 2.81 remesh tool
 

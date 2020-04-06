@@ -111,3 +111,4 @@ docs/html
 
 # verification settings
 verification/verification.sh
+*.log

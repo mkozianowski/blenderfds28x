@@ -654,7 +654,7 @@ class SP_TIME_setup_only(BFParam):
     bpy_prop = BoolProperty
     bpy_default = False
 
-    def to_fds_param(self, context):
+    def to_fds_param(self, context):  # FIXME move to T_END
         """!
         Return the FDSParam Python representation.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -2518,15 +2518,18 @@ class OP_GEOM(BFParam):
         verts = [t for t in zip(*[iter(fds_verts)] * 3)]
         faces = [t for t in zip(*[iter(fds_faces)] * 4)]
         # Prepare
+        # This is special: FDSParam formatting capabilities are not used for speed
         surfids_str = ",".join(("'{}'".format(s) for s in fds_surfids))
         separator1 = "\n      "
         separator2 = "\n            "
+        p = 6  # precision config
         verts_str = separator2.join(
-            ("{0[0]:+.6f}, {0[1]:+.6f}, {0[2]:+.6f},".format(v) for v in verts)
+            (
+                f"{round(v[0],p):+.{p}f}, {round(v[1],p):+.{p}f}, {round(v[2],p):+.{p}f},"
+                for v in verts
+            )
         )
-        faces_str = separator2.join(
-            ("{0[0]},{0[1]},{0[2]}, {0[3]},".format(f) for f in faces)
-        )
+        faces_str = separator2.join((f"{f[0]},{f[1]},{f[2]}, {f[3]}," for f in faces))
         return FDSParam(
             label=separator1.join(
                 (f"SURF_ID={surfids_str}", f"VERTS={verts_str}", f"FACES={faces_str}")
