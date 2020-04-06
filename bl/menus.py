@@ -2,23 +2,6 @@
 BlenderFDS, import/export menu panel
 """
 
-# BlenderFDS, an open tool for the NIST Fire Dynamics Simulator
-
-# Copyright (C) 2013  Emanuele Gissi, http://www.blenderfds.org
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 import os
 
 import bpy, logging
@@ -144,8 +127,9 @@ class ExportFDS(Operator, ExportHelper):
 
     bl_idname = "export_scene.fds"
     bl_label = "Export FDS"
-    bl_description = "Export current Blender Scene as an FDS case file"
+    bl_description = "Export Blender Scenes as FDS case files"
 
+    # Inherited from ExportHelper
     filename_ext = ".fds"
     filter_glob: StringProperty(default="*.fds", options={"HIDDEN"})
     directory: StringProperty(
@@ -155,17 +139,13 @@ class ExportFDS(Operator, ExportHelper):
         subtype="DIR_PATH",
         options={"HIDDEN"},
     )
+
+    # Export all scenes
     all_scenes: BoolProperty(name="All Scenes", default=False)
 
     @classmethod
     def poll(cls, context):
         return context.scene is not None  # at least one available scene
-
-    def _set_default_filepath(self, context, sc):
-        self.filepath = (
-            bpy.path.abspath(sc.bf_config_directory)
-            or os.path.dirname(bpy.data.filepath)
-        ) + "{0}.fds".format(bpy.path.clean_name(sc.name))
 
     def _write_fds_file(self, context, sc, filepath):
         w = context.window_manager.windows[0]
@@ -175,13 +155,13 @@ class ExportFDS(Operator, ExportHelper):
         try:
             utils.write_to_file(filepath, sc.to_fds(context=context, full=True))
         except BFException as err:
-            self.report({"ERROR"}, f"Error while assembling FDS file:\n<{str(err)}>")
+            self.report({"ERROR"}, f"Error assembling FDS file:\n<{str(err)}>")
             return {"CANCELLED"}
         except IOError:
-            self.report({"ERROR"}, "Filepath not writable, cannot export FDS file")
+            self.report({"ERROR"}, f"Filepath not writable:\n<{filepath}>")
             return {"CANCELLED"}
         except Exception as err:
-            self.report({"ERROR"}, f"Unexpected error, cannot export:\n<{str(err)}>")
+            self.report({"ERROR"}, f"Unexpected error:\n<{str(err)}>")
             return {"CANCELLED"}
         finally:
             w.cursor_modal_restore()
@@ -189,52 +169,47 @@ class ExportFDS(Operator, ExportHelper):
             # Write .ge1 file
             w.cursor_modal_set("WAIT")
             try:
-                utils.write_to_file(filepath[:-4] + ".ge1", sc.to_ge1(context=context))
+                filepath = filepath[:-4] + ".ge1"
+                utils.write_to_file(filepath, sc.to_ge1(context=context))
             except BFException as err:
-                self.report(
-                    {"ERROR"}, f"Error while assembling GE1 file:\n<{str(err)}>"
-                )
+                self.report({"ERROR"}, f"Error assembling GE1 file:\n<{str(err)}>")
                 return {"CANCELLED"}
             except IOError:
-                self.report({"ERROR"}, "Filepath not writable, cannot export GE1 file")
+                self.report({"ERROR"}, f"Filepath not writable:\n<{filepath}>")
                 return {"CANCELLED"}
             except Exception as err:
-                self.report(
-                    {"ERROR"}, f"Unexpected error, cannot export:\n<{str(err)}>"
-                )
+                self.report({"ERROR"}, f"Unexpected error:\n<{str(err)}>")
                 return {"CANCELLED"}
             finally:
                 w.cursor_modal_restore()
-        self.report({"INFO"}, f"FDS export ok")
+        self.report({"INFO"}, f"FDS exporting ok")
         return {"FINISHED"}
 
     def invoke(self, context, event):
-        # Set default filepath
         sc = context.scene
+        basename = f"{bpy.path.clean_name(sc.name)}.fds"
         directory = bpy.path.abspath(
             sc.bf_config_directory or os.path.dirname(bpy.data.filepath)
         )
-        basename = f"{bpy.path.clean_name(sc.name)}.fds"
         self.filepath = "/".join((directory, basename))
-        print("self.filepath:", self.filepath)
-        return super().invoke(context, event)
+        return super().invoke(context, event)  # open dialog
 
     def execute(self, context):
-        if not self.all_scenes:
+        if self.all_scenes:
+            # Export all scenes to configure dir or chosen dir
+            for sc in bpy.data.scenes:
+                basename = f"{bpy.path.clean_name(sc.name)}.fds"
+                directory = bpy.path.abspath(sc.bf_config_directory or self.directory)
+                filepath = "/".join((directory, basename))
+                res = self._write_fds_file(context=context, sc=sc, filepath=filepath)
+                if res != {"FINISHED"}:  # break if any goes wrong
+                    break
+            return res
+        else:
+            # Export current scene to chosen dir
             return self._write_fds_file(
                 context=context, sc=context.scene, filepath=self.filepath
             )
-        else:
-            for sc in bpy.data.scenes:
-                # Set filepath
-                directory = bpy.path.abspath(sc.bf_config_directory or self.directory)
-                basename = f"{bpy.path.clean_name(sc.name)}.fds"
-                filepath = "/".join((directory, basename))
-                print("filepath:", filepath)
-                res = self._write_fds_file(context=context, sc=sc, filepath=filepath)
-                if res != {"FINISHED"}:
-                    break
-            return res
 
 
 def menu_func_export_to_fds(self, context):
