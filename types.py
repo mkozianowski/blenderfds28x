@@ -715,10 +715,11 @@ class FDSParam:
         # Check first element of the iterable and choose formatting
         v0 = self.values[0]
         if isinstance(v0, float):
+            p = self.precision
             if self.exponential:
-                v_string = ",".join(f"{v:.{self.precision}E}" for v in self.values)
+                v_string = ",".join(f"{round(v,p):.{p}E}" for v in self.values)
             else:
-                v_string = ",".join(f"{v:.{self.precision}f}" for v in self.values)
+                v_string = ",".join(f"{round(v,p):.{p}f}" for v in self.values)
         elif isinstance(v0, str):
             v_string = ",".join("'" in v and f'"{v}"' or f"'{v}'" for v in self.values)
         elif isinstance(v0, bool):  # always before int
