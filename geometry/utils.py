@@ -17,10 +17,10 @@ def get_object_bmesh(
     Return evaluated object bmesh.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
-    @param matrix: ???
-    @param world: ???
-    @param triangulate: ???
-    @param lookup: ???
+    @param matrix: TODO
+    @param world: TODO
+    @param triangulate: TODO
+    @param lookup: TODO
     @return the evaluated bmesh.
     """
     # Check object and init
@@ -148,7 +148,7 @@ def get_bbox_xbs(context, ob, scale_length, world=False) -> "x0, x1, y0, y1, z0,
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param scale_length: the scale to use.
-    @param world: ???
+    @param world: TODO
     @return the object’s bounding box.
     """
     if world:

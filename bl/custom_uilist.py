@@ -27,7 +27,7 @@ class _OPSlotAdd:
         """!
         Set item in the new slot.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param item: ???
+        @param item: TODO
         """
         pass
 
@@ -144,13 +144,13 @@ class _OPSlotMv:
 
 def register_collection(bpy_type, bpy_idname, name, bpy_pg, description=""):
     """!
-    ???
-    @param bpy_type: ???
-    @param bpy_idname: ???
-    @param name: ???
-    @param bpy_pg: ???
-    @param description: ???
-    @return ???
+    TODO
+    @param bpy_type: TODO
+    @param bpy_idname: TODO
+    @param name: TODO
+    @param bpy_pg: TODO
+    @param description: TODO
+    @return TODO
     """
     # Register index bpy_idx_idname
     bpy_idx_idname = f"{bpy_idname}_idx"
@@ -203,10 +203,10 @@ def register_collection(bpy_type, bpy_idname, name, bpy_pg, description=""):
 
 def unregister_collection(bpy_type, bpy_idname, ops):
     """!
-    ???
-    @param bpy_type: ???
-    @param bpy_idname: ???
-    @param ops: ???
+    TODO
+    @param bpy_type: TODO
+    @param bpy_idname: TODO
+    @param ops: TODO
     """
     bpy_idx_idname = f"{bpy_idname}_idx"
     # Unregister operators
@@ -219,14 +219,14 @@ def unregister_collection(bpy_type, bpy_idname, ops):
 
 def draw_collection(element, context, layout, bpy_type, bpy_idname, name, bpy_ul):
     """!
-    ???
-    @param element: ???
-    @param context: ???
+    TODO
+    @param element: TODO
+    @param context: TODO
     @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-    @param bpy_type: ???
-    @param bpy_idname: ???
-    @param name: ???
-    @param bpy_ul: ???
+    @param bpy_type: TODO
+    @param bpy_idname: TODO
+    @param name: TODO
+    @param bpy_ul: TODO
     """
     # Init
     bpy_idx_idname = f"{bpy_idname}_idx"

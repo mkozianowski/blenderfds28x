@@ -24,7 +24,7 @@ def get_trisurface(
     @param ob: the Blender object.
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
-    @param terrain: ???
+    @param terrain: TODO
     @return the materials, verts and faces lists.
     """
     log.debug(ob.name)
@@ -310,8 +310,8 @@ def _get_bm_intersected_faces(bm, tree, other_tree):
     """!
     Get intersected faces between trees.
     @param bm: the object's bmesh.
-    @param tree: ???
-    @param other_tree: ???
+    @param tree: TODO
+    @param other_tree: TODO
     """
     overlap = tree.overlap(other_tree)
     if overlap:
@@ -333,9 +333,9 @@ def _raise_bad_geometry(
     @param bm: the object's bmesh.
     @param msg: the BFException message.
     @param protect: if True raise BFException without context modifications.
-    @param bad_verts: ???
-    @param bad_edges: ???
-    @param bad_faces: ???
+    @param bad_verts: TODO
+    @param bad_edges: TODO
+    @param bad_faces: TODO
     """
     if protect:
         raise BFException(ob, msg)

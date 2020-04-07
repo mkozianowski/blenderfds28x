@@ -390,7 +390,7 @@ def _grow_boxes_along_x(boxes, sort_by):
     """!
     Grow boxes by merging neighbours along x axis.
     @param boxes: the boxes to handle.
-    @param sort_by: ???
+    @param sort_by: TODO
     @return the grown boxes.
     """
     log.debug("grow x")
@@ -422,7 +422,7 @@ def _grow_boxes_along_y(boxes, sort_by):
     """!
     Grow boxes by merging neighbours along y axis.
     @param boxes: the boxes to handle.
-    @param sort_by: ???
+    @param sort_by: TODO
     @return the grown boxes.
     """
     log.debug("grow y")
@@ -454,7 +454,7 @@ def _grow_boxes_along_z(boxes, sort_by):
     """!
     Grow boxes by merging neighbours along z axis.
     @param boxes: the boxes to handle.
-    @param sort_by: ???
+    @param sort_by: TODO
     @return the grown boxes.
     """
     log.debug("grow z")
@@ -489,7 +489,7 @@ def _get_box_xbs(boxes, origin, voxel_size, scale_length) -> "xbs":
     """!
     Transform boxes to xbs in world coordinates.
     @param boxes: the boxes to handle.
-    @param origin: ???
+    @param origin: TODO
     @param voxel_size: the voxel size of the object.
     @param scale_length: the scale to use.
     @return the xbs.
@@ -590,9 +590,9 @@ def _get_flat_axis(ob, voxel_size):
 def _x_flatten_xbs(xbs, flat_origin) -> "[(l0, l0, y0, y1, z0, z1), ...]":
     """!
     Flatten voxels to obtain pixels (normal to x axis) at flat_origin height.
-    @param xbs: ???
-    @param flat_origin: ???
-    @return ???
+    @param xbs: TODO
+    @param flat_origin: TODO
+    @return TODO
     """
     return [[flat_origin[0], flat_origin[0], xb[2], xb[3], xb[4], xb[5]] for xb in xbs]
 
@@ -600,9 +600,9 @@ def _x_flatten_xbs(xbs, flat_origin) -> "[(l0, l0, y0, y1, z0, z1), ...]":
 def _y_flatten_xbs(xbs, flat_origin) -> "[(x0, x1, l0, l0, z0, z1), ...]":
     """!
     Flatten voxels to obtain pixels (normal to y axis) at flat_origin height.
-    @param xbs: ???
-    @param flat_origin: ???
-    @return ???
+    @param xbs: TODO
+    @param flat_origin: TODO
+    @return TODO
     """
     return [[xb[0], xb[1], flat_origin[1], flat_origin[1], xb[4], xb[5]] for xb in xbs]
 
@@ -610,8 +610,8 @@ def _y_flatten_xbs(xbs, flat_origin) -> "[(x0, x1, l0, l0, z0, z1), ...]":
 def _z_flatten_xbs(xbs, flat_origin) -> "[(x0, x1, y0, y1, l0, l0), ...]":
     """!
     Flatten voxels to obtain pixels (normal to z axis) at flat_origin height.
-    @param xbs: ???
-    @param flat_origin: ???
-    @return ???
+    @param xbs: TODO
+    @param flat_origin: TODO
+    @return TODO
     """
     return [[xb[0], xb[1], xb[2], xb[3], flat_origin[2], flat_origin[2]] for xb in xbs]

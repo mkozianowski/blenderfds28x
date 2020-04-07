@@ -203,7 +203,7 @@ class SP_config_text(BFParam):
 
     def draw_operators(self, context, layout):
         """!
-        ???
+        TODO
         """
         layout.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")
 
@@ -717,7 +717,7 @@ class SP_TIME_T_END(BFParam):
 @subscribe
 class SP_TIME_other(BFParamOther):
     """!
-    ???
+    TODO
     """
 
     bpy_type = Scene
@@ -788,7 +788,7 @@ class SP_MISC_THICKEN_OBSTRUCTIONS(BFParam):
 @subscribe
 class SP_MISC_other(BFParamOther):
     """!
-    ???
+    TODO
     """
 
     bpy_type = Scene
@@ -955,7 +955,7 @@ class SP_REAC_RADIATIVE_FRACTION(BFParam):
 @subscribe
 class SP_REAC_other(BFParamOther):
     """!
-    ???
+    TODO
     """
 
     bpy_type = Scene
@@ -1086,7 +1086,7 @@ class SP_RADI_RADIATION_ITERATIONS(BFParam):
 @subscribe
 class SP_RADI_other(BFParamOther):
     """!
-    ???
+    TODO
     """
 
     bpy_type = Scene
@@ -1229,7 +1229,7 @@ class SP_DUMP_DT_RESTART(BFParam):
 @subscribe
 class SP_DUMP_other(BFParamOther):
     """!
-    ???
+    TODO
     """
 
     bpy_type = Scene
@@ -1354,7 +1354,7 @@ class SN_CATF(BFNamelistSc):
 
 def update_MP_namelist_cls(self, context):
     """!
-    ???
+    TODO
     """
     # Set default appearance
     self.set_default_appearance(context)
@@ -1584,7 +1584,7 @@ class MP_MATL_ID(BFParamStr):
 
     def draw_operators(self, context, layout):
         """!
-        ???
+        TODO
         """
         layout.operator("material.bf_choose_matl_id", icon="VIEWZOOM", text="")
 
@@ -1646,7 +1646,7 @@ class MP_BACKING(BFParam):
 @subscribe
 class MP_other(BFParamOther):
     """!
-    ???
+    TODO
     """
 
     bpy_type = Material
@@ -1697,7 +1697,7 @@ class MN_SURF(BFNamelistMa):
 
 def update_OP_namelist_cls(ob, context):
     """!
-    ???
+    TODO
     """
     geometry.utils.rm_geometric_cache(ob=ob)
     geometry.utils.rm_tmp_objects()
@@ -1752,7 +1752,7 @@ class OP_FYI(BFParamFYI):
 
 def update_bf_xb(ob, context):
     """!
-    ???
+    TODO
     """
     # Remove cache and tmp objects
     ob["ob_to_xbs_cache"] = None
@@ -1967,7 +1967,7 @@ class OP_XB_BBOX(OP_XB):
 
 def update_bf_xyz(ob, context):
     """!
-    ???
+    TODO
     """
     # Remove cache and tmp objects
     ob["ob_to_xyzs_cache"] = None
@@ -2353,7 +2353,7 @@ class OP_SURF_ID(BFParam):
 @subscribe
 class OP_other(BFParamOther):
     """!
-    ???
+    TODO
     """
 
     bpy_type = Object
@@ -2405,7 +2405,7 @@ class OP_other_namelist(BFParam):
 @subscribe
 class ON_other(BFNamelistOb):
     """!
-    ???
+    TODO
     """
 
     label = "Other"
@@ -2430,7 +2430,7 @@ class ON_other(BFNamelistOb):
     @property
     def fds_label(self):
         """!
-        ???
+        TODO
         """
         return self.element.bf_other_namelist
 
@@ -3041,7 +3041,7 @@ class BFObject:
     @property
     def bf_namelist(self):
         """!
-        ???
+        TODO
         """
         try:
             return bf_namelists_by_cls[self.bf_namelist_cls](self)
@@ -3077,7 +3077,7 @@ class BFObject:
 
     def set_default_appearance(self, context):
         """!
-        ???
+        TODO
         """
         # Check preferences and namelist
         prefs = context.preferences.addons[__package__].preferences
@@ -3143,7 +3143,7 @@ class BFMaterial:
     @property
     def bf_namelist(self):
         """!
-        ???
+        TODO
         """
         try:
             return bf_namelists_by_cls[self.bf_namelist_cls](self)
@@ -3213,7 +3213,7 @@ class BFScene:
     @property
     def bf_namelists(self):
         """!
-        ???
+        TODO
         """
         return (n(self) for _, n in bf_namelists_by_cls.items() if n.bpy_type == Scene)
 
@@ -3221,7 +3221,7 @@ class BFScene:
         """!
         Return the FDS str representation.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param full: ???
+        @param full: TODO
         @return string representation.
         """
         # Header
@@ -3318,13 +3318,13 @@ class BFScene:
 
     def to_ge1(self, context):
         """!
-        ???
+        TODO
         """
         return geometry.to_ge1.scene_to_ge1(context, self)
 
     def set_default_appearance(self, context):
         """!
-        ???
+        TODO
         TODO
         """
         preferences = getattr(context, "preferences", None)
@@ -3375,7 +3375,7 @@ class BFCollection:
         """!
         Return the FDS str representation.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param full: ???
+        @param full: TODO
         @return string representation.
         """
         obs, lines = list(self.objects), list()
