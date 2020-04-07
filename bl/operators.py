@@ -443,6 +443,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                     ob=ob_tmp,
                     scale_length=scale_length,
                 )
+                ob_tmp.show_wire = True
                 self.report({"INFO"}, msg)
                 return {"FINISHED"}
             finally:
@@ -472,6 +473,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                     ma=ob.active_material,
                     bf_xb=ob.bf_xb,
                 )
+                ob_tmp.show_wire = True
         # XYZ
         if ob.bf_xyz_export and ob.bf_namelist.bf_param_xyz:
             try:
@@ -494,6 +496,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                     scale_length=scale_length,
                     ma=ob.active_material,
                 )
+                ob_tmp.show_wire = True
         # PB
         if ob.bf_pb_export and ob.bf_namelist.bf_param_pb:
             try:
@@ -516,6 +519,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                     scale_length=scale_length,
                     ma=ob.active_material,
                 )
+                ob_tmp.show_wire = True
         # Close
         w.cursor_modal_restore()
         msg = "; ".join(msg for msg in msgs if msg)

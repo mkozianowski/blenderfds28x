@@ -41,8 +41,7 @@ def get_voxels(context, ob, scale_length):
     ob_tmp.data.transform(ob.matrix_world)
     context.collection.objects.link(ob_tmp)
     # Align voxels to world origin and add remesh modifier
-    if not ob.bf_xb_center_voxels:
-        _align_remesh_to_world_origin(context, ob_tmp, voxel_size)
+    _align_remesh_bbox(context, ob_tmp, voxel_size, centered=ob.bf_xb_center_voxels)
     _add_remesh_mod(context, ob_tmp, voxel_size)
     # Get evaluated bmesh from ob_tmp; it is already in world coo
     bm = utils.get_object_bmesh(context, ob_tmp, world=False)
@@ -171,41 +170,55 @@ def _get_voxel_size(context, ob) -> "voxel_size":
 # temporary object, we can align the voxelization to FDS world origin
 
 
-def _align_remesh_to_world_origin(context, ob, voxel_size):
+def _align_remesh_bbox(context, ob, voxel_size, centered=False):
     """!
-    Modify object mesh for remesh voxel alignment to world origin.
+    Modify object mesh for remesh voxel safe alignment to world origin or to ob center by inserting 8 vertices.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param voxel_size: the voxel size of the object.
     """
     bb = utils.get_bbox_xbs(context, ob, scale_length=1.0)  # in world coo
     # Calc new bbox (in Blender units)
-    #      +---+ pv1
-    #      |   |
-    #  pv0 +---+
+    #           +----+ bb1, pv1
+    #           |    |
+    #  bb0, pv0 +----+  + origin
+    # Calc voxel grid origin
+    if centered:
+        hvs = voxel_size / 2.0
+        origin = (
+            (bb[1] + bb[0]) / 2.0 - hvs,
+            (bb[3] + bb[2]) / 2.0 - hvs,
+            (bb[5] + bb[4]) / 2.0 - hvs,
+        )
+    else:
+        origin = 0.0, 0.0, 0.0
+    # Calc adimensional coordinates and align to the voxel grid
     pv0 = (
-        floor(bb[0] / voxel_size) - 1,  # at least one voxel away from obj
-        floor(bb[2] / voxel_size) - 1,
-        floor(bb[4] / voxel_size) - 1,
+        floor((bb[0] - origin[0]) / voxel_size),
+        floor((bb[2] - origin[1]) / voxel_size),
+        floor((bb[4] - origin[2]) / voxel_size),
     )
     pv1 = (
-        ceil(bb[1] / voxel_size) + 1,  # at least one voxel away from obj
-        ceil(bb[3] / voxel_size) + 1,
-        ceil(bb[5] / voxel_size) + 1,
+        ceil((bb[1] - origin[0]) / voxel_size),
+        ceil((bb[3] - origin[1]) / voxel_size),
+        ceil((bb[5] - origin[2]) / voxel_size),
     )
+    # Set odd number of voxels for better shapes
     pv1 = (
-        pv0[0] + (pv1[0] - pv0[0]) // 2 * 2 + 1,  # at least one voxel away from obj
-        pv0[1] + (pv1[1] - pv0[1]) // 2 * 2 + 1,  # and odd number of voxels
+        pv0[0] + (pv1[0] - pv0[0]) // 2 * 2 + 1,
+        pv0[1] + (pv1[1] - pv0[1]) // 2 * 2 + 1,
         pv0[2] + (pv1[2] - pv0[2]) // 2 * 2 + 1,
     )
+    # Calc new bounding box
     bb = (
-        pv0[0] * voxel_size,
-        pv1[0] * voxel_size,
-        pv0[1] * voxel_size,
-        pv1[1] * voxel_size,
-        pv0[2] * voxel_size,
-        pv1[2] * voxel_size,
+        pv0[0] * voxel_size + origin[0],
+        pv1[0] * voxel_size + origin[0],
+        pv0[1] * voxel_size + origin[1],
+        pv1[1] * voxel_size + origin[1],
+        pv0[2] * voxel_size + origin[2],
+        pv1[2] * voxel_size + origin[2],
     )
+    # Prepare new vertices and insert them
     verts = (
         (bb[0], bb[2], bb[4]),
         (bb[0], bb[2], bb[5]),
