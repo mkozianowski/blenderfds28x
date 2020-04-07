@@ -313,8 +313,4 @@ def ob_to_pbs(context, ob, scale_length) -> "((0,x3,), (1,x7,), (1,y9,), ...), '
     if ob.get("ob_to_pbs_cache") is None:  # recalc
         log.debug(f"Update <{ob.name}> pbs cache")
         ob["ob_to_pbs_cache"] = _ob_to_pbs_planes(context, ob, scale_length)
-        print("ob['ob_to_pbs_cache'][0][0]:", tuple(ob["ob_to_pbs_cache"][0][0]))
-    return ob["ob_to_pbs_cache"]
-    # res = _ob_to_pbs_planes(context, ob, scale_length)
-    # print("ob_to_pbs:", res)
-    # return res # FIXME restore caching
+    return ob["ob_to_pbs_cache"]  # the cache sends floats instead of integers for axis

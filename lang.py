@@ -2172,7 +2172,9 @@ class OP_PB(BFParamPB):
             ids = (f"{n}_{i}" for i, _ in enumerate(pbs))
         elif suffix == "IDXYZ":
             ids = (
-                (f"{n}_x{pb:+.3f}", f"{n}_y{pb:+.3f}", f"{n}_z{pb:+.3f}")[axis]
+                (f"{n}_x{pb:+.3f}", f"{n}_y{pb:+.3f}", f"{n}_z{pb:+.3f}")[
+                    int(axis)
+                ]  # the pbs cache sends floats
                 for axis, pb in pbs
             )
         else:
