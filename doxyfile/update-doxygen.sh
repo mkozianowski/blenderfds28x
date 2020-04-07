@@ -1,25 +1,25 @@
 #!/bin/bash
 
-#generation of new doxygen
+# Generation of new doxygen
 echo "Doxygen generation ..."
 doxygen doxyfile > doxygen.log 2>&1
 
-#moving to branch gh-pages
+# Moving to branch gh-pages
 echo "Pulling gh-pages branch ..."
 git checkout gh-pages
 git pull
 
-#replacing current doxygen
+# Replacing current doxygen
 echo "Deploying doxygen ..."
 rm -rf  ../docs/html
 mv html ../docs/
 
-#commit
+# Commit
 echo "Commit doxygen ..."
 git add ../docs/html
 COMMITMESSAGE="Doxygen update $(date)"
 git commit -m "$COMMITMESSAGE"
 git push
 
-#restoring master
+# Restoring master
 git checkout master
