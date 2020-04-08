@@ -44,7 +44,7 @@ class BFException(Exception):
 
     def __init__(self, sender, msg):
         """!
-        Constructor of the Exception
+        Class constructor.
         @param sender: the object that generate the exception
         @param msg: exception message
         """
@@ -53,7 +53,8 @@ class BFException(Exception):
 
     def __str__(self):
         """!
-        String representation
+        String representation.
+        @return str
         """
         sender = self.sender
         try:
@@ -114,7 +115,7 @@ class BFParam:
     bpy_export = None
 
     ## idname of export toggle Blender property
-    bpy_export_default = None  # FIXME test
+    bpy_export_default = None
 
     def __init__(self, element):
         """!
@@ -178,24 +179,24 @@ class BFParam:
         Unregister related Blender properties.
         @param cls: class to be unregistered.
         """
-        # if cls.bpy_prop and cls.bpy_idname:  # FIXME
+        # if cls.bpy_prop and cls.bpy_idname:
         #     delattr(cls.bpy_type, cls.bpy_idname)
         # if cls.bpy_export:
         #     delattr(cls.bpy_type, cls.bpy_export)
         pass
 
     @property
-    def value(self) -> "any":
+    def value(self):
         """!
-        Get value.
-        @return value to be get
+        Get value of instance.
+        @return value to be get of any type
         """
         return getattr(self.element, self.bpy_idname)
 
     def set_value(self, context, value=None):
         """!
-        Set value. If value is None, set default.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        Set value. If value is None, set default value.
+        @param context: the Blender context.
         @param value: value to set.
         """
         if value is None:
@@ -206,10 +207,10 @@ class BFParam:
             return
 
     @property
-    def exported(self) -> "bool":
+    def exported(self):
         """!
         Get if self is exported to FDS.
-        @return True if is exported, False otherwise.
+        @return True if self is exported, False otherwise.
         """
         # Check if empty
         value = self.value
@@ -227,8 +228,8 @@ class BFParam:
 
     def set_exported(self, context, value=None):
         """!
-        Set if self is exported to FDS. If value is None, set default.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        Set if self is exported to FDS. If value is None, set default value.
+        @param context: the Blender context.
         @param value: value to set.
         """
         if self.bpy_export:
@@ -239,25 +240,26 @@ class BFParam:
 
     def check(self, context):
         """!
-        Check self validity for FDS.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        Check self validity for FDS. In case of error raise BFException.
+        @param context: the Blender context.
         """
         pass
 
     def draw_operators(self, context, layout):
         """!
-        Draw operators on panel layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
+        Draw my operators on layout.
+        @param context: the Blender context.
+        @param layout: the Blender panel layout.
+        @return used layout.
         """
         pass
 
-    def draw(self, context, layout) -> "layout":
+    def draw(self, context, layout):
         """!
-        Draw self UI on panel layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        @return Blender panel layout.
+        Draw my UI on layout.
+        @param context: the Blender context.
+        @param layout: the Blender panel layout.
+        @return used layout.
         """
         if not self.bpy_idname:
             return
@@ -276,11 +278,11 @@ class BFParam:
             row.prop(self.element, self.bpy_export, text="")
         return col
 
-    def to_fds_param(self, context) -> "None, FDSParam, or ((FDSParam, ...), ...)":
+    def to_fds_param(self, context):
         """!
         Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
+        @param context: the Blender context.
+        @return None; FDSParam; or ((FDSParam, ...), ...).
         """
         # Get if exported and check
         if not self.exported or not self.fds_label:
@@ -302,7 +304,7 @@ class BFParam:
     def to_fds(self, context) -> "None or str":
         """!
         Return the FDS str representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @return string representation.
         """
         fds_param = self.to_fds_param(context)
@@ -311,7 +313,7 @@ class BFParam:
     def from_fds(self, context, value):
         """!
         Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @param value: the value to set.
         """
         log.debug(f"{self} {value}")
@@ -328,7 +330,7 @@ class BFParam:
 
 class BFParamXB(BFParam):
     """!
-    Helper for FDS XB parameter.
+    Blender representation of an FDS parameter, helper for FDS XB parameter.
     """
 
     pass
@@ -336,7 +338,7 @@ class BFParamXB(BFParam):
 
 class BFParamXYZ(BFParam):
     """!
-    Helper for FDS XYZ parameter.
+    Blender representation of an FDS parameter, helper for FDS XYZ parameter.
     """
 
     pass
@@ -344,7 +346,7 @@ class BFParamXYZ(BFParam):
 
 class BFParamPB(BFParam):
     """!
-    Helper for FDS PB parameter.
+    Blender representation of an FDS parameter, helper for FDS PBX PBY PBZ parameters.
     """
 
     pass
@@ -352,7 +354,7 @@ class BFParamPB(BFParam):
 
 class BFParamStr(BFParam):
     """!
-    Helper for FDS string parameter.
+    Blender representation of an FDS parameter, helper for any FDS string parameter.
     """
 
     bpy_prop = StringProperty
@@ -360,7 +362,7 @@ class BFParamStr(BFParam):
     def check(self, context):
         """!
         Checking the value validity.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         """
         value = self.value
         if "&" in value or "/" in value or "#" in value:
@@ -379,7 +381,7 @@ class BFParamStr(BFParam):
 
 class BFParamFYI(BFParamStr):
     """!
-    Helper for FDS FYI parameter.
+    Blender representation of an FDS parameter, helper for FDS FYI parameter.
     """
 
     label = "FYI"
@@ -390,12 +392,6 @@ class BFParamFYI(BFParamStr):
     bpy_other = {"maxlen": 128}
 
     def draw(self, context, layout):
-        """!
-        Draw parameter in Blender panel.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        @return layout column.
-        """
         col = layout.column()
         try:
             self.check(context)
@@ -408,7 +404,7 @@ class BFParamFYI(BFParamStr):
 
 class BFParamOther(BFParam):
     """!
-    Helper for FDS other parameters.
+    Blender representation of an FDS parameter, helper for other FDS parameters.
     """
 
     label = "Other Parameters"
@@ -421,10 +417,6 @@ class BFParamOther(BFParam):
 
     @classmethod
     def register(cls):
-        """!
-        Register related Blender properties.
-        @param cls: class to be registered.
-        """
         cls._ops = custom_uilist.register_collection(
             bpy_type=cls.bpy_type,
             bpy_idname=cls.bpy_idname,
@@ -435,29 +427,16 @@ class BFParamOther(BFParam):
 
     @classmethod
     def unregister(cls):
-        """!
-        Unregister related Blender properties.
-        @param cls: class to be unregistered.
-        """
         custom_uilist.unregister_collection(
             bpy_type=cls.bpy_type, bpy_idname=cls.bpy_idname, ops=cls._ops
         )
 
     @property
     def value(self):
-        """!
-        Get value.
-        @return value to be get
-        """
         collection = getattr(self.element, self.bpy_idname)
         return tuple(item.name for item in collection if item.bf_export)
 
     def set_value(self, context, value):
-        """!
-        Set value.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param value: value to set.
-        """
         collection = getattr(self.element, self.bpy_idname)
         if value is None:
             collection.clear()
@@ -466,11 +445,6 @@ class BFParamOther(BFParam):
             item.name, item.bf_export = value, True
 
     def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        """
         custom_uilist.draw_collection(
             element=self.element,
             context=context,
@@ -482,11 +456,6 @@ class BFParamOther(BFParam):
         )
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         self.check(context)
         coll = getattr(self.element, self.bpy_idname)
         if coll:
@@ -503,22 +472,15 @@ class BFNamelist(BFParam):
     Blender representation of an FDS namelist group.
     """
 
-    maxlen = 80  # max number of columns when exporting
+    ## max number of text columns when exporting
+    maxlen = 80
 
     def __init__(self, element):
-        """!
-        Class constructor
-        @param element: FDS element to represent.
-        """
         self.element = element
         self.bf_params = tuple(p(element) for p in self.bf_params)  # instantiate
 
     @classmethod
     def register(cls):
-        """!
-        Register related Blender properties.
-        @param cls: class to be registered.
-        """
         super().register()
         # Indexes are used to link both the class and the instance
         cls._bf_param_idx_by_fds_label = dict()  # fds_label: index of param
@@ -538,11 +500,11 @@ class BFNamelist(BFParam):
             elif issubclass(p, BFParamOther):
                 cls._bf_param_other_idx = i
 
-    def get_bf_param_by_fds_label(self, fds_label) -> "BFParam or None":
+    def get_bf_param_by_fds_label(self, fds_label):
         """!
         Get bf_param (class or instance) by its fds_label.
         @param fds_label: FDS parameter to be obtained.
-        @return FDS parameter.
+        @return BFParam or None.
         """
         i = self._bf_param_idx_by_fds_label.get(fds_label)
         if i is not None:
@@ -550,27 +512,24 @@ class BFNamelist(BFParam):
 
     @property
     def bf_param_xb(self):
-        """!
-        XB bf_param (class or instance).
-        @return BFParamXB parameter.
+         """!
+        Return the reference of the XB bf_param (BFParamXB class or instance).
         """
         if self._bf_param_xb_idx is not None:
             return self.bf_params[self._bf_param_xb_idx]
 
     @property
     def bf_param_xyz(self):
-        """!
-        XYZ bf_param (class or instance).
-        @return BFParamXYZ parameter.
+         """!
+        Return the reference of the XYZ bf_param (BFParamXYZ class or instance).
         """
         if self._bf_param_xyz_idx is not None:
             return self.bf_params[self._bf_param_xyz_idx]
 
     @property
     def bf_param_pb(self):
-        """!
-        PB bf_param (class or instance).
-        @return BFParamPB parameter.
+         """!
+        Return the reference of the PB bf_param (BFParamPB class or instance).
         """
         if self._bf_param_pb_idx is not None:
             return self.bf_params[self._bf_param_pb_idx]
@@ -578,18 +537,17 @@ class BFNamelist(BFParam):
     @property
     def bf_param_other(self):
         """!
-        Other bf_param (class or instance).
-        @return BFParamOther parameter.
+        Return the reference of the other bf_param (class or instance).
         """
         if self._bf_param_other_idx is not None:
             return self.bf_params[self._bf_param_other_idx]
 
-    def draw(self, context, layout) -> "layout":
+    def draw(self, context, layout):
         """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        @return layout column.
+        Draw my UI on layout.
+        @param context: the Blender context.
+        @param layout: the Blender panel layout.
+        @return used layout.
         """
         # Check and active
         try:
@@ -606,18 +564,18 @@ class BFNamelist(BFParam):
     @property
     def exported(self) -> "bool":
         """!
-        Get if self is exported.
-        @return True if is exported, False otherwise.
+        Get if self is exported to FDS.
+        @return True if self is exported, False otherwise.
         """
         if self.bpy_export is None:
             return True
         return bool(getattr(self.element, self.bpy_export, True))
 
-    def to_fds_namelist(self, context) -> "None or FDSNamelist":
+    def to_fds_namelist(self, context):
         """!
         Return the FDSNamelist Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSNamelist.
+        @param context: the Blender context.
+        @return None, FDSNamelist, or (FDSNamelist, ...)
         """
         # Get if exported and check
         if not self.exported or not self.fds_label:
@@ -630,11 +588,11 @@ class BFNamelist(BFParam):
             maxlen=self.maxlen,
         )
 
-    def to_fds(self, context) -> "None or str":
+    def to_fds(self, context):
         """!
         Return the FDS str representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return string representation.
+        @param context: the Blender context.
+        @return None or str.
         """
         fds_namelist = self.to_fds_namelist(context)
         return fds_namelist and str(fds_namelist)
@@ -642,7 +600,7 @@ class BFNamelist(BFParam):
     def from_fds(self, context, fds_params):
         """!
         Set namelist parameter values from list of FDSParam, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @param fds_params: fds parameter to set.
         """
         for p in fds_params:
@@ -661,14 +619,15 @@ class BFNamelist(BFParam):
 
 class BFNamelistSc(BFNamelist):
     """!
-    TODO
+    Blender representation of an FDS namelist group related to a Blender Scene.
     """
+
     bpy_type = Scene
 
 
 class BFNamelistOb(BFNamelist):
     """!
-    TODO
+    Blender representation of an FDS namelist group related to a Blender Object.
     """
 
     bpy_type = Object
@@ -688,8 +647,9 @@ class BFNamelistOb(BFNamelist):
 
 class BFNamelistMa(BFNamelist):
     """!
-    TODO
+    Blender representation of an FDS namelist group related to a Blender Material.
     """
+
     bpy_type = Material
 
 
@@ -698,7 +658,7 @@ class BFNamelistMa(BFNamelist):
 
 class FDSParam:
     """!
-    Python datastructure for FDS namelist parameter.
+    Python datastructure representing an FDS namelist parameter.
     """
 
     def __init__(self, label, values=None, precision=3, exponential=False, msg=None):
@@ -707,7 +667,7 @@ class FDSParam:
         @param label: namelist parameter label.
         @param values: list of parameter values of type float, int, str, bool.
         @param precision: float precision, number of decimal digits.
-        @param exponential: TODO
+        @param exponential: True to set exponential representation of floats.
         @param msg: comment msg.
         """
         self.label = label
@@ -718,7 +678,8 @@ class FDSParam:
 
     def __str__(self):
         """!
-        String representation
+        String representation.
+        @return str
         """
         if not self.values:
             return self.label
@@ -785,7 +746,7 @@ class FDSParam:
 
 class FDSNamelist:
     """!
-    Python datastructure for FDS namelist.
+    Python datastructure representing an FDS namelist.
     """
 
     def __init__(self, label, fds_params=None, msg=None, maxlen=80):
@@ -805,7 +766,8 @@ class FDSNamelist:
 
     def __str__(self):
         """!
-        String representation
+        String representation.
+        @return str
         """
         ps, mps, msgs = list(), list(), list((self.msg,))
         # Select parameters ps, multi parameters mps, messages msgs
@@ -900,7 +862,7 @@ class FDSNamelist:
 
 class FDSCase:
     """!
-    Python datastructure for FDS case.
+    Python datastructure representing an FDS case.
     """
 
     def __init__(self, fds_namelists=None):
@@ -912,7 +874,8 @@ class FDSCase:
 
     def __str__(self):
         """!
-        String representation
+        String representation.
+        @return str
         """
         return "\n".join(str(n) for n in self.fds_namelists)
 
@@ -944,15 +907,3 @@ class FDSCase:
         @return tuple of fds namelists
         """
         return tuple(n for n in self.fds_namelists if n.label == label)
-
-
-if __name__ == "__main__":
-    import sys
-
-    if not sys.argv:
-        exit()
-    with open(sys.argv[1], "r") as f:
-        fdsfile = f.read()
-    c = FDSCase()
-    c.from_fds(fdsfile)
-    print(c)
