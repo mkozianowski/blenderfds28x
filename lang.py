@@ -2306,7 +2306,7 @@ class OP_ID_suffix(BFParam):
 @subscribe
 class OP_SURF_ID(BFParam):
     """!
-    Blender representation of the SURF_ID parameter, the reference to SURF.
+    Blender representation of the SURF_ID parameter, the reference to a SURF boundary condition.
     """
 
     label = "SURF_ID"
@@ -2484,6 +2484,40 @@ class OP_GEOM_protect(BFParam):  # FIXME should not be here
 
 
 @subscribe
+class OP_GEOM_move_export(BFParam):
+    """!
+    Blender representation for exporting GEOM along with a MOVE namelist.
+    """
+
+    label = "Export MOVE"
+    description = "Export current GEOM along with a corresponding MOVE namelist"
+    bpy_type = Object
+    bpy_idname = "bf_geom_move_export"
+    bpy_prop = BoolProperty
+    bpy_default = True
+
+    # TODO develop MOVE with QUATERNION
+    # TODO import various GEOM types
+    # TODO GEOM textures
+
+
+@subscribe
+class OP_GEOM_READ_BINARY(BFParam):
+    """!
+    Blender representation for readin binary GEOM.
+    """
+
+    label = "READ_BINARY"
+    description = "Read binary geometry, if available"
+    bpy_type = Object
+    bpy_idname = "bf_geom_read_binary"
+    bpy_prop = BoolProperty
+    bpy_default = True
+
+    # TODO delete binary geom if ob updated
+
+
+@subscribe
 class OP_GEOM(BFParam):
     """!
     Blender representation for the geometry parameters.
@@ -2595,6 +2629,8 @@ class ON_GEOM(BFNamelistOb):
         OP_ID,
         OP_FYI,
         OP_GEOM_check_sanity,
+        OP_GEOM_move_export,
+        OP_GEOM_READ_BINARY,
         OP_GEOM_IS_TERRAIN,
         OP_GEOM_EXTEND_TERRAIN,
         OP_GEOM,
@@ -2705,6 +2741,9 @@ class OP_DEVC_QUANTITY(BFParamStr):
     fds_label = "QUANTITY"
     bpy_type = Object
     bpy_idname = "bf_quantity"
+
+    def draw_operators(self, context, layout):
+        layout.operator("object.bf_choose_devc_quantity", icon="VIEWZOOM", text="")
 
 
 @subscribe
