@@ -45,8 +45,11 @@ verification/verification.sh
 *_git.txt
 *_hrr.csv
 *_steps.csv
+*_devc.csv
 *.binfo
 *.end
 *.out
 *.sinfo
 *.smv
+*.ge
+*.bingeom
