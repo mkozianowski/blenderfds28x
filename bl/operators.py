@@ -424,9 +424,14 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
         # Manage GEOM
         if ob.bf_namelist_cls == "ON_GEOM" and not ob.hide_render:  # was bf_export
             check = ob.bf_geom_check_sanity
+            world = True  # world = not ob.bf_geom_move_id  # FIXME test
             try:
                 fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
-                    context=context, ob=ob, scale_length=scale_length, check=check
+                    context=context,
+                    ob=ob,
+                    scale_length=scale_length,
+                    check=check,
+                    world=world,
                 )
             except BFException as err:
                 self.report({"ERROR"}, str(err))

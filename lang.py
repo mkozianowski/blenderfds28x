@@ -2484,37 +2484,45 @@ class OP_GEOM_protect(BFParam):  # FIXME should not be here
 
 
 @subscribe
-class OP_GEOM_move_export(BFParam):
+class OP_GEOM_MOVE_ID(BFParam):
     """!
     Blender representation for exporting GEOM along with a MOVE namelist.
     """
 
-    label = "Export MOVE"
-    description = "Export current GEOM along with a corresponding MOVE namelist"
+    label = "MOVE_ID"
+    description = "Export current GEOM along with the corresponding MOVE namelist"
+    fds_label = "MOVE_ID"
+    fds_default = True  # FIXME confirm with Marcos
     bpy_type = Object
-    bpy_idname = "bf_geom_move_export"
+    bpy_idname = "bf_geom_move_id"
     bpy_prop = BoolProperty
-    bpy_default = True
 
     # TODO develop MOVE with QUATERNION
     # TODO import various GEOM types
     # TODO GEOM textures
 
+    @property
+    def value(self):
+        if self.element.bf_geom_move_id:
+            return f"{self.element.name}_move"
+
 
 @subscribe
 class OP_GEOM_READ_BINARY(BFParam):
     """!
-    Blender representation for readin binary GEOM.
+    Blender representation for read in binary GEOM.
     """
 
     label = "READ_BINARY"
-    description = "Read binary geometry, if available"
+    description = "Read in binary geometry, if available"
+    fds_label = "READ_BINARY"
+    fds_default = False  # FIXME confirm with Marcos
     bpy_type = Object
     bpy_idname = "bf_geom_read_binary"
     bpy_prop = BoolProperty
     bpy_default = True
 
-    # TODO delete binary geom if ob updated
+    # TODO delete binary geom if ob geometry updated
 
 
 @subscribe
@@ -2545,8 +2553,13 @@ class OP_GEOM(BFParam):
         # Get surf_idv, verts and faces
         scale_length = context.scene.unit_settings.scale_length
         check = self.element.bf_geom_check_sanity
+        world = not self.element.bf_geom_move_id  # FIXME test
         fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
-            context, self.element, scale_length, check
+            context=context,
+            ob=self.element,
+            scale_length=scale_length,
+            check=check,
+            world=True,
         )
         if not fds_faces:
             return None, msg
@@ -2607,10 +2620,6 @@ class OP_GEOM_EXTEND_TERRAIN(BFParam):
 
     @property
     def exported(self):
-        """!
-        Get if self is exported.
-        @return True if is exported, False otherwise.
-        """
         ob = self.element
         return ob.bf_geom_is_terrain
 
@@ -2629,7 +2638,7 @@ class ON_GEOM(BFNamelistOb):
         OP_ID,
         OP_FYI,
         OP_GEOM_check_sanity,
-        OP_GEOM_move_export,
+        OP_GEOM_MOVE_ID,
         OP_GEOM_READ_BINARY,
         OP_GEOM_IS_TERRAIN,
         OP_GEOM_EXTEND_TERRAIN,
@@ -2637,6 +2646,23 @@ class ON_GEOM(BFNamelistOb):
         OP_other,
     )
     bf_other = {"appearance": "TEXTURED"}
+
+    # def to_fds_namelist(self, context) -> "None or FDSNamelist":
+    #     nl = super().to_fds_namelist(context)
+    #     if nl:
+    #         if self.element.bf_geom_move_id:  # add MOVE namelist
+    #             return (
+    #                 FDSNamelist(
+    #                     label="MOVE",
+    #                     fds_params=(
+    #                         FDSParam(label="ID", values=(f"{self.element.name}_move",)),
+    #                         FDSParam(label="QUATERNION", values=("FIXME QUATERNION",)),
+    #                     ),
+    #                 ),
+    #                 nl,
+    #             )
+    #         else:
+    #             return nl
 
 
 # HOLE
