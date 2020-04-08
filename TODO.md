@@ -1,16 +1,26 @@
 # TODO
 
-GEOM MOVE
+Verification double torus does not work in FDS
+
+Set active object after deleting tmp obs
+
+QUANTITY search in DEVC
+
+GEOM MOVE export
+
+GEOM MOVE import
 
 Toolbox: MESH, mesh alignment
 
 Is copy working?
 
-unit testing (WUIFI-21)
+unit testing (WUIFI-21): namelists, operators (by script)
 
 New Blender 2.8x website with MAECI logo
 
-Insert GEOREF in MISC, set a checkbox to avoid exporting
+Insert GEOREF in MISC and general file, set a checkbox to avoid exporting
+
+Integration with Blender GIS?
 
 automatic developer's doc with doxygen (WUIFI-21)
 
@@ -35,6 +45,8 @@ progress_update(value)
 progress_end()
 
 # DONE
+
+Fix pixel geometry elevation
 
 GEOM minimum face area default lower
 
