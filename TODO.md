@@ -2,12 +2,6 @@
 
 Verification double torus does not work in FDS
 
-Set active object after deleting tmp obs
-
-QUANTITY search in DEVC
-
-GEOM MOVE export
-
 GEOM MOVE import
 
 Toolbox: MESH, mesh alignment
@@ -45,6 +39,12 @@ progress_update(value)
 progress_end()
 
 # DONE
+
+New free text when not existing
+
+Set active object after deleting tmp obs
+
+QUANTITY search in DEVC
 
 Fix pixel geometry elevation
 
