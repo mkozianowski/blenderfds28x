@@ -552,7 +552,15 @@ class OBJECT_OT_bf_hide_fds_geometry(Operator):  # FIXME merge with show
         - "PASS_THROUGH" do nothing and pass the event on.
         - "INTERFACE" handled but not executed (popup menus).
         """
+        ob = context.active_object  # FIXME test
         geometry.utils.rm_tmp_objects()
+        try:
+            context.view_layer.objects.active = ob
+        except ReferenceError:
+            try:
+                context.view_layer.objects.active = context.selected_objects[0]
+            except IndexError:
+                pass
         self.report({"INFO"}, "Temporary geometry hidden")
         return {"FINISHED"}
 
@@ -570,27 +578,16 @@ class SCENE_OT_bf_show_text(Operator):
     bl_idname = "scene.bf_show_text"
     bl_description = "Show free text in the editor"
 
-    @classmethod
-    def poll(cls, context):
-        """!
-        Test if the operator can be called or not.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return True if operator can be called, False otherwise.
-        """
-        return context.scene.bf_config_text
+    # @classmethod # FIXME
+    # def poll(cls, context):
+    #     return context.scene.bf_config_text
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         te = context.scene.bf_config_text
+        if not te:  # if not existing, create
+            bpy.ops.text.new()
+            te = bpy.data.texts[-1]
+            context.scene.bf_config_text = te
         done = False
         for w in context.window_manager.windows:
             for area in w.screen.areas:
@@ -930,7 +927,7 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
         return {"FINISHED"}
 
 
-# Search MATL, PROP items in free text and CATF files
+# Choose IDs for MATL_ID, PROP_ID in free text and CATF files
 
 
 def _get_namelist_items(self, context, label) -> "items":
@@ -1047,7 +1044,7 @@ def _get_prop_items(self, context):
 
 
 @subscribe
-class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
+class MATERIAL_OT_bf_choose_devc_prop_id(Operator):  # FIXME isn't it OBJECT?
     """!
     Choose PROP_ID from PROPs available in Free Text and CATF files.
     """
@@ -1064,41 +1061,15 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
 
     @classmethod
     def poll(cls, context):
-        """!
-        Test if the operator can be called or not.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return True if operator can be called, False otherwise.
-        """
         return context.active_object
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         ob = context.active_object
         ob.bf_devc_prop_id = self.bf_devc_prop_id
         self.report({"INFO"}, "PROP_ID parameter set")
         return {"FINISHED"}
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         ob = context.active_object
         try:
             self.bf_devc_prop_id = ob.bf_devc_prop_id
@@ -1108,11 +1079,42 @@ class MATERIAL_OT_bf_choose_devc_prop_id(Operator):
         return wm.invoke_props_dialog(self, width=300)
 
     def draw(self, context):
-        """!
-        Draw function for the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         self.layout.prop(self, "bf_devc_prop_id", text="")
+
+
+# Choose DEVC QUANTITY
+
+
+@subscribe
+class OBJECT_OT_bf_choose_devc_quantity(Operator):
+    bl_label = "Choose QUANTITY for DEVC"
+    bl_idname = "object.bf_choose_devc_quantity"
+    bl_description = "Choose QUANTITY parameter for DEVC namelist"
+
+    bf_quantity = EnumProperty(
+        name="QUANTITY",
+        description="QUANTITY parameter for DEVC namelist",
+        items=config.get_quantity_items(qtype="D"),
+    )
+
+    def execute(self, context):
+        ob = context.active_object
+        ob.bf_quantity = self.bf_quantity
+        self.report({"INFO"}, "QUANTITY parameter set")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        ob = context.active_object
+        try:
+            self.bf_quantity = ob.bf_quantity  # Manage None
+        except TypeError:
+            ob.bf_quantity = ""
+        # Call dialog
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, context):
+        self.layout.prop(self, "bf_quantity", text="")
 
 
 # MESH Tools
