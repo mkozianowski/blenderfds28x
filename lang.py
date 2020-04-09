@@ -654,7 +654,7 @@ class SP_TIME_setup_only(BFParam):
     bpy_prop = BoolProperty
     bpy_default = False
 
-    def to_fds_param(self, context):
+    def to_fds_param(self, context):  # FIXME move to T_END
         """!
         Return the FDSParam Python representation.
         @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
@@ -2172,7 +2172,9 @@ class OP_PB(BFParamPB):
             ids = (f"{n}_{i}" for i, _ in enumerate(pbs))
         elif suffix == "IDXYZ":
             ids = (
-                (f"{n}_x{pb:+.3f}", f"{n}_y{pb:+.3f}", f"{n}_z{pb:+.3f}")[axis]
+                (f"{n}_x{pb:+.3f}", f"{n}_y{pb:+.3f}", f"{n}_z{pb:+.3f}")[
+                    int(axis)
+                ]  # the pbs cache sends floats
                 for axis, pb in pbs
             )
         else:
@@ -2304,7 +2306,7 @@ class OP_ID_suffix(BFParam):
 @subscribe
 class OP_SURF_ID(BFParam):
     """!
-    Blender representation of the SURF_ID parameter, the reference to SURF.
+    Blender representation of the SURF_ID parameter, the reference to a SURF boundary condition.
     """
 
     label = "SURF_ID"
@@ -2482,6 +2484,48 @@ class OP_GEOM_protect(BFParam):  # FIXME should not be here
 
 
 @subscribe
+class OP_GEOM_MOVE_ID(BFParam):
+    """!
+    Blender representation for exporting GEOM along with a MOVE namelist.
+    """
+
+    label = "MOVE_ID"
+    description = "Export current GEOM along with the corresponding MOVE namelist"
+    fds_label = "MOVE_ID"
+    fds_default = True  # FIXME confirm with Marcos
+    bpy_type = Object
+    bpy_idname = "bf_geom_move_id"
+    bpy_prop = BoolProperty
+
+    # TODO develop MOVE with QUATERNION
+    # TODO import various GEOM types
+    # TODO GEOM textures
+
+    @property
+    def value(self):
+        if self.element.bf_geom_move_id:
+            return f"{self.element.name}_move"
+
+
+@subscribe
+class OP_GEOM_READ_BINARY(BFParam):
+    """!
+    Blender representation for read in binary GEOM.
+    """
+
+    label = "READ_BINARY"
+    description = "Read in binary geometry, if available"
+    fds_label = "READ_BINARY"
+    fds_default = False  # FIXME confirm with Marcos
+    bpy_type = Object
+    bpy_idname = "bf_geom_read_binary"
+    bpy_prop = BoolProperty
+    bpy_default = True
+
+    # TODO delete binary geom if ob geometry updated
+
+
+@subscribe
 class OP_GEOM(BFParam):
     """!
     Blender representation for the geometry parameters.
@@ -2509,8 +2553,13 @@ class OP_GEOM(BFParam):
         # Get surf_idv, verts and faces
         scale_length = context.scene.unit_settings.scale_length
         check = self.element.bf_geom_check_sanity
+        world = not self.element.bf_geom_move_id  # FIXME test
         fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
-            context, self.element, scale_length, check
+            context=context,
+            ob=self.element,
+            scale_length=scale_length,
+            check=check,
+            world=True,
         )
         if not fds_faces:
             return None, msg
@@ -2518,15 +2567,18 @@ class OP_GEOM(BFParam):
         verts = [t for t in zip(*[iter(fds_verts)] * 3)]
         faces = [t for t in zip(*[iter(fds_faces)] * 4)]
         # Prepare
+        # This is special: FDSParam formatting capabilities are not used for speed
         surfids_str = ",".join(("'{}'".format(s) for s in fds_surfids))
         separator1 = "\n      "
         separator2 = "\n            "
+        p = 6  # precision config
         verts_str = separator2.join(
-            ("{0[0]:+.6f}, {0[1]:+.6f}, {0[2]:+.6f},".format(v) for v in verts)
+            (
+                f"{round(v[0],p):+.{p}f}, {round(v[1],p):+.{p}f}, {round(v[2],p):+.{p}f},"
+                for v in verts
+            )
         )
-        faces_str = separator2.join(
-            ("{0[0]},{0[1]},{0[2]}, {0[3]},".format(f) for f in faces)
-        )
+        faces_str = separator2.join((f"{f[0]},{f[1]},{f[2]}, {f[3]}," for f in faces))
         return FDSParam(
             label=separator1.join(
                 (f"SURF_ID={surfids_str}", f"VERTS={verts_str}", f"FACES={faces_str}")
@@ -2568,10 +2620,6 @@ class OP_GEOM_EXTEND_TERRAIN(BFParam):
 
     @property
     def exported(self):
-        """!
-        Get if self is exported.
-        @return True if is exported, False otherwise.
-        """
         ob = self.element
         return ob.bf_geom_is_terrain
 
@@ -2590,12 +2638,31 @@ class ON_GEOM(BFNamelistOb):
         OP_ID,
         OP_FYI,
         OP_GEOM_check_sanity,
+        OP_GEOM_MOVE_ID,
+        OP_GEOM_READ_BINARY,
         OP_GEOM_IS_TERRAIN,
         OP_GEOM_EXTEND_TERRAIN,
         OP_GEOM,
         OP_other,
     )
     bf_other = {"appearance": "TEXTURED"}
+
+    # def to_fds_namelist(self, context) -> "None or FDSNamelist":
+    #     nl = super().to_fds_namelist(context)
+    #     if nl:
+    #         if self.element.bf_geom_move_id:  # add MOVE namelist
+    #             return (
+    #                 FDSNamelist(
+    #                     label="MOVE",
+    #                     fds_params=(
+    #                         FDSParam(label="ID", values=(f"{self.element.name}_move",)),
+    #                         FDSParam(label="QUATERNION", values=("FIXME QUATERNION",)),
+    #                     ),
+    #                 ),
+    #                 nl,
+    #             )
+    #         else:
+    #             return nl
 
 
 # HOLE
@@ -2700,6 +2767,9 @@ class OP_DEVC_QUANTITY(BFParamStr):
     fds_label = "QUANTITY"
     bpy_type = Object
     bpy_idname = "bf_quantity"
+
+    def draw_operators(self, context, layout):
+        layout.operator("object.bf_choose_devc_quantity", icon="VIEWZOOM", text="")
 
 
 @subscribe
@@ -3252,7 +3322,7 @@ class BFScene:
                 for ma in mas:
                     lines.append(ma.to_fds(context))
             # Objects
-            lines.append(context.scene.collection.to_fds(context))
+            lines.append(self.collection.to_fds(context))
             # Tail
             if self.bf_head_export:
                 lines.append("\n&TAIL /")

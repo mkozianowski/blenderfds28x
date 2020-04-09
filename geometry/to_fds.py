@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 def _ob_to_geom(
-    context, ob, scale_length, check=True
+    context, ob, scale_length, check=True, world=True
 ) -> "mas, fds_verts, fds_faces, 'Msg'":
     """!
     Transform Object geometry to FDS mas, verts, faces notation.
@@ -24,11 +24,12 @@ def _ob_to_geom(
     @param ob: the Blender object.
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
+    @param world: True to return the object in world coordinates.
     @return FDS mas, verts, faces notation as lists and any error message.
     """
     t0 = time()
     mas, verts, faces = calc_trisurfaces.get_trisurface(
-        context, ob, scale_length, check
+        context=context, ob=ob, scale_length=scale_length, check=check, world=world
     )
     fds_verts = [coo for vert in verts for coo in vert]
     fds_faces = [i for face in faces for i in face]
@@ -38,7 +39,7 @@ def _ob_to_geom(
 
 
 def ob_to_geom(
-    context, ob, scale_length, check=True
+    context, ob, scale_length, check=True, world=True
 ) -> "mas, fds_verts, fds_faces, 'Msg'":
     """!
     Transform Object geometry to FDS mas, verts, faces notation.
@@ -46,12 +47,15 @@ def ob_to_geom(
     @param ob: the Blender object.
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
+    @param world: True to return the object in world coordinates.
     @return FDS mas, verts, faces notation as lists and any error message.
     """
     log.debug(ob.name)
     if ob.get("ob_to_geom_cache") is None:  # recalc
         log.debug(f"Update <{ob.name}> geom cache")
-        ob["ob_to_geom_cache"] = _ob_to_geom(context, ob, scale_length, check)
+        ob["ob_to_geom_cache"] = _ob_to_geom(
+            context=context, ob=ob, scale_length=scale_length, check=check, world=world
+        )
     return ob["ob_to_geom_cache"]
 
 
@@ -313,8 +317,4 @@ def ob_to_pbs(context, ob, scale_length) -> "((0,x3,), (1,x7,), (1,y9,), ...), '
     if ob.get("ob_to_pbs_cache") is None:  # recalc
         log.debug(f"Update <{ob.name}> pbs cache")
         ob["ob_to_pbs_cache"] = _ob_to_pbs_planes(context, ob, scale_length)
-        print("ob['ob_to_pbs_cache'][0][0]:", tuple(ob["ob_to_pbs_cache"][0][0]))
-    return ob["ob_to_pbs_cache"]
-    # res = _ob_to_pbs_planes(context, ob, scale_length)
-    # print("ob_to_pbs:", res)
-    # return res # FIXME restore caching
+    return ob["ob_to_pbs_cache"]  # the cache sends floats instead of integers for axis

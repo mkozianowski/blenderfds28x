@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 def get_trisurface(
-    context, ob, scale_length, check=True, terrain=False
+    context, ob, scale_length, check=True, world=True
 ) -> "mas, verts, faces":
     """!
     Get triangulated surface from object in xbs format.
@@ -24,13 +24,13 @@ def get_trisurface(
     @param ob: the Blender object.
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
-    @param terrain: TODO
+    @param world: True to return the object in world coordinates.
     @return the materials, verts and faces lists.
     """
     log.debug(ob.name)
     mas = _get_materials(context, ob)
     bm = utils.get_object_bmesh(
-        context=context, ob=ob, world=True, triangulate=True, lookup=False
+        context=context, ob=ob, world=world, triangulate=True, lookup=False
     )
     if check:
         _check_bm_sanity(context, ob, bm, protect=True)

@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 @persistent
 def _load_post(self):
     """!
-    TODO
+    Automatic setup after loading a Blender file.
     """
     # Beware: self is None
     # Check file format version
@@ -52,7 +52,7 @@ def _load_post(self):
 @persistent
 def _save_pre(self):
     """!
-    TODO
+    Automatic setup before saving a Blender file.
     """
     # Beware: self is None
     # Remove all caches and tmp objects, clean up to prevent stale caches
@@ -64,9 +64,9 @@ def _save_pre(self):
 
 
 @persistent
-def _depsgraph_update_post(scene):
+def _depsgraph_update_post(scene):  # FIXME test was crashing
     """!
-    Detect object change and erase cached geometry. FIXME test, was crashing.
+    Detect object change and erase cached geometry.
     """
     for update in bpy.context.view_layer.depsgraph.updates:
         ob = update.id.original
@@ -92,7 +92,7 @@ def register():
     log.debug(f"Registering handlers")
     load_post.append(_load_post)
     save_pre.append(_save_pre)
-    depsgraph_update_post.append(_depsgraph_update_post)  # FIXME
+    depsgraph_update_post.append(_depsgraph_update_post)
 
 
 def unregister():
@@ -102,4 +102,4 @@ def unregister():
     log.debug(f"Unregistering handlers")
     load_post.remove(_load_post)
     save_pre.remove(_save_pre)
-    depsgraph_update_post.remove(_depsgraph_update_post)  # FIXME
+    depsgraph_update_post.remove(_depsgraph_update_post)
