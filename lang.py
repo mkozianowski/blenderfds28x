@@ -2484,27 +2484,26 @@ class OP_GEOM_protect(BFParam):  # FIXME should not be here
 
 
 @subscribe
-class OP_GEOM_MOVE_ID(BFParam):
+class OP_MOVE_ID(BFParam):
     """!
-    Blender representation for exporting GEOM along with a MOVE namelist.
+    Blender representation for exporting a namelist with its MOVE namelist.
     """
 
     label = "MOVE_ID"
-    description = "Export current GEOM along with the corresponding MOVE namelist"
+    description = "Export this namelist with a corresponding MOVE namelist"
     fds_label = "MOVE_ID"
-    fds_default = True  # FIXME confirm with Marcos
+    fds_default = False
     bpy_type = Object
-    bpy_idname = "bf_geom_move_id"
+    bpy_idname = "bf_move_id"
     bpy_prop = BoolProperty
 
-    # TODO develop MOVE with QUATERNION
     # TODO import various GEOM types
     # TODO GEOM textures
 
     @property
     def value(self):
-        if self.element.bf_geom_move_id:
-            return f"{self.element.name}_move"
+        if self.element.bf_move_id:
+            return f"{self.element.name}_move"  # FIXME
 
 
 @subscribe
@@ -2553,7 +2552,7 @@ class OP_GEOM(BFParam):
         # Get surf_idv, verts and faces
         scale_length = context.scene.unit_settings.scale_length
         check = self.element.bf_geom_check_sanity
-        world = not self.element.bf_geom_move_id  # FIXME test
+        world = not self.element.bf_move_id  # FIXME test
         fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
             context=context,
             ob=self.element,
@@ -2638,7 +2637,7 @@ class ON_GEOM(BFNamelistOb):
         OP_ID,
         OP_FYI,
         OP_GEOM_check_sanity,
-        OP_GEOM_MOVE_ID,
+        OP_MOVE_ID,
         OP_GEOM_READ_BINARY,
         OP_GEOM_IS_TERRAIN,
         OP_GEOM_EXTEND_TERRAIN,
@@ -2647,22 +2646,39 @@ class ON_GEOM(BFNamelistOb):
     )
     bf_other = {"appearance": "TEXTURED"}
 
-    # def to_fds_namelist(self, context) -> "None or FDSNamelist":
-    #     nl = super().to_fds_namelist(context)
-    #     if nl:
-    #         if self.element.bf_geom_move_id:  # add MOVE namelist
-    #             return (
-    #                 FDSNamelist(
-    #                     label="MOVE",
-    #                     fds_params=(
-    #                         FDSParam(label="ID", values=(f"{self.element.name}_move",)),
-    #                         FDSParam(label="QUATERNION", values=("FIXME QUATERNION",)),
-    #                     ),
-    #                 ),
-    #                 nl,
-    #             )
-    #         else:
-    #             return nl
+    def to_fds_namelist(self, context) -> "None or FDSNamelist":
+        nl = super().to_fds_namelist(context)
+        if nl is None:
+            return
+        else:
+            if not self.element.bf_move_id:  # add MOVE namelist
+                return nl
+        name = f"{self.element.name}_move"
+        m = self.element.matrix_world
+        t34 = (
+            m[0][0],
+            m[1][0],
+            m[2][0],
+            m[0][1],
+            m[1][1],
+            m[2][1],
+            m[0][2],
+            m[1][2],
+            m[2][2],
+            m[0][3],
+            m[1][3],
+            m[2][3],
+        )
+        return (
+            FDSNamelist(
+                label="MOVE",
+                fds_params=(
+                    FDSParam(label="ID", values=(name,)),
+                    FDSParam(label="T34", values=t34),
+                ),
+            ),
+            nl,
+        )
 
 
 # HOLE
