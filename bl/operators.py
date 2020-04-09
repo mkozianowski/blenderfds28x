@@ -424,7 +424,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
         # Manage GEOM
         if ob.bf_namelist_cls == "ON_GEOM" and not ob.hide_render:  # was bf_export
             check = ob.bf_geom_check_sanity
-            world = True  # world = not ob.bf_geom_move_id  # FIXME test
+            world = True  # world = not ob.bf_move_id  # FIXME test
             try:
                 fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
                     context=context,
@@ -1096,7 +1096,7 @@ class OBJECT_OT_bf_choose_devc_quantity(Operator):
     bl_idname = "object.bf_choose_devc_quantity"
     bl_description = "Choose QUANTITY parameter for DEVC namelist"
 
-    bf_quantity = EnumProperty(
+    bf_quantity: EnumProperty(
         name="QUANTITY",
         description="QUANTITY parameter for DEVC namelist",
         items=config.get_quantity_items(qtype="D"),

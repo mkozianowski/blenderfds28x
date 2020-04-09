@@ -54,7 +54,6 @@ class BFException(Exception):
     def __str__(self):
         """!
         String representation.
-        @return str
         """
         sender = self.sender
         try:
@@ -301,14 +300,16 @@ class BFParam:
             precision=self.bpy_other.get("precision", 3),
         )
 
-    def to_fds(self, context) -> "None or str":
+    def to_fds(self, context):
         """!
         Return the FDS str representation.
         @param context: the Blender context.
-        @return string representation.
+        @return None, str, or ((str, ...), ...).
         """
-        fds_param = self.to_fds_param(context)
-        return fds_param and str(fds_param)
+        result = self.to_fds_param(context)
+        if is_iterable(result):  # ((FDSParam, ...), ...) # FIXME
+            return (" ".join((str(r) for r in rs)) for rs in result)
+        return result and str(result)
 
     def from_fds(self, context, value):
         """!
@@ -512,7 +513,7 @@ class BFNamelist(BFParam):
 
     @property
     def bf_param_xb(self):
-         """!
+        """!
         Return the reference of the XB bf_param (BFParamXB class or instance).
         """
         if self._bf_param_xb_idx is not None:
@@ -520,7 +521,7 @@ class BFNamelist(BFParam):
 
     @property
     def bf_param_xyz(self):
-         """!
+        """!
         Return the reference of the XYZ bf_param (BFParamXYZ class or instance).
         """
         if self._bf_param_xyz_idx is not None:
@@ -528,7 +529,7 @@ class BFNamelist(BFParam):
 
     @property
     def bf_param_pb(self):
-         """!
+        """!
         Return the reference of the PB bf_param (BFParamPB class or instance).
         """
         if self._bf_param_pb_idx is not None:
@@ -592,10 +593,13 @@ class BFNamelist(BFParam):
         """!
         Return the FDS str representation.
         @param context: the Blender context.
-        @return None or str.
+        @return None, str, or (str, ...).
         """
-        fds_namelist = self.to_fds_namelist(context)
-        return fds_namelist and str(fds_namelist)
+        result = self.to_fds_namelist(context)
+        if is_iterable(result):  # (FDSNamelist, ...) # FIXME
+            return "\n".join((str(r) for r in result))
+        else:
+            return result and str(result)
 
     def from_fds(self, context, fds_params):
         """!
@@ -679,7 +683,6 @@ class FDSParam:
     def __str__(self):
         """!
         String representation.
-        @return str
         """
         if not self.values:
             return self.label
@@ -767,7 +770,6 @@ class FDSNamelist:
     def __str__(self):
         """!
         String representation.
-        @return str
         """
         ps, mps, msgs = list(), list(), list((self.msg,))
         # Select parameters ps, multi parameters mps, messages msgs
@@ -875,7 +877,6 @@ class FDSCase:
     def __str__(self):
         """!
         String representation.
-        @return str
         """
         return "\n".join(str(n) for n in self.fds_namelists)
 

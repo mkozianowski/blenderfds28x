@@ -50,7 +50,6 @@ def get_quantity_items(qtype):
     items = []
     # Generated like this: (("[Heat] NET HEAT FLUX", "NET HEAT FLUX (kW/m²)", "Description...",) ...)
     for q in quantities:
-        print(q)
         name, desc, units, allowed_qtype, subject = q
         if qtype in allowed_qtype:
             items.append((name, f"{subject} - {name} [{units}]", desc))
