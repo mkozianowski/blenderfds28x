@@ -59,9 +59,8 @@ bl_classes = list()
 
 def subscribe(cls):
     """!
-    Subscribe class to related collection.
-    @param cls: the class to subscribe.
-    @return the class subscribed.
+    Subscribe class to related collections for registration.
+    @param cls: class to be registered.
     """
     bl_classes.append(cls)
     return cls
@@ -81,32 +80,11 @@ class WM_OT_bf_load_blenderfds_settings(Operator):
     bl_description = "Load default BlenderFDS settings, deleting current data!"
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         # Ask for confirmation
         wm = context.window_manager
         return wm.invoke_confirm(self, event)
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         # Set default startup.blend
         filepath = (
             os.path.dirname(sys.modules[__package__].__file__) + "/../startup.blend"
@@ -145,16 +123,6 @@ class OBJECT_OT_bf_check_intersections(Operator):
         return context.active_object
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
         ob = context.active_object
@@ -195,16 +163,6 @@ class SCENE_OT_bf_check_sanity(Operator):
         return context.active_object
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
         ob = context.active_object
@@ -247,16 +205,6 @@ class _show_fds_code:
             layout.label(text=line)
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         self.report({"INFO"}, "FDS Code Shown")
         return {"FINISHED"}
 
@@ -269,17 +217,6 @@ class _show_fds_code:
         return str()
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
         try:
@@ -362,11 +299,6 @@ class SCENE_OT_bf_show_fds_code(_show_fds_code, Operator):
 
     @classmethod
     def poll(cls, context):
-        """!
-        Test if the operator can be called or not.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return True if operator can be called, False otherwise.
-        """
         return context.scene
 
     def _get_lines(self, context):
@@ -384,47 +316,45 @@ class SCENE_OT_bf_show_fds_code(_show_fds_code, Operator):
 @subscribe
 class OBJECT_OT_bf_show_fds_geometry(Operator):
     """!
-    Show geometry as exported to FDS.
+    Show geometry of Object as exported to FDS.
     """
 
     bl_label = "FDS Geometry"
     bl_idname = "object.bf_show_fds_geometry"
-    bl_description = "Show geometry as exported to FDS"
+    bl_description = "Show/Hide geometry as exported to FDS"
 
     @classmethod
     def poll(cls, context):
-        """!
-        Test if the operator can be called or not.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return True if operator can be called, False otherwise.
-        """
-        return context.active_object
+        return context.object
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
-        ob = context.active_object
-        bf_namelist = ob.bf_namelist
-        scale_length = context.scene.unit_settings.scale_length
-        # Exported
-        if not bf_namelist.exported:
-            self.report({"WARNING"}, "Not exported")
-            return {"CANCELLED"}
-        # Wait
         w = context.window_manager.windows[0]
         w.cursor_modal_set("WAIT")
+        ob = context.object
+        # Hide
+        if ob.bf_is_tmp or ob.bf_has_tmp:
+            geometry.utils.rm_tmp_objects()
+            try:
+                context.view_layer.objects.active = ob
+            except ReferenceError:
+                try:
+                    context.view_layer.objects.active = context.selected_objects[0]
+                except IndexError:
+                    pass
+            w.cursor_modal_restore()
+            self.report({"INFO"}, "Temporary geometry hidden")
+            return {"FINISHED"}
+        # Show
+        bf_namelist = ob.bf_namelist
+        scale_length = context.scene.unit_settings.scale_length
+        if not bf_namelist.exported:
+            w.cursor_modal_restore()
+            self.report({"WARNING"}, "Not exported, nothing to show!")
+            return {"CANCELLED"}
         # Manage GEOM
         if ob.bf_namelist_cls == "ON_GEOM" and not ob.hide_render:  # was bf_export
             check = ob.bf_geom_check_sanity
-            world = True  # world = not ob.bf_move_id  # FIXME test
+            world = True  # not: world = not ob.bf_move_id
             try:
                 fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
                     context=context,
@@ -536,40 +466,6 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
             return {"CANCELLED"}
 
 
-@subscribe
-class OBJECT_OT_bf_hide_fds_geometry(Operator):  # FIXME merge with show
-    """!
-    Hide all temporary geometry.
-    """
-
-    bl_label = "FDS Geometry"
-    bl_idname = "object.bf_hide_fds_geometry"
-    bl_description = "Hide all temporary geometry"
-
-    def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
-        ob = context.active_object  # FIXME test
-        geometry.utils.rm_tmp_objects()
-        try:
-            context.view_layer.objects.active = ob
-        except ReferenceError:
-            try:
-                context.view_layer.objects.active = context.selected_objects[0]
-            except IndexError:
-                pass
-        self.report({"INFO"}, "Temporary geometry hidden")
-        return {"FINISHED"}
-
-
 # Show text in Blender text editor
 
 
@@ -583,16 +479,14 @@ class SCENE_OT_bf_show_text(Operator):
     bl_idname = "scene.bf_show_text"
     bl_description = "Show free text in the editor"
 
-    # @classmethod # FIXME
-    # def poll(cls, context):
-    #     return context.scene.bf_config_text
-
     def execute(self, context):
         te = context.scene.bf_config_text
-        if not te:  # if not existing, create
+        # If not existing, create one
+        if not te:
             bpy.ops.text.new()
             te = bpy.data.texts[-1]
             context.scene.bf_config_text = te
+        # Show text in text editor
         done = False
         for w in context.window_manager.windows:
             for area in w.screen.areas:
@@ -642,30 +536,9 @@ class WM_OT_bf_dialog(Operator):
     description: StringProperty(name="Description", description="Dialog description")
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         return {"FINISHED"}
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
 
@@ -744,16 +617,6 @@ class SCENE_OT_bf_copy_props_to_scene(Operator):
         )
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         # Get source and destination scenes
         source_element = context.scene
         destination_elements = (
@@ -771,17 +634,6 @@ class SCENE_OT_bf_copy_props_to_scene(Operator):
         return {"FINISHED"}
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         # Call dialog
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
@@ -808,32 +660,11 @@ class OBJECT_OT_bf_copy_FDS_properties_to_sel_obs(Operator):
         return context.active_object
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         # Ask for confirmation
         wm = context.window_manager
         return wm.invoke_confirm(self, event)
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         bpy.ops.object.mode_set(mode="OBJECT")
         # Get source and destination objects
         source_element = context.active_object
@@ -877,32 +708,11 @@ class MATERIAL_OT_bf_assign_BC_to_sel_obs(Operator):
         return source_element and active_material
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         # Ask for confirmation
         wm = context.window_manager
         return wm.invoke_confirm(self, event)
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
         # Get source and destination materials
         source_element = context.active_object
@@ -998,33 +808,12 @@ class MATERIAL_OT_bf_choose_matl_id(Operator):
         return context.active_object and context.active_object.active_material
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         ma = context.active_object.active_material
         ma.bf_matl_id = self.bf_matl_id
         self.report({"INFO"}, "MATL_ID parameter set")
         return {"FINISHED"}
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         ma = context.active_object.active_material
         try:
             self.bf_matl_id = ma.bf_matl_id
@@ -1170,16 +959,6 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
         layout.prop(self, "bf_poisson_restriction")
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         ob = context.active_object
         ob.bf_xb, ob.bf_xb_export = "BBOX", True  # FIXME should be impossible to change
         scale_length = context.scene.unit_settings.scale_length
@@ -1193,17 +972,6 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
         return {"FINISHED"}
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         ob = context.active_object
         scale_length = context.scene.unit_settings.scale_length
         # Set default
@@ -1347,16 +1115,6 @@ class _bf_set_geoloc:
         pass
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         x, y, z = self._get_loc(context)
         sc = context.scene
         if sc.bf_crs == "LonLat":
@@ -1381,17 +1139,6 @@ class _bf_set_geoloc:
         return {"FINISHED"}
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         # Get loc, convert
         x, y, z = self._get_loc(context)
         sc = context.scene

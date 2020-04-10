@@ -2503,6 +2503,13 @@ class ON_GEOM(BFNamelistOb):
             nl,
         )
 
+    def draw_operators(self, context, layout):
+        ob = context.object
+        col = layout.column()
+        col.prop(ob, "bf_geom_protect")
+        col.operator("object.bf_geom_check_sanity")
+        col.operator("object.bf_geom_check_intersections")
+
 
 # HOLE
 
@@ -2850,6 +2857,12 @@ class ON_MESH(BFNamelistOb):
     fds_label = "MESH"
     bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB_BBOX, OP_other
     bf_other = {"appearance": "WIRE"}
+
+    def draw_operators(self, context, layout):
+        ob = context.object
+        col = layout.column()
+        col.operator("object.bf_set_mesh_cell_size")
+        col.operator("object.bf_align_selected_meshes")
 
 
 # INIT

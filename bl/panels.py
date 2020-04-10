@@ -59,11 +59,6 @@ class SCENE_PT_bf_namelist:
 
     @classmethod
     def poll(cls, context):
-        """!
-        If this method returns a non-null output, then the panel can be drawn
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return current scene
-        """
         return context.scene
 
     def draw_header(self, context):
@@ -105,10 +100,6 @@ class SCENE_PT_bf_case_config(Panel, SCENE_PT_bf_namelist):
     bl_label = "FDS Case Config"
 
     def draw(self, context):
-        """!
-        Draw UI elements into the panel UI layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         sc = context.scene
         layout = self.layout
         layout.use_property_split = True
@@ -236,29 +227,20 @@ class SCENE_PT_bf_namelist_CATF(Panel, SCENE_PT_bf_namelist):
 @subscribe
 class OBJECT_PT_bf_namelist(Panel):
     """!
-    FDS Geometric Namelist
+    FDS geometric namelist
     """
 
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"
-    bl_label = "FDS Geometric Namelist"
+    bl_label = "FDS Namelist"
 
     @classmethod
     def poll(cls, context):
-        """!
-        If this method returns a non-null output, then the panel can be drawn
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return current object
-        """
         ob = context.object
-        return ob and ob.type == "MESH"
+        return ob and ob.type == "MESH"  # FIXME other types?
 
     def draw_header(self, context):
-        """!
-        Draw UI elements into the panel’s header UI layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         ob = context.object
         if ob.bf_is_tmp:
             self.bl_label = f"FDS Temp Geometry"
@@ -268,20 +250,16 @@ class OBJECT_PT_bf_namelist(Panel):
         self.layout.prop(ob, "hide_render", emboss=False, icon_only=True)
 
     def draw(self, context):
-        """!
-        Draw UI elements into the panel UI layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         ob = context.object
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # no animation
         row = layout.row(align=True)  # general operators
         if ob.bf_is_tmp:
-            row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
+            row.operator("object.bf_show_fds_geometry", icon="HIDE_ON")
             return
         if ob.bf_has_tmp:
-            row.operator("object.bf_hide_fds_geometry", icon="HIDE_ON")
+            row.operator("object.bf_show_fds_geometry", icon="HIDE_ON")
         else:
             row.operator("object.bf_show_fds_geometry", icon="HIDE_OFF")
         row.operator("object.bf_show_fds_code", icon="HIDE_OFF")
@@ -304,19 +282,10 @@ class MATERIAL_PT_bf_namelist(Panel):
 
     @classmethod
     def poll(cls, context):
-        """!
-        If this method returns a non-null output, then the panel can be drawn
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return current object
-        """
         ob = context.object
         return ob and ob.active_material
 
     def draw_header(self, context):
-        """!
-        Draw UI elements into the panel’s header UI layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         ma = context.object.active_material
         # Manage predefined Material
         if ma.name in config.default_mas:
@@ -328,10 +297,6 @@ class MATERIAL_PT_bf_namelist(Panel):
         self.layout.prop(ma, "bf_surf_export", icon_only=True)
 
     def draw(self, context):
-        """!
-        Draw UI elements into the panel UI layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         ma = context.object.active_material
         layout = self.layout
         layout.use_property_split = True
@@ -351,64 +316,44 @@ class MATERIAL_PT_bf_namelist(Panel):
 
 
 @subscribe
-class VIEW3D_PT_BF_MESH_Tools(Panel):
+class VIEW3D_PT_bf_ob_namelist_tools(Panel):
     """!
-    Object Tools
+    Object namelist tools
     """
 
-    bl_idname = "VIEW3D_PT_bf_mesh_tools"
+    bl_idname = "VIEW3D_PT_bf_ob_namelist_tools"
     bl_context = "objectmode"
     bl_category = "FDS"
-    bl_label = "FDS MESH Tools"
+    bl_label = "FDS Namelist Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
     @classmethod
     def poll(cls, context):
         ob = context.object
-        return ob and not ob.bf_is_tmp and ob.bf_namelist_cls == "ON_MESH"
+        return ob and ob.type == "MESH"  # FIXME other types?
+
+    def draw_header(self, context):
+        ob = context.object
+        if ob.bf_is_tmp:
+            self.bl_label = f"FDS Temp Geometry"
+            return
+        bf_namelist = ob.bf_namelist
+        self.bl_label = f"FDS {bf_namelist.label}"
 
     def draw(self, context):
+        ob = context.object
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        col = layout.column()
-        col.operator("object.bf_set_mesh_cell_size")
-        col.operator("object.bf_align_selected_meshes")
+        if ob.bf_is_tmp or ob.bf_has_tmp:
+            layout.operator("object.bf_show_fds_geometry", icon="HIDE_ON")
+            return
+        ob.bf_namelist.draw_operators(context, layout)
 
 
 @subscribe
-class VIEW3D_PT_BF_GEOM_Tools(Panel):
-    """!
-    FDS GEOM Tools
-    """
-
-    bl_idname = "VIEW3D_PT_bf_geom_tools"
-    bl_context = "objectmode"
-    bl_category = "FDS"
-    bl_label = "FDS GEOM Tools"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-
-    @classmethod
-    def poll(cls, context):
-        ob = context.object
-        return ob and not ob.bf_is_tmp and ob.bf_namelist_cls == "ON_GEOM"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        ob = context.object
-        col = layout.column(align=True)
-        col = layout.column()
-        col.prop(ob, "bf_geom_protect")
-        col.operator("object.bf_geom_check_sanity")
-        col.operator("object.bf_geom_check_intersections")
-
-
-@subscribe
-class VIEW3D_PT_BF_Remesh(Panel):
+class VIEW3D_PT_bf_remesh(Panel):
     """!
     Object remesh panel
     """
@@ -460,7 +405,7 @@ class VIEW3D_PT_BF_Remesh(Panel):
 
 
 @subscribe
-class VIEW3D_PT_BF_mesh_clean_up(Panel):
+class VIEW3D_PT_bf_mesh_clean_up(Panel):
     """!
     Mesh clean up panel
     """
@@ -504,7 +449,7 @@ class VIEW3D_PT_BF_mesh_clean_up(Panel):
 
 
 @subscribe
-class VIEW3D_PT_BF_Geolocation(Panel):
+class VIEW3D_PT_bf_geolocation(Panel):
     """!
     Geolocation panel
     """
