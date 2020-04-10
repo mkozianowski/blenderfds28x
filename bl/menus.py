@@ -242,4 +242,4 @@ def unregister():
         unregister_class(cls)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_FDS)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_snippet_FDS)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_FDS)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_to_fds)

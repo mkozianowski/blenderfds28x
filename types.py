@@ -45,16 +45,15 @@ class BFException(Exception):
     def __init__(self, sender, msg):
         """!
         Class constructor.
-        @param sender: the object that generate the exception
+        @param sender: the object that generates the exception
         @param msg: exception message
         """
+        ## The object that generates the exception
         self.sender = sender
+        ## Exception message
         self.msg = msg
 
     def __str__(self):
-        """!
-        String representation.
-        """
         sender = self.sender
         try:
             element = sender.element
@@ -76,58 +75,48 @@ class BFParam:
 
     ## Object label
     label = "No Label"
-
     ## Object description
     description = None
-
     ## Unique integer id for EnumProperty
     enum_id = None
-
     ## Other BlenderFDS parameters, eg: {'draw_type': 'WIRE', ...}
     bf_other = {}
-
     ## tuple of sub params of type BFParam
     bf_params = tuple()
-
     ## FDS label, eg. "OBST", "ID", ...
     fds_label = None
-
     ## FDS default value
     fds_default = None
-
     ## type in bpy.types for Blender property, eg. Object
     bpy_type = None
-
     ## idname of related bpy.types Blender property, eg. "bf_id"
     bpy_idname = None
-
     ## prop in bpy.props of Blender property, eg. StringProperty
     bpy_prop = None
-
     ## Blender property default
     bpy_default = None
-
     ## Other optional Blender property parameters, eg. {"min": 3., ...}
     bpy_other = {}
-
     ## idname of export toggle Blender property
     bpy_export = None
-
     ## idname of export toggle Blender property
     bpy_export_default = None
+
+    ## List of registered bpy_idname for unregistering
+    _registered_bpy_idnames = list()
 
     def __init__(self, element):
         """!
         Class constructor.
         @param element: FDS element represented by this class instance.
         """
+        ## FDS element represented by this class instance
         self.element = element
 
     @classmethod  # FIXME what if property exists? as in Blender restart?
     def register(cls):
         """!
         Register related Blender properties.
-        @param cls: class to be registered.
         """
         log.debug(f"Registering <{cls.label}>")
         if not cls.bpy_type:
@@ -135,7 +124,7 @@ class BFParam:
         # Insert fds_default
         if cls.fds_default is not None:
             # ...in description
-            cls.description += f"\n[FDS default: {cls.fds_default}]"
+            cls.description += f"\n(FDS default: {cls.fds_default})"
             # ...in bpy_default if not present
             if cls.bpy_default is None:
                 cls.bpy_default = cls.fds_default
@@ -152,6 +141,7 @@ class BFParam:
                 cls.bpy_idname,
                 cls.bpy_prop(name=cls.label, description=cls.description, **bpy_other),
             )
+            cls._registered_bpy_idnames.append(cls.bpy_idname)
         # Create bpy_export
         if cls.bpy_export:
             if hasattr(cls.bpy_type, cls.bpy_export):
@@ -171,18 +161,18 @@ class BFParam:
                         default=cls.bpy_export_default,
                     ),
                 )
+                cls._registered_bpy_idnames.append(cls.bpy_export)
 
     @classmethod
-    def unregister(cls):  # FIXME
+    def unregister(cls):
         """!
         Unregister related Blender properties.
-        @param cls: class to be unregistered.
         """
-        # if cls.bpy_prop and cls.bpy_idname:
-        #     delattr(cls.bpy_type, cls.bpy_idname)
-        # if cls.bpy_export:
-        #     delattr(cls.bpy_type, cls.bpy_export)
-        pass
+        for bpy_idname in cls._registered_bpy_idnames:
+            if not hasattr(cls.bpy_type, bpy_idname):  # already deleted?
+                continue
+            log.debug(f"Unregistering <{bpy_idname}> Blender property")
+            delattr(cls.bpy_type, bpy_idname)
 
     @property
     def value(self):
@@ -681,9 +671,6 @@ class FDSParam:
         self.msg = msg
 
     def __str__(self):
-        """!
-        String representation.
-        """
         if not self.values:
             return self.label
         # Check first element of the iterable and choose formatting
@@ -768,9 +755,6 @@ class FDSNamelist:
         self.maxlen = maxlen
 
     def __str__(self):
-        """!
-        String representation.
-        """
         ps, mps, msgs = list(), list(), list((self.msg,))
         # Select parameters ps, multi parameters mps, messages msgs
         for p in self.fds_params:
@@ -875,9 +859,6 @@ class FDSCase:
         self.fds_namelists = fds_namelists or list()
 
     def __str__(self):
-        """!
-        String representation.
-        """
         return "\n".join(str(n) for n in self.fds_namelists)
 
     _scan = re.compile(
