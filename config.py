@@ -26,12 +26,10 @@ import bpy
 # mod = addon_utils.addons_fake_modules.get(PKG)
 # mod.bl_info['show_expanded'] = True
 
-# Supported file version
-
+## Supported file version
 supported_file_version = 5, 0, 0
 
-# Default SURFs
-
+## Default SURFs
 default_mas = {  # name: diffuse_color
     "Dummy Color1": ((1.0, 1.0, 1.0, 0.05),),  # white
     "Dummy Color2": ((1.0, 1.0, 0.0, 0.05),),  # yellow
@@ -43,20 +41,8 @@ default_mas = {  # name: diffuse_color
     "PERIODIC": ((1.0, 0.0, 1.0, 0.2),),
 }
 
-# Frequently used output QUANTITYs (FDS User's guide, table 16.3)
 
-
-def get_quantity_items(qtype):
-    items = []
-    # Generated like this: (("[Heat] NET HEAT FLUX", "NET HEAT FLUX (kW/m²)", "Description...",) ...)
-    for q in quantities:
-        name, desc, units, allowed_qtype, subject = q
-        if qtype in allowed_qtype:
-            items.append((name, f"{subject} - {name} [{units}]", desc))
-    items.sort(key=lambda k: k[1])
-    return items
-
-
+## Frequently used output QUANTITYs (FDS User's guide, table 16.3)
 quantities = (  # name, description, units, qtype, subject
     ("ACTUATED SPRINKLERS", "Number of activated sprinklers", "", "D", "Det"),
     (
@@ -280,3 +266,17 @@ quantities = (  # name, description, units, qtype, subject
     ),
     ("WALL TEMPERATURE", "Surface temperature", "°C", "B,D", "Wall"),
 )
+
+
+def get_quantity_items(qtype):
+    """!
+    Prepare quantity items for menus.
+    """
+    items = []
+    # Generated like this: (("[Heat] NET HEAT FLUX", "NET HEAT FLUX (kW/m²)", "Description...",) ...)
+    for q in quantities:
+        name, desc, units, allowed_qtype, subject = q
+        if qtype in allowed_qtype:
+            items.append((name, f"{subject} - {name} [{units}]", desc))
+    items.sort(key=lambda k: k[1])
+    return items

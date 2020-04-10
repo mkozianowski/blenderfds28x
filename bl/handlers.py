@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 @persistent
 def _load_post(self):
     """!
-    Automatic setup after loading a Blender file.
+    Run automatic setup after loading a Blender file.
     """
     # Beware: self is None
     # Check file format version
@@ -52,7 +52,7 @@ def _load_post(self):
 @persistent
 def _save_pre(self):
     """!
-    Automatic setup before saving a Blender file.
+    Run automatic setup before saving a Blender file.
     """
     # Beware: self is None
     # Remove all caches and tmp objects, clean up to prevent stale caches
@@ -87,7 +87,7 @@ def _depsgraph_update_post(scene):  # FIXME test was crashing
 
 def register():
     """!
-    Load the Python classes and functions to blender.
+    Load the Python classes and functions to Blender.
     """
     log.debug(f"Registering handlers")
     load_post.append(_load_post)
@@ -97,7 +97,7 @@ def register():
 
 def unregister():
     """!
-    Unload the Python classes and functions from blender.
+    Unload the Python classes and functions from Blender.
     """
     log.debug(f"Unregistering handlers")
     load_post.remove(_load_post)

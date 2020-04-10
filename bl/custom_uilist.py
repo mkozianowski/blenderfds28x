@@ -13,7 +13,7 @@ from bpy.props import IntProperty, CollectionProperty
 
 class _OPSlotAdd:
     """!
-    Add slot to custom list operator.
+    Operator helper to add slot to custom list operator.
     """
 
     bl_label = "Add"
@@ -32,16 +32,6 @@ class _OPSlotAdd:
         pass
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         celem = getattr(context, self.bpy_type.__name__.lower())
         ccollection = getattr(celem, self.bpy_idname)
         item = ccollection.add()
@@ -52,7 +42,7 @@ class _OPSlotAdd:
 
 class _OPSlotRm:
     """!
-    Remove slot from custom list operator.
+    Operator helper to remove slot from custom list operator.
     """
 
     bl_label = "Remove"
@@ -64,26 +54,10 @@ class _OPSlotRm:
 
     @classmethod
     def poll(cls, context):
-        """!
-        Test if the operator can be called or not
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return True if operator can be called, False otherwise.
-        """
         celem = getattr(context, cls.bpy_type.__name__.lower())
         return getattr(celem, cls.bpy_idname)
 
     def invoke(self, context, event):
-        """!
-        Invoke the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param event: the <a href="https://docs.blender.org/api/current/bpy.types.Event.html">blender event</a>.
-        @return result
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         celem = getattr(context, self.bpy_type.__name__.lower())
         cidx = getattr(celem, self.bpy_idx_idname)
         ccollection = getattr(celem, self.bpy_idname)
@@ -96,7 +70,7 @@ class _OPSlotRm:
 
 class _OPSlotMv:
     """!
-    Move slot from custom list operator.
+    Operator helper to move slot from custom list operator.
     """
 
     bl_label = "Move"
@@ -110,25 +84,10 @@ class _OPSlotMv:
 
     @classmethod
     def poll(cls, context):
-        """!
-        Test if the operator can be called or not
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return True if operator can be called, False otherwise.
-        """
         celem = getattr(context, cls.bpy_type.__name__.lower())
         return getattr(celem, cls.bpy_idname)
 
     def execute(self, context):
-        """!
-        Execute the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return return
-        - "RUNNING_MODAL" keep the operator running with blender.
-        - "CANCELLED" when no action has been taken, operator exits.
-        - "FINISHED" when the operator is complete, operator exits.
-        - "PASS_THROUGH" do nothing and pass the event on.
-        - "INTERFACE" handled but not executed (popup menus).
-        """
         celem = getattr(context, self.bpy_type.__name__.lower())
         cidx = getattr(celem, self.bpy_idx_idname)
         ccollection = getattr(celem, self.bpy_idname)
@@ -144,13 +103,13 @@ class _OPSlotMv:
 
 def register_collection(bpy_type, bpy_idname, name, bpy_pg, description=""):
     """!
-    TODO
-    @param bpy_type: TODO
-    @param bpy_idname: TODO
-    @param name: TODO
-    @param bpy_pg: TODO
-    @param description: TODO
-    @return TODO
+    Helper to register the Blender properties of a collection.
+    @param bpy_type: type in bpy.types for Blender property, eg. Object
+    @param bpy_idname: prop in bpy.props of Blender property, eg. StringProperty
+    @param name: name
+    @param bpy_pg: related PropertyGroup for items
+    @param description: description
+    @return operators for adding, moving and removing
     """
     # Register index bpy_idx_idname
     bpy_idx_idname = f"{bpy_idname}_idx"
@@ -203,10 +162,10 @@ def register_collection(bpy_type, bpy_idname, name, bpy_pg, description=""):
 
 def unregister_collection(bpy_type, bpy_idname, ops):
     """!
-    TODO
-    @param bpy_type: TODO
-    @param bpy_idname: TODO
-    @param ops: TODO
+    Helper to unregister the Blender properties of a collection. 
+    @param bpy_type: type in bpy.types for Blender property, eg. Object
+    @param bpy_idname: prop in bpy.props of Blender property, eg. StringProperty
+    @param ops: operators for adding, moving and removing
     """
     bpy_idx_idname = f"{bpy_idname}_idx"
     # Unregister operators
@@ -219,14 +178,7 @@ def unregister_collection(bpy_type, bpy_idname, ops):
 
 def draw_collection(element, context, layout, bpy_type, bpy_idname, name, bpy_ul):
     """!
-    TODO
-    @param element: TODO
-    @param context: TODO
-    @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-    @param bpy_type: TODO
-    @param bpy_idname: TODO
-    @param name: TODO
-    @param bpy_ul: TODO
+    Helper to draw the UI of the Blender collection.
     """
     # Init
     bpy_idx_idname = f"{bpy_idname}_idx"

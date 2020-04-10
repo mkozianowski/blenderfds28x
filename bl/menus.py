@@ -213,6 +213,9 @@ class ExportFDS(Operator, ExportHelper):
 
 
 def menu_func_export_to_fds(self, context):
+    """!
+    Export function for current Scene to FDS case file.
+    """
     self.layout.operator(ExportFDS.bl_idname, text="NIST FDS (.fds)")
 
 
@@ -221,7 +224,7 @@ def menu_func_export_to_fds(self, context):
 
 def register():
     """!
-    Load the Python classes and functions to blender.
+    Load the Python classes and functions to Blender.
     """
     from bpy.utils import register_class
 
@@ -234,7 +237,7 @@ def register():
 
 def unregister():
     """!
-    Unload the Python classes and functions from blender.
+    Unload the Python classes and functions from Blender.
     """
     from bpy.utils import unregister_class
 
