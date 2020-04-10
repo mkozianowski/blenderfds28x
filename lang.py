@@ -74,7 +74,8 @@ bf_namelists_by_fds_label = dict()  # dict of all BFNamelist classes by fds_labe
 
 def subscribe(cls):
     """!
-    Subscribe class to related collection.
+    Subscribe BFNamelist, BFParam, or bpy_struct class to related collections for registration.
+    @param cls: class to be registered.
     """
 
     if issubclass(cls, BFNamelist):
@@ -99,7 +100,7 @@ def subscribe(cls):
 @subscribe
 class WM_PG_bf_other(PropertyGroup):
     """!
-    Blender representation for the other parameters.
+    Blender PropertyGroup for items of 'other' FDS parameters.
     """
 
     bf_export: BoolProperty(name="Export", default=True)
@@ -109,19 +110,10 @@ class WM_PG_bf_other(PropertyGroup):
 @subscribe
 class WM_UL_bf_other_items(UIList):
     """!
-    Blender representation to list other parameters.
+    Blender UIList for items of 'other' FDS parameters.
     """
 
     def draw_item(self, context, layout, data, item, icon, active_data):
-        """!
-        Draw an item in the list.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a> to draw the item.
-        @param data: data from which to take Collection property.
-        @param item: item of the collection property.
-        @param icon: icon of the item in the collection.
-        @param active_data: data from which to take property for the active element.
-        """
         col = layout.column()
         col.active = item.bf_export
         col.prop(item, "name", text="", emboss=False, icon_value=icon)
@@ -132,7 +124,7 @@ class WM_UL_bf_other_items(UIList):
 @subscribe
 class WM_PG_bf_filepaths(PropertyGroup):
     """!
-    Blender representation for the filepaths.
+    Blender PropertyGroup for items of 'filepaths' FDS parameters.
     """
 
     bf_export: BoolProperty(name="Export", default=False)
@@ -142,19 +134,10 @@ class WM_PG_bf_filepaths(PropertyGroup):
 @subscribe
 class WM_UL_bf_filepaths_items(UIList):
     """!
-    Blender representation to list filepaths.
+    Blender UIList for items of 'filepaths' FDS parameters.
     """
 
     def draw_item(self, context, layout, data, item, icon, active_data):
-        """!
-        Draw an item in the list.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a> to draw the item.
-        @param data: data from which to take Collection property.
-        @param item: item of the collection property.
-        @param icon: icon of the item in the collection.
-        @param active_data: data from which to take property for the active element.
-        """
         col = layout.column()
         col.active = item.bf_export
         col.prop(item, "name", text="", emboss=False, icon_value=icon)
@@ -179,10 +162,6 @@ class SP_config_directory(BFParam):
     bpy_other = {"subtype": "DIR_PATH", "maxlen": 1024}
 
     def check(self, context):
-        """!
-        Check self validity.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         value = self.element.bf_config_directory
         if value and not os.path.exists(bpy.path.abspath(value)):
             raise BFException(self, "Case directory path not existing")
@@ -202,9 +181,6 @@ class SP_config_text(BFParam):
     bpy_other = {"type": bpy.types.Text}
 
     def draw_operators(self, context, layout):
-        """!
-        TODO
-        """
         layout.operator("scene.bf_show_text", text="", icon="GREASEPENCIL")
 
 
@@ -251,8 +227,8 @@ class SP_crs(BFParam):
 
 def update_lonlat(self, context):
     """!
-    Function to update the UTM of the context starting from longitude and latitude of the scene.
-    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    Update the UTM of the context starting from longitude and latitude of the scene.
+    @param context: the Blender context.
     """
     sc = context.scene
     utm = gis.LonLat(sc.bf_lon, sc.bf_lat).to_UTM()
@@ -264,8 +240,8 @@ def update_lonlat(self, context):
 
 def update_utm(self, context):
     """!
-    Function to update the longitude and latitude of the context starting from the UTM of the scene.
-    @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+    Update the longitude and latitude of the context starting from the UTM of the scene.
+    @param context: the Blender context.
     """
     sc = context.scene
     lonlat = gis.UTM(
@@ -403,11 +379,7 @@ class SN_config_geoloc(BFNamelistSc):
     label = "Origin Geolocation"
 
     def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        """
+
         sc = self.element
         col = layout.column()
         row = col.row()
@@ -431,7 +403,6 @@ class SN_config_geoloc(BFNamelistSc):
 
 
 # Config sizes
-# FIXME move to preferences
 
 
 @subscribe
@@ -535,11 +506,6 @@ class SN_config_units(BFNamelistSc):
     label = "Units"
 
     def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        """
         sc = self.element
         unit = sc.unit_settings
         col = layout.column()
@@ -570,10 +536,6 @@ class SP_HEAD_CHID(BFParam):
     bpy_idname = "name"
 
     def check(self, context):
-        """!
-        Check self validity.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         value = self.element.name
         if value and bpy.path.clean_name(value) != value:
             raise BFException(self, "Illegal characters in case filename")
@@ -622,19 +584,9 @@ class SN_TAIL(BFNamelistSc):
     fds_label = "TAIL"
 
     def to_fds_namelist(self, context):
-        """!
-        Return the FDSNamelist Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSNamelist.
-        """
         pass
 
     def from_fds(self, context, fds_params):
-        """!
-        Import from FDSParam in FDS notation, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param fds_params: FDSParam to import
-        """
         pass
 
 
@@ -655,11 +607,6 @@ class SP_TIME_setup_only(BFParam):
     bpy_default = False
 
     def to_fds_param(self, context):  # FIXME move to T_END
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         if self.element.bf_time_setup_only:
             return FDSParam(
                 label="T_END", values=(0.0,), msg="Smokeview setup only", precision=1
@@ -683,10 +630,6 @@ class SP_TIME_T_BEGIN(BFParam):
 
     @property
     def exported(self):
-        """!
-        Get if self is exported.
-        @return True if is exported, False otherwise.
-        """
         return super().exported and not self.element.bf_time_setup_only
 
 
@@ -707,10 +650,6 @@ class SP_TIME_T_END(BFParam):
 
     @property
     def exported(self):
-        """!
-        Get if self is exported.
-        @return True if is exported, False otherwise.
-        """
         return super().exported and not self.element.bf_time_setup_only
 
 
@@ -1148,20 +1087,10 @@ class SP_DUMP_render_file(BFParam):
 
     @property
     def value(self):
-        """!
-        Get value.
-        @return value to be get
-        """
         if self.element.bf_dump_render_file:
             return f"{self.element.name}.ge1"
 
     def set_value(self, context, value):
-        """!
-        Set value. If value is None, set defaul.
-        In FDS it is a str!
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param value: value to set.
-        """
         self.element.bf_dump_render_file = bool(value)
 
 
@@ -1279,11 +1208,6 @@ class SP_CATF_check_files(BFParam):
     bpy_default = False
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         return
 
 
@@ -1302,11 +1226,6 @@ class SP_CATF_files(BFParamOther):
     bpy_ul = WM_UL_bf_filepaths_items
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         el = self.element
         coll = getattr(self.element, self.bpy_idname)
         result = list()
@@ -1322,7 +1241,7 @@ class SP_CATF_files(BFParamOther):
     def from_fds(self, context, value):
         """!
         Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @param value: the value to set.
         """
         if not value:
@@ -1378,11 +1297,6 @@ class MP_namelist_cls(BFParam):
     bpy_default = "MN_SURF"
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         if self.element.name in {"INERT", "HVAC", "MIRROR", "OPEN", "PERIODIC"}:
             return
         super().to_fds_param(context)
@@ -1428,20 +1342,10 @@ class MP_RGB(BFParam):
     bpy_idname = "diffuse_color"
 
     def set_value(self, context, value):
-        """!
-        Set value. If value is None, set defaul.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param value: value to set.
-        """
         c = self.element.diffuse_color
         c[0], c[1], c[2] = value[0] / 255.0, value[1] / 255.0, value[2] / 255.0
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         c = self.element.diffuse_color
         rs = (int(c[0] * 255), int(c[1] * 255), int(c[2] * 255))
         ts = (c[3],)
@@ -1467,11 +1371,6 @@ class MP_COLOR(BFParam):
     bpy_prop = None  # Do not register
 
     def set_value(self, context, value):
-        """!
-        Set value. If value is None, set defaul.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param value: value to set.
-        """
         c = self.element.diffuse_color
         rgb = utils.fds_colors.get(value, None)
         if not rgb:
@@ -1479,11 +1378,6 @@ class MP_COLOR(BFParam):
         c[0], c[1], c[2] = rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         pass
 
 
@@ -1501,20 +1395,10 @@ class MP_TRANSPARENCY(BFParam):
     bpy_prop = None  # Do not register
 
     def set_value(self, context, value):
-        """!
-        Set value. If value is None, set defaul.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param value: value to set.
-        """
         c = self.element.diffuse_color
         c[3] = value
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         pass
 
 
@@ -1685,10 +1569,7 @@ class MN_SURF(BFNamelistMa):
 
     @property
     def exported(self) -> "bool":
-        """!
-        Get if self is exported.
-        @return True if is exported, False otherwise.
-        """
+
         return self.element.bf_surf_export and self.element.name not in default_mas
 
 
@@ -1860,11 +1741,7 @@ class OP_XB(BFParamXB):
     bf_xb_from_fds = None  # auto
 
     def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        """
+
         super().draw(context, layout)
         ob = self.element
         if ob.bf_xb_export and ob.bf_xb in ("VOXELS", "PIXELS"):
@@ -1872,11 +1749,6 @@ class OP_XB(BFParamXB):
             OP_XB_voxel_size(ob).draw(context, layout)
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         ob = self.element
         if not ob.bf_xb_export:
             return
@@ -1921,7 +1793,7 @@ class OP_XB(BFParamXB):
     def from_fds(self, context, value):
         """!
         Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @param value: the value to set.
         """
         scale_length = context.scene.unit_settings.scale_length
@@ -2018,11 +1890,6 @@ class OP_XYZ(BFParamXYZ):
     bpy_export = "bf_xyz_export"
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         ob = self.element
         if not ob.bf_xyz_export:
             return
@@ -2067,7 +1934,7 @@ class OP_XYZ(BFParamXYZ):
     def from_fds(self, context, value):
         """!
         Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @param value: the value to set.
         """
         scale_length = context.scene.unit_settings.scale_length
@@ -2145,11 +2012,6 @@ class OP_PB(BFParamPB):
     axis = None  # axis for importing
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         ob = self.element
         if not ob.bf_pb_export:
             return
@@ -2193,7 +2055,7 @@ class OP_PB(BFParamPB):
     def from_fds(self, context, value):
         """!
         Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @param value: the value to set.
         """
         scale_length = context.scene.unit_settings.scale_length
@@ -2224,19 +2086,10 @@ class OP_PBX(OP_PB):
     axis = 0  # axis for importing
 
     def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        """
         return
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
+
         return
 
 
@@ -2289,7 +2142,7 @@ class OP_ID_suffix(BFParam):
     def draw(self, context, layout):
         """!
         Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
         @return layout.
         """
@@ -2319,19 +2172,10 @@ class OP_SURF_ID(BFParam):
 
     @property
     def value(self):
-        """!
-        Get value.
-        @return value to be get
-        """
         if self.element.active_material:
             return self.element.active_material.name
 
     def set_value(self, context, value):
-        """!
-        Set value. If value is None, set defaul.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param value: value to set.
-        """
         if value is None:
             self.element.active_material = None
         else:
@@ -2344,10 +2188,6 @@ class OP_SURF_ID(BFParam):
 
     @property
     def exported(self):
-        """!
-        Get if self is exported.
-        @return True if is exported, False otherwise.
-        """
         ob = self.element
         return ob.bf_surf_id_export and ob.active_material
 
@@ -2396,10 +2236,6 @@ class OP_other_namelist(BFParam):
     bpy_other = {"maxlen": 4}
 
     def check(self, context):
-        """
-        !Check self validity.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        """
         if not re.match("^[A-Z0-9_]{4}$", self.element.bf_other_namelist):
             raise BFException(self, "Malformed other namelist label")
 
@@ -2454,11 +2290,7 @@ class OP_GEOM_check_sanity(BFParam):
     bpy_default = True
 
     def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        """
+
         ob = self.element
         me = ob.data
         material_slots = ob.material_slots
@@ -2535,19 +2367,10 @@ class OP_GEOM(BFParam):
     bpy_type = Object
 
     def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        """
+
         pass
 
     def to_fds_param(self, context):
-        """!
-        Return the FDSParam Python representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return FDSParam representation of the context.
-        """
         # Check is performed while exporting
         # Get surf_idv, verts and faces
         scale_length = context.scene.unit_settings.scale_length
@@ -2718,20 +2541,10 @@ class OP_VENT_OBST_ID(BFParam):
 
     @property
     def value(self):
-        """!
-        Get value.
-        FIXME to str.
-        @return value to be get
-        """
         if self.element.bf_vent_obst_id:
             return self.element.bf_vent_obst_id.name
 
     def set_value(self, context, value):
-        """!
-        Set value. If value is None, set default.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param value: value to set.
-        """
         if value:
             ob = bpy.data.objects.get(value)
             if ob:
@@ -3124,7 +2937,7 @@ class BFObject:
     @property
     def bf_namelist(self):
         """!
-        TODO
+        Related bf_namelist, instance of BFNamelist.
         """
         try:
             return bf_namelists_by_cls[self.bf_namelist_cls](self)
@@ -3137,8 +2950,8 @@ class BFObject:
     def to_fds(self, context):
         """!
         Return the FDS str representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return string representation.
+        @param context: the Blender context.
+        @return None or str.
         """
         if self.bf_is_tmp or not self.type == "MESH":
             return
@@ -3147,7 +2960,7 @@ class BFObject:
     def from_fds(self, context, fds_namelist):
         """!
         Import from FDSNamelist in FDS notation, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @param fds_namelist: FDSNamelist to import
         """
         # Set bf_namelist_cls
@@ -3160,7 +2973,7 @@ class BFObject:
 
     def set_default_appearance(self, context):
         """!
-        TODO
+        Set my default appearance in Blender.
         """
         # Check preferences and namelist
         prefs = context.preferences.addons[__package__].preferences
@@ -3226,7 +3039,7 @@ class BFMaterial:
     @property
     def bf_namelist(self):
         """!
-        TODO
+        Related bf_namelist, instance of BFNamelist.
         """
         try:
             return bf_namelists_by_cls[self.bf_namelist_cls](self)
@@ -3239,15 +3052,15 @@ class BFMaterial:
     def to_fds(self, context):
         """!
         Return the FDS str representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @return string representation.
+        @param context: the Blender context.
+        @return None or str.
         """
         return self.bf_namelist.to_fds(context)
 
     def from_fds(self, context, fds_namelist):
         """!
         Import from FDSNamelist in FDS notation, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         @param fds_namelist: FDSNamelist to import
         """
         # Set bf_namelist_cls
@@ -3256,6 +3069,9 @@ class BFMaterial:
         self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
 
     def set_default_appearance(self, context):  # TODO
+        """!
+        Set my default appearance in Blender.
+        """
         prefs = context.preferences.addons[__package__].preferences
         if not prefs.bf_pref_appearance:
             return
@@ -3289,23 +3105,19 @@ class BFScene:
     Extension of Blender Scene.
     """
 
-    name = str()  # sc.name
-    bf_head_export = bool()  # sc.bf_head_export
-    collection = None  # sc.collection
-
     @property
     def bf_namelists(self):
         """!
-        TODO
+        Related bf_namelist, instance of BFNamelist.
         """
         return (n(self) for _, n in bf_namelists_by_cls.items() if n.bpy_type == Scene)
 
     def to_fds(self, context, full=False):
         """!
         Return the FDS str representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param full: TODO
-        @return string representation.
+        @param context: the Blender context.
+        @param full: if True, return full FDS case.
+        @return None or str.
         """
         # Header
         v = sys.modules[__package__].bl_info["version"]
@@ -3347,8 +3159,8 @@ class BFScene:
     def from_fds(self, context, fds_case):
         """!
         Import from FDSCase in FDS notation, on error raise BFException.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param fds_case: fds case to set
+        @param context: the Blender context.
+        @param fds_case: FDSCase to set
         """
         self.set_default_appearance(context)  # current scene
         fds_case_un = FDSCase()  # unmanaged namelists
@@ -3401,14 +3213,15 @@ class BFScene:
 
     def to_ge1(self, context):
         """!
-        TODO
+        Return the GE1 str representation of the geometry.
+        @param context: the Blender context.
+        @return None or str.
         """
         return geometry.to_ge1.scene_to_ge1(context, self)
 
     def set_default_appearance(self, context):
         """!
-        TODO
-        TODO
+        Set my default appearance in Blender.
         """
         preferences = getattr(context, "preferences", None)
         if (
@@ -3450,16 +3263,12 @@ class BFCollection:
     Extension of Blender Collection.
     """
 
-    name = str()  # collection.name
-    objects = list()  # collection.objects
-    children = list()  # collection.children
-
     def to_fds(self, context):
         """!
         Return the FDS str representation.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
-        @param full: TODO
-        @return string representation.
+        @param context: the Blender context.
+        @param full: if True, return full FDS case.
+        @return None or str.
         """
         obs, lines = list(self.objects), list()
         obs.sort(key=lambda k: k.name)  # alphabetic by name
