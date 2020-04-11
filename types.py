@@ -542,6 +542,15 @@ class BFNamelist(BFParam):
             return True
         return bool(getattr(self.element, self.bpy_export, True))
 
+    def draw_operators(self, context, layout):
+        """!
+        Draw my operators on Tools panel.
+        @param context: the Blender context.
+        @param layout: the Blender panel layout.
+        @return used layout.
+        """
+        layout.label(text="No tool available.")
+
     def draw(self, context, layout):
         """!
         Draw my UI on layout.
