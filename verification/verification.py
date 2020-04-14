@@ -2,6 +2,7 @@
 Automatic verification script for continous integration.
 """
 
+import csv
 import bpy
 import os, sys, difflib, subprocess, tempfile
 
@@ -155,7 +156,7 @@ def do_tests(dirpath, filename):
             raise ValueError("Invalid test type")
 
         for sc in bpy.data.scenes:
-            test = dict(testDict)
+            test = dict(TEST_DICT)
             test["scene"] = sc.name
 
             try:
@@ -184,7 +185,7 @@ def do_tests(dirpath, filename):
 
     except Exception as e:
         print(e)
-        test = dict(testDict)
+        test = dict(TEST_DICT)
         test["result"] = "EXCEPTION"
         test["note"] = str(e)
         tests.append(test)
@@ -199,11 +200,20 @@ def do_tests(dirpath, filename):
 #         contentType     [Type tag content]
 #         contentInput    [Input tag content]
 #         tests           [test results ordered in a dictionary]
-def append_case(xml, results, contentName, contentType, contentInput, tests):
+def append_case(xml, csvData, results, contentName, contentType, contentInput, tests):
     def escape_text(text):
         return escape(str(text).encode("unicode_escape").decode("utf-8"))
 
     for test in tests:
+        # csv
+        csvData.append([escape_text(contentName),
+                        escape_text(contentType),
+                        escape_text(contentInput),
+                        escape_text(test["scene"]),
+                        escape_text(test["result"]),
+                        escape_text(test["fdsResult"]) ])
+
+        # xml
         nodeName = xml.createElement("Name")
         nodeText = xml.createTextNode(escape_text(contentName))
         nodeName.appendChild(nodeText)
@@ -252,7 +262,8 @@ def append_case(xml, results, contentName, contentType, contentInput, tests):
 
 # parameters
 PATH_TO_VALIDATION = os.path.dirname(os.path.realpath(__file__))
-PATH_TO_RESULTS = os.path.join(PATH_TO_VALIDATION, "results.xml")
+PATH_TO_RESULTS_XML = os.path.join(PATH_TO_VALIDATION, "results.xml")
+PATH_TO_RESULTS_CSV = os.path.join(PATH_TO_VALIDATION, "DATA[" + datetime.today().strftime("%d-%m-%Y") + "].csv")
 
 DIR_NAME_BLN2FDS = "Blender_Input_Files"
 DIR_NAME_FDS2FDS = "FDS_Input_Files"
@@ -260,9 +271,12 @@ DIR_NAME_FDS2FDS = "FDS_Input_Files"
 RESULT_EMPTY = """<?xml version="1.0"?><testResults></testResults>"""
 DATE_FORMAT = "%d-%m-%Y %H.%M"
 
+TEST_DICT = {"scene": "", "result": "", "note": "", "fdsResult": "", "fdsNote": ""}
 
 # start of the verification script
 xml = None
+csvData = []
+csvData.append(['NAME', 'TYPE', 'INPUT', 'SCENE', 'RESULT', 'RESULT_FDS'])
 
 try:
     print("\n\n")
@@ -272,7 +286,7 @@ try:
 
     # opening the file results.xml if it exists, otherwise its initialization
     try:
-        xml = minidom.parse(PATH_TO_RESULTS)
+        xml = minidom.parse(PATH_TO_RESULTS_XML)
     except:
         xml = minidom.parseString(RESULT_EMPTY)
 
@@ -313,6 +327,8 @@ try:
                 testXml.getElementsByTagName("fdsfds")[0].firstChild.nodeValue == "true"
             )
 
+            #raise Exception("ciao")
+
             # blend to fds test
             if blnfds:
                 for filename in os.listdir(os.path.join(dirpath, DIR_NAME_BLN2FDS)):
@@ -320,7 +336,7 @@ try:
                         print("> Test: blend to fds")
                         print("> Input: " + filename)
                         test = do_tests(dirpath, filename)
-                        append_case(xml, results, dirname, "blnfds", filename, test)
+                        append_case(xml, csvData, results, dirname, "blnfds", filename, test)
                         print("")
 
             # fds to fds test
@@ -330,20 +346,31 @@ try:
                         print("> Test: fds to fds")
                         print("> Input: " + filename)
                         test = do_tests(dirpath, filename)
-                        append_case(xml, results, dirname, "fdsfds", filename, test)
+                        append_case(xml, csvData, results, dirname, "fdsfds", filename, test)
                         print("")
 
         except Exception as e:
             contentType = ""
             contentResult = "EXCEPTION"
             contentNote = str(e)
-            append_case(xml, results, dirname, "", "", "EXCEPTION", str(e), "", "")
+
+            test = dict(TEST_DICT)
+            test["result"] = "EXCEPTION"
+            test["note"] = str(e)
+
+            append_case(xml, csvData, results, dirname, "", "", test)
 
 finally:
+
+    with open(PATH_TO_RESULTS_CSV, 'w', newline='') as csvfile:
+        spamwriter = csv.writer(csvfile, delimiter=';', quotechar='"',)
+        for csvRow in csvData:
+            spamwriter.writerow(csvRow)
+
     if xml != None:
 
         # editing the results.xml file
-        with open(PATH_TO_RESULTS, "w") as xmlFile:
+        with open(PATH_TO_RESULTS_XML, "w") as xmlFile:
             reparsed = minidom.parseString(xml.toprettyxml())
             string = "\n".join(
                 [
