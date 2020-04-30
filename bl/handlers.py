@@ -22,28 +22,106 @@ def _load_post(self):
     # Beware: self is None
     # Check file format version
     bf_file_version = tuple(bpy.data.scenes[0].bf_file_version)
-    if not bf_file_version or bf_file_version < config.supported_file_version:  # older
-        msg = "Check your old input data!"
-        description = "This file was created on a previous BlenderFDS version.\nAutomatic data conversion is not supported."
+    print("File version:", bf_file_version)  # FIXME
+    if bf_file_version == (4,0,0):
+        for ma in bpy.data.materials:
+            ma.bf_namelist_cls = "MN_SURF"
+        for ob in bpy.data.objects:
+            try:
+                bf_xb = ob["bf_xb"] 
+            except KeyError:
+                pass
+            else:
+                if bf_xb == 0 or ob.bf_xb == '':  # was "NONE" or bad
+                    ob.bf_xb = "BBOX"
+                    ob.bf_xb_export = False
+                else:
+                    ob.bf_xb_export = True
+            try:
+                bf_xyz = ob["bf_xyz"]
+            except KeyError:
+                pass
+            else:
+                if bf_xyz == 0 or ob.bf_xyz == '':  # was "NONE" or bad
+                    ob.bf_xyz = "VERTICES"
+                    ob.bf_xyz_export = False
+                else:
+                    ob.bf_xyz_export = True
+            try:
+                bf_pb = ob["bf_pb"]
+            except KeyError:
+                pass
+            else:
+                if bf_pb == 0 or ob.bf_pb == '':  # was "NONE" or bad
+                    ob.bf_pb = "PLANES"
+                    ob.bf_pb_export = False
+                else:
+                    ob.bf_pb_export = True
         bpy.ops.wm.bf_dialog(
-            "INVOKE_DEFAULT", msg=msg, description=description, type="ERROR"
-        )
-    elif bf_file_version > config.supported_file_version:  # newer
-        msg = "Install latest BlenderFDS!"
-        description = "This file was created on a newer BlenderFDS version.\nNew features may not be supported."
+            "INVOKE_DEFAULT",
+            msg="Check your data!",
+            description="This file was created with an old BlenderFDS version.",
+            type="ERROR",
+        )       
+    elif bf_file_version > config.supported_file_version:
         bpy.ops.wm.bf_dialog(
-            "INVOKE_DEFAULT", msg=msg, description=description, type="ERROR"
+            "INVOKE_DEFAULT",
+            msg="Install latest BlenderFDS!",
+            description="This file was created with a new BlenderFDS version.",
+            type="ERROR",
         )
+    else:
+        # Fix some properties, due to a development error!
+        for ma in bpy.data.materials:
+            try:
+                ma["bf_backing"] = {0: 100, 1: 200, 2: 300}[ma["bf_backing"]]
+            except KeyError:
+                if ma.bf_backing == '':
+                    ma.bf_backing = 'EXPOSED'
+        for ob in bpy.data.objects:
+            try:
+                ob["bf_xb"] = {0: 100, 1: 200, 2: 300, 3: 400, 4: 500,}[ob["bf_xb"]]
+            except KeyError:
+                if ob.bf_xb == '':
+                    ob.bf_xb = 'BBOX'
+            try:
+                ob["bf_xyz"] = {0: 100, 1: 200,}[ob["bf_xyz"]]
+            except KeyError:
+                if ob.bf_xyz == '':
+                    ob.bf_xyz = 'CENTER'
+            try:
+                ob["bf_pb"] = {0: 100,}[ob["bf_pb"]]
+            except KeyError:
+                if ob.bf_pb == '':
+                    ob.bf_pb = 'PLANES'
+            try:
+                ob["bf_id_suffix"] = {
+                    0: 100,
+                    1: 200,
+                    2: 300,
+                    3: 400,
+                    4: 500,
+                    5: 600,
+                    6: 700,
+                    7: 800,
+                }[ob["bf_id_suffix"]]
+            except KeyError:
+                if ob.bf_id_suffix == '':
+                    ob.bf_id_suffix = 'IDI'
+
     # Remove all caches and tmp objects, clean up to remove stale caches
     geometry.utils.rm_geometric_caches()
     geometry.utils.rm_tmp_objects()
+
     # Init FDS default materials
     for k, v in config.default_mas.items():
-        if not bpy.data.materials.get(k):  # check existance
+        ma = bpy.data.materials.get(k)  # k is ID
+        if not ma:
             ma = bpy.data.materials.new(k)
-            ma.bf_surf_export = True
-            ma.diffuse_color = v[0]
-            ma.use_fake_user = True
+        ma.diffuse_color = v[0]  # RGB
+        ma.bf_surf_export = True
+        ma.use_fake_user = True
+
     # Set default scene appearance
     for sc in bpy.data.scenes:
         sc.set_default_appearance(context=None)
