@@ -12,61 +12,55 @@ from . import utils
 
 log = logging.getLogger(__name__)
 
-# Get triangulated surface
+# Get triangulated surface in FDS format
 
 
-def get_trisurface(context, ob, scale_length, check=True, world=True):
+def get_fds_trisurface(context, ob, scale_length, check=True, world=True):  # FIXME
     """!
-    Get triangulated surface from object in mas, verts, faces format.
+    Get triangulated surface from object in FDS format.
     @param context: the Blender context.
     @param ob: the Blender object.
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
     @param world: True to return the object in world coordinates.
-    @return the materials, verts and faces lists.
+    @return fds_surfids, fds_verts, fds_faces, ... as lists  FIXME
     """
-    log.debug(ob.name)
-    mas = _get_materials(context, ob)
+    # Get list of referenced surf_id
+    fds_surfids = list()
+    for s in ob.material_slots:
+        ma = s.material
+        if not ma:
+            raise BFException(ob, "No referenced SURF, fill empty slot")
+        if not ma.bf_surf_export:
+            raise BFException(ob, f"Referenced SURF <{ma.name}> is not exported")
+        fds_surfids.append(ma.name)
+    if not fds_surfids:
+        raise BFException(ob, "No referenced SURF")
+    # Get bmesh and check it, if requested
     bm = utils.get_object_bmesh(
         context=context, ob=ob, world=world, triangulate=True, lookup=False
     )
     if check:
         _check_bm_sanity(context, ob, bm, protect=True)
-    # Extract verts and faces from bmesh
-    verts, faces = list(), list()
+    # Get geometric data from bmesh
+    fds_verts, fds_faces, fds_surfs = list(), list(), list()
+    fds_volus, fds_faces_surfs = list(), list()
     for v in bm.verts:
         co = v.co
-        verts.append((co.x * scale_length, co.y * scale_length, co.z * scale_length))
+        fds_verts.extend(
+            (co.x * scale_length, co.y * scale_length, co.z * scale_length)
+        )
     for f in bm.faces:
         v = f.verts
-        faces.append(
+        fds_faces.extend((v[0].index + 1, v[1].index + 1, v[2].index + 1))
+        fds_surfs.append(f.material_index + 1)  # FDS index start from 1, not 0
+        fds_faces_surfs.extend(  # this is for GEOM ASCII notation
             (v[0].index + 1, v[1].index + 1, v[2].index + 1, f.material_index + 1)
-        )  # FDS index start from 1, not 0
-    # Clean up
-    bm.free()
-    return mas, verts, faces
-
-
-def _get_materials(context, ob):
-    """!
-    Get referenced ob materials from slots.
-    @param context: the Blender context.
-    @param ob: the Blender object.
-    @return the materials list.
-    """
-    mas, material_slots = list(), ob.material_slots
-    if len(material_slots) == 0:
-        raise BFException(ob, "No referenced SURF, add at least one Material")
-    for material_slot in material_slots:
-        ma = material_slot.material
-        if not ma:
-            raise BFException(
-                ob, "No referenced SURF, fill empty slot with at least one Material"
-            )
-        if not ma.bf_surf_export:
-            raise BFException(ob, f"Referenced SURF <{ma.name}> is not exported")
-        mas.append(ma.name)
-    return mas
+        )
+    bm.free()  # clean up bmesh
+    if not fds_verts or not fds_faces:
+        raise BFException(ob, "The object is empty")
+    return fds_surfids, fds_verts, fds_faces, fds_surfs, fds_volus, fds_faces_surfs
 
 
 # Check sanity

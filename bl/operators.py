@@ -185,21 +185,20 @@ class SCENE_OT_bf_check_sanity(Operator):
 
 class _show_fds_code:
     """!
-    TODO
+    Helper for showing fds code operators
     """
 
     def draw(self, context):
         """!
         Draw function for the operator.
-        @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
+        @param context: the Blender context.
         """
         if self.lines:
             lines = self.lines.split("\n")
         else:
             lines = ("No FDS code is exported",)
         if len(lines) > 60:
-            lines = lines[:60]
-            lines.append("...")
+            lines = lines[:55] + ["..."] + lines[-4:]
         layout = self.layout
         for line in lines:
             layout.label(text=line)
@@ -356,7 +355,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
             check = ob.bf_geom_check_sanity
             world = True  # not: world = not ob.bf_move_id
             try:
-                fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
+                fds_surfids, fds_verts, fds_faces, fds_surfs, fds_volus, fds_faces_surfs, msg = geometry.to_fds.ob_to_geom(
                     context=context,
                     ob=ob,
                     scale_length=scale_length,
@@ -373,7 +372,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 geometry.from_fds.geom_to_ob(
                     fds_surfids=fds_surfids,
                     fds_verts=fds_verts,
-                    fds_faces=fds_faces,
+                    fds_faces=fds_faces_surfs,  # FIXME
                     context=context,
                     ob=ob_tmp,
                     scale_length=scale_length,
