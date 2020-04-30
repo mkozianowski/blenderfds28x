@@ -242,7 +242,7 @@ def append_case(xml, csvData, results, contentName, contentType, contentInput, t
         nodeText = xml.createTextNode(escape_text(test["fdsResult"]))
         nodeFdsResult.appendChild(nodeText)
 
-        nodeFdsNote = xml.createElement("Node_Fds")
+        nodeFdsNote = xml.createElement("Note_Fds")
         nodeText = xml.createTextNode(escape_text(test["fdsNote"]))
         nodeFdsNote.appendChild(nodeText)
 
