@@ -15,40 +15,34 @@ log = logging.getLogger(__name__)
 # to GEOM
 
 
-def _ob_to_geom(
-    context, ob, scale_length, check=True, world=True
-) -> "mas, fds_verts, fds_faces, 'Msg'":
+def _ob_to_geom(context, ob, scale_length, check=True, world=True):
     """!
-    Transform Object geometry to FDS mas, verts, faces notation.
+    Transform Object geometry to FDS notation.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
     @param world: True to return the object in world coordinates.
-    @return FDS mas, verts, faces notation as lists and any error message.
+    @return FDS notation as lists and any error message. FIXME
     """
     t0 = time()
-    mas, verts, faces = calc_trisurfaces.get_trisurface(
+    fds_surfids, fds_verts, fds_faces, fds_surfs, fds_volus, fds_faces_surfs = calc_trisurfaces.get_fds_trisurface(
         context=context, ob=ob, scale_length=scale_length, check=check, world=world
     )
-    fds_verts = [coo for vert in verts for coo in vert]
-    fds_faces = [i for face in faces for i in face]
     dt = time() - t0
     msg = f"GEOM: {len(fds_verts)} vertices, {len(fds_faces)} faces, in {dt:.3f} s"
-    return mas, fds_verts, fds_faces, msg
+    return fds_surfids, fds_verts, fds_faces, fds_surfs, fds_volus, fds_faces_surfs, msg
 
 
-def ob_to_geom(
-    context, ob, scale_length, check=True, world=True
-) -> "mas, fds_verts, fds_faces, 'Msg'":
+def ob_to_geom(context, ob, scale_length, check=True, world=True):
     """!
-    Transform Object geometry to FDS mas, verts, faces notation.
+    Transform Object geometry to FDS notation.
     @param context: the <a href="https://docs.blender.org/api/current/bpy.context.html">blender context</a>.
     @param ob: the Blender object.
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
     @param world: True to return the object in world coordinates.
-    @return FDS mas, verts, faces notation as lists and any error message.
+    @return FDS mas, verts, faces notation as lists and any error message. FIXME
     """
     log.debug(ob.name)
     if ob.get("ob_to_geom_cache") is None:  # recalc
