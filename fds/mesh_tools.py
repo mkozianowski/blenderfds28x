@@ -336,6 +336,9 @@ def calc_triangulation(csv_file_path):
     Function to convert a csv file into a mesh.
     @param csv_file_path: csv file path.
     @return return three array: nodes, connectivity and propeties.
+        Nodes: list of nodes that make up the mesh. Each node is made up of three float (x, y and z);
+        Connectivity: connectivity list. Each element is made up of three integers;
+        Propeties: list of properties of the fourth column of the csv file;
     """
 
     def get_norm(vector):
@@ -376,64 +379,122 @@ def calc_triangulation(csv_file_path):
     def average(lst):
         return sum(lst)/len(lst) 
 
-    matrix = list()
+    def matrix_has_index(row, col):
+        if row<0 or col<0:
+            return False
+        
+        try:
+            csv_matrix[row][col]
+            return True
+        
+        except(IndexError):
+            return False
+
+    def get_boundary_node(point1, point2):
+        return [
+            point1["x"] - (point2["x"] - point1["x"])/2,
+            point1["y"] - (point2["y"] - point1["y"])/2,
+            point1["z"] - (point2["z"] - point1["z"])/2
+        ]
+
+    csv_matrix = list()
     nodes = list()
-    connectivity = list()
     properties = list()
+    connectivity = list()
 
     with open(csv_file_path, 'r') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
+
+        # ignoring csv header
         next(csv_reader)
 
         col = None
         first_point = None
         prev_point = None
 
+        # Step 1 - csv_matrix generation
+        #-----------------------------------------------
+        # csv_matrix contains the same information present in the csv file without the header and organized in a matrix
         for row in csv_reader:
-            properties.append(float(row[3]))
             curr_point = [float(row[0]), float(row[1]), float(row[2])]
             col, first_point, prev_point = next_step(col, first_point, prev_point, curr_point)
             dot = dot_product(first_point, prev_point, curr_point)
 
             if col == 0:
-                matrix.append(list())
+                csv_matrix.append(list())
             
-            matrix[-1].append({
-                "id": None,
+            csv_matrix[-1].append({
                 "x": curr_point[0],
                 "y": curr_point[1],
-                "z": curr_point[2]
+                "z": curr_point[2],
+                "property": float(row[3]),
             })
         
-        node_count = 0
-        for row in range(len(matrix)):
-            for col in range(len(matrix[row])):
+        # Step 2 - generation of output arrays
+        #-----------------------------------------------
+        node_count = -1
+        for row in range(len(csv_matrix)+1):
+            row_len = len(csv_matrix[row]) if row<len(csv_matrix) else len(csv_matrix[-1])
+
+            for col in range(row_len+1):
+                node = [None, None, None]
                 
-                node0 = matrix[row-1][col-1]
-                node1 = matrix[row-1][col]
-                node2 = matrix[row][col-1]
-                node3 = matrix[row][col]
-
-                # nodes
-                if row>0 and col>0:
-                    matrix[row][col]["id"] = node_count
-                    node_count += 1
-
-                    x = average([node0["x"], node1["x"], node2["x"], node3["x"]])
-                    y = average([node0["y"], node1["y"], node2["y"], node3["y"]])
-                    z = average([node0["z"], node1["z"], node2["z"], node3["z"]])
+                # generation of nodes array
+                # each node is calculated as the average of the 4 adjacent face centers (if they exist)
+                try:
+                    if row==0 or col==0:
+                        raise IndexError()
                     
-                    nodes.append([x, y, z])
+                    node[0] = average([csv_matrix[row-1][col-1]["x"], csv_matrix[row-1][col]["x"], csv_matrix[row][col-1]["x"], csv_matrix[row][col]["x"]])
+                    node[1] = average([csv_matrix[row-1][col-1]["y"], csv_matrix[row-1][col]["y"], csv_matrix[row][col-1]["y"], csv_matrix[row][col]["y"]])
+                    node[2] = average([csv_matrix[row-1][col-1]["z"], csv_matrix[row-1][col]["z"], csv_matrix[row][col-1]["z"], csv_matrix[row][col]["z"]])
 
-                # connectivity
-                if row>1 and col>1:
-                    try:
-                        connectivity.append([node0["id"], node1["id"], node2["id"]])
-                        connectivity.append([node1["id"], node2["id"], node3["id"]])
+                # generation of boudnary nodes
+                # boundary nodes are calculated as a point aligned with two adjacent face centers
+                except(IndexError):
+                    if matrix_has_index(row, col) and matrix_has_index(row-1, col+1):
+                        node = get_boundary_node(csv_matrix[row][col], csv_matrix[row-1][col+1])
                     
-                    except IndexError:
-                        pass
+                    elif matrix_has_index(row, col) and matrix_has_index(row+1, col-1):
+                        node = get_boundary_node(csv_matrix[row][col], csv_matrix[row+1][col-1])
+                    
+                    elif matrix_has_index(row, col) and matrix_has_index(row+1, col+1):
+                        node = get_boundary_node(csv_matrix[row][col], csv_matrix[row+1][col+1])
+                    
+                    elif matrix_has_index(row, col) and matrix_has_index(row-1, col-1):
+                        node = get_boundary_node(csv_matrix[row][col], csv_matrix[row-1][col-1])
+                    
+                    elif matrix_has_index(row, col-1) and matrix_has_index(row-1, col-2):
+                        node = get_boundary_node(csv_matrix[row][col-1], csv_matrix[row-1][col-1])
 
+                    elif matrix_has_index(row, col-1) and matrix_has_index(row+1, col-2):
+                        node = get_boundary_node(csv_matrix[row][col-1], csv_matrix[row+1][col-1])
+                    
+                    elif matrix_has_index(row-1, col) and matrix_has_index(row-2, col+1):
+                        node = get_boundary_node(csv_matrix[row-1][col], csv_matrix[row-2][col+1])
+                    
+                    elif matrix_has_index(row-1, col-1) and matrix_has_index(row-2, col-2):
+                        node = get_boundary_node(csv_matrix[row-1][col-1], csv_matrix[row-2][col-2])
+                    
+                    else:
+                        raise ValueError(str(row) + " - " + str(col))
+
+                nodes.append(node)
+                node_count += 1
+
+                # generation of connectivity and properties arrays
+                if row<len(csv_matrix) and col<len(csv_matrix[row]):
+                    node_count_0 = node_count
+                    node_count_1 = node_count + 1
+                    node_count_2 = node_count + len(csv_matrix[row]) + 1
+                    node_count_3 = node_count + len(csv_matrix[row]) + 2
+
+                    connectivity.append([node_count_0, node_count_2, node_count_1])
+                    connectivity.append([node_count_1, node_count_2, node_count_3])
+
+                    properties.append(csv_matrix[row][col]["property"])
+                    properties.append(csv_matrix[row][col]["property"])
+                
     return nodes, connectivity, properties
 
 
