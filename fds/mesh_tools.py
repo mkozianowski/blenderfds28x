@@ -452,30 +452,33 @@ def calc_triangulation(csv_file_path):
                 # generation of boudnary nodes
                 # boundary nodes are calculated as a point aligned with two adjacent face centers
                 except(IndexError):
-                    if matrix_has_index(row, col) and matrix_has_index(row-1, col+1):
-                        node = get_boundary_node(csv_matrix[row][col], csv_matrix[row-1][col+1])
-                    
-                    elif matrix_has_index(row, col) and matrix_has_index(row+1, col-1):
-                        node = get_boundary_node(csv_matrix[row][col], csv_matrix[row+1][col-1])
-                    
-                    elif matrix_has_index(row, col) and matrix_has_index(row+1, col+1):
+
+                    #management of row and col boundaries
+                    if   row == 0 and ( col != 0 and col < row_len ):
+                        node = get_boundary_node(csv_matrix[row][col], csv_matrix[row+1][col])
+
+                    elif ( row != 0 and row < len(csv_matrix) ) and col == 0:
+                        node = get_boundary_node(csv_matrix[row][col], csv_matrix[row][col+1])
+
+                    elif row == len(csv_matrix) and ( col != 0 and col < row_len ):
+                        node = get_boundary_node(csv_matrix[row-1][col], csv_matrix[row-2][col])
+
+                    elif ( row != 0 and row < len(csv_matrix) ) and col == row_len:
+                        node = get_boundary_node(csv_matrix[row][col-1], csv_matrix[row][col-2])
+
+                    #management of the four corners
+                    elif ( row == 0 ) and ( col == 0 ):
                         node = get_boundary_node(csv_matrix[row][col], csv_matrix[row+1][col+1])
                     
-                    elif matrix_has_index(row, col) and matrix_has_index(row-1, col-1):
-                        node = get_boundary_node(csv_matrix[row][col], csv_matrix[row-1][col-1])
-                    
-                    elif matrix_has_index(row, col-1) and matrix_has_index(row-1, col-2):
-                        node = get_boundary_node(csv_matrix[row][col-1], csv_matrix[row-1][col-1])
-
-                    elif matrix_has_index(row, col-1) and matrix_has_index(row+1, col-2):
-                        node = get_boundary_node(csv_matrix[row][col-1], csv_matrix[row+1][col-1])
-                    
-                    elif matrix_has_index(row-1, col) and matrix_has_index(row-2, col+1):
+                    elif ( row == len(csv_matrix) ) and ( col == 0 ):
                         node = get_boundary_node(csv_matrix[row-1][col], csv_matrix[row-2][col+1])
                     
-                    elif matrix_has_index(row-1, col-1) and matrix_has_index(row-2, col-2):
+                    elif ( row == 0 ) and ( col == row_len ):
+                        node = get_boundary_node(csv_matrix[row][col-1], csv_matrix[row+1][col-2])
+
+                    elif ( row == len(csv_matrix) ) and ( col == row_len ):
                         node = get_boundary_node(csv_matrix[row-1][col-1], csv_matrix[row-2][col-2])
-                    
+
                     else:
                         raise ValueError(str(row) + " - " + str(col))
 
