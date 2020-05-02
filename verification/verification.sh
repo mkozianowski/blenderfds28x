@@ -15,5 +15,5 @@ export OMP_NUM_THREADS=1
 
 # Running Blender
 echo "Run verification.py in Blender..."
-$BLENDER_PATHFILE --background --python $(dirname $0)/verification.py 2> error.log
+$BLENDER_PATHFILE --background --python $(dirname $0)/verification.py &> error.log
 #rm error.log

@@ -215,11 +215,13 @@ class SP_crs(BFParam):
                 "LonLat",
                 "WGS84 Lon/Lat",
                 "Decimal degrees longitude/latitude geographic coordinates\nwith WGS84 coordinate reference system",
+                100,
             ),
             (
                 "UTM",
                 "WGS84 UTM",
                 "Universal Transverse Mercator projected coordinates\nwith WGS84 coordinate reference system",
+                200,
             ),
         )
     }
@@ -379,14 +381,12 @@ class SN_config_geoloc(BFNamelistSc):
     label = "Origin Geolocation"
 
     def draw(self, context, layout):
-
         sc = self.element
         col = layout.column()
         row = col.row()
         row.prop(sc, "bf_crs", text="Coordinate Ref Sys")
         url = gis.LonLat(lon=sc.bf_lon, lat=sc.bf_lat).to_url()
         row.operator("wm.url_open", text="", icon="URL").url = url
-
         sub = col.column(align=True)
         sub.prop(sc, "bf_geoname", text="Origin Geoname")
         if sc.bf_crs == "LonLat":
@@ -568,7 +568,6 @@ class SN_HEAD(BFNamelistSc):
     bpy_export = "bf_head_export"
     bpy_export_default = True
     bf_params = SP_HEAD_CHID, SP_HEAD_TITLE
-    maxlen = 0
 
 
 @subscribe
@@ -609,7 +608,10 @@ class SP_TIME_setup_only(BFParam):
     def to_fds_param(self, context):  # FIXME move to T_END
         if self.element.bf_time_setup_only:
             return FDSParam(
-                label="T_END", values=(0.0,), msg="Smokeview setup only", precision=1
+                fds_label="T_END",
+                values=(0.0,),
+                msg="Smokeview setup only",
+                precision=1,
             )
 
 
@@ -678,7 +680,6 @@ class SN_TIME(BFNamelistSc):
     bpy_export = "bf_time_export"
     bpy_export_default = True
     bf_params = SP_TIME_T_BEGIN, SP_TIME_T_END, SP_TIME_setup_only, SP_TIME_other
-    maxlen = 0
 
 
 # MISC
@@ -754,10 +755,7 @@ class SN_MISC(BFNamelistSc):
         SP_MISC_THICKEN_OBSTRUCTIONS,
         SP_MISC_other,
     )
-    maxlen = 0
 
-
-# FIXME MOVE namelist
 
 # REAC
 
@@ -927,7 +925,6 @@ class SN_REAC(BFNamelistSc):
         SP_REAC_RADIATIVE_FRACTION,  # moved from RADI
         SP_REAC_other,
     )
-    maxlen = 0
 
 
 # RADI
@@ -1055,7 +1052,6 @@ class SN_RADI(BFNamelistSc):
         SP_RADI_RADIATION_ITERATIONS,
         SP_RADI_other,
     )
-    maxlen = 0
 
 
 # DUMP
@@ -1125,18 +1121,18 @@ class SP_DUMP_NFRAMES(BFParam):
     bpy_other = {"min": 1}
 
 
-@subscribe
-class SP_DUMP_set_frequency(BFParam):
-    """!
-    Blender representation of the dump output every 1 s.
-    """
+# @subscribe
+# class SP_DUMP_set_frequency(BFParam):
+#     """!
+#     Blender representation of the dump output every 1 s.
+#     """
 
-    label = "Dump Output every 1 s"
-    description = "Dump output every 1 s"
-    bpy_type = Scene
-    bpy_idname = "bf_dump_set_frequency"
-    bpy_prop = BoolProperty
-    bpy_default = False
+#     label = "Dump Output every 1 s"
+#     description = "Dump output every 1 s"
+#     bpy_type = Scene
+#     bpy_idname = "bf_dump_set_frequency"
+#     bpy_prop = BoolProperty
+#     bpy_default = False
 
 
 @subscribe
@@ -1184,11 +1180,10 @@ class SN_DUMP(BFNamelistSc):
         SP_DUMP_render_file,
         SP_DUMP_STATUS_FILES,
         SP_DUMP_NFRAMES,
-        SP_DUMP_set_frequency,
+        # SP_DUMP_set_frequency, # FIXME not ready
         SP_DUMP_DT_RESTART,
         SP_DUMP_other,
     )
-    maxlen = 0
 
 
 # CATF
@@ -1208,7 +1203,7 @@ class SP_CATF_check_files(BFParam):
     bpy_default = False
 
     def to_fds_param(self, context):
-        return
+        pass
 
 
 @subscribe
@@ -1234,16 +1229,11 @@ class SP_CATF_files(BFParamOther):
                 if el.bf_catf_check_files and not utils.is_file(p.name):
                     raise BFException(self, f"File path <{p.name}> does not exist")
                 result.append(
-                    tuple((FDSParam(label=f"OTHER_FILES='{p.name}'"),))
+                    tuple((FDSParam(fds_label=f"OTHER_FILES='{p.name}'"),))
                 )  # multi param
         return tuple(result)  # multi
 
     def from_fds(self, context, value):
-        """!
-        Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: the Blender context.
-        @param value: the value to set.
-        """
         if not value:
             self.set_value(context, None)
         elif isinstance(value, str):  # str
@@ -1265,17 +1255,12 @@ class SN_CATF(BFNamelistSc):
     bpy_export = "bf_catf_export"
     bpy_export_default = False
     bf_params = SP_CATF_check_files, SP_CATF_files
-    maxlen = 0
 
 
 # Material
 
 
 def update_MP_namelist_cls(self, context):
-    """!
-    TODO
-    """
-    # Set default appearance
     self.set_default_appearance(context)
 
 
@@ -1297,6 +1282,7 @@ class MP_namelist_cls(BFParam):
     bpy_default = "MN_SURF"
 
     def to_fds_param(self, context):
+        # Do not export default FIXME move to exported
         if self.element.name in {"INERT", "HVAC", "MIRROR", "OPEN", "PERIODIC"}:
             return
         super().to_fds_param(context)
@@ -1349,12 +1335,10 @@ class MP_RGB(BFParam):
         c = self.element.diffuse_color
         rs = (int(c[0] * 255), int(c[1] * 255), int(c[2] * 255))
         ts = (c[3],)
-        return tuple(
-            (
-                FDSParam(label="RGB", values=rs),
-                FDSParam(label="TRANSPARENCY", values=ts, precision=2),
-            )
-        )
+        return (
+            FDSParam(fds_label="RGB", values=rs),
+            FDSParam(fds_label="TRANSPARENCY", values=ts, precision=2),
+        )  # many # FIXME TRANSPARENCY not always
 
 
 @subscribe
@@ -1467,9 +1451,6 @@ class MP_MATL_ID(BFParamStr):
     bpy_export_default = False
 
     def draw_operators(self, context, layout):
-        """!
-        TODO
-        """
         layout.operator("material.bf_choose_matl_id", icon="VIEWZOOM", text="")
 
 
@@ -1512,16 +1493,19 @@ class MP_BACKING(BFParam):
                 "VOID",
                 "VOID",
                 "The wall is assumed to back up to the ambient temperature",
+                100,
             ),
             (
                 "INSULATED",
                 "INSULATED",
                 "The back side of the material is perfectly insulated",
+                200,
             ),
             (
                 "EXPOSED",
                 "EXPOSED",
                 "The heat transfer into the space behind the wall is calculated (only if wall is one cell thick)",
+                300,
             ),
         )
     }
@@ -1565,11 +1549,9 @@ class MN_SURF(BFNamelistMa):
         MP_IGNITION_TEMPERATURE,
         MP_other,
     )
-    maxlen = 0
 
     @property
     def exported(self) -> "bool":
-
         return self.element.bf_surf_export and self.element.name not in default_mas
 
 
@@ -1577,9 +1559,6 @@ class MN_SURF(BFNamelistMa):
 
 
 def update_OP_namelist_cls(ob, context):
-    """!
-    TODO
-    """
     geometry.utils.rm_geometric_cache(ob=ob)
     geometry.utils.rm_tmp_objects()
     ob.set_default_appearance(context)
@@ -1632,9 +1611,6 @@ class OP_FYI(BFParamFYI):
 
 
 def update_bf_xb(ob, context):
-    """!
-    TODO
-    """
     # Remove cache and tmp objects
     ob["ob_to_xbs_cache"] = None
     geometry.utils.rm_tmp_objects()
@@ -1730,18 +1706,17 @@ class OP_XB(BFParamXB):
     bpy_other = {
         "update": update_bf_xb,
         "items": (
-            ("BBOX", "BBox", "Export object bounding box"),
-            ("VOXELS", "Voxels", "Export voxels from voxelized solid Object"),
-            ("FACES", "Faces", "Export faces, one for each face"),
-            ("PIXELS", "Pixels", "Export pixels from pixelized flat Object"),
-            ("EDGES", "Edges", "Export segments, one for each edge"),
+            ("BBOX", "BBox", "Export object bounding box", 100),
+            ("VOXELS", "Voxels", "Export voxels from voxelized solid Object", 200),
+            ("FACES", "Faces", "Export faces, one for each face", 300),
+            ("PIXELS", "Pixels", "Export pixels from pixelized flat Object", 400),
+            ("EDGES", "Edges", "Export segments, one for each edge", 500),
         ),
     }
     bpy_export = "bf_xb_export"
     bf_xb_from_fds = None  # auto
 
     def draw(self, context, layout):
-
         super().draw(context, layout)
         ob = self.element
         if ob.bf_xb_export and ob.bf_xb in ("VOXELS", "PIXELS"):
@@ -1757,7 +1732,7 @@ class OP_XB(BFParamXB):
         xbs, msg = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
         # Single param
         if len(xbs) == 1:
-            return FDSParam(label="XB", values=xbs[0], precision=6)
+            return FDSParam(fds_label="XB", values=xbs[0], precision=6)
         # Multi param, prepare new ID
         n = ob.name
         suffix = self.element.bf_id_suffix
@@ -1781,8 +1756,8 @@ class OP_XB(BFParamXB):
             raise Exception("Unknown suffix <{suffix}>")
         result = tuple(
             (
-                FDSParam(label="ID", values=(hid,)),
-                FDSParam(label="XB", values=xb, precision=6),
+                FDSParam(fds_label="ID", values=(hid,)),
+                FDSParam(fds_label="XB", values=xb, precision=6),
             )
             for hid, xb in zip(ids, xbs)
         )  # multi
@@ -1791,11 +1766,6 @@ class OP_XB(BFParamXB):
         return result
 
     def from_fds(self, context, value):
-        """!
-        Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: the Blender context.
-        @param value: the value to set.
-        """
         scale_length = context.scene.unit_settings.scale_length
         try:
             bf_xb = geometry.from_fds.xbs_to_ob(
@@ -1828,7 +1798,7 @@ class OP_XB_BBOX(OP_XB):
         # Compute
         scale_length = context.scene.unit_settings.scale_length
         xbs, _ = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
-        return FDSParam(label="XB", values=xbs[0], precision=6)
+        return FDSParam(fds_label="XB", values=xbs[0], precision=6)
 
     def draw(self, context, layout):
         ob = self.element
@@ -1838,9 +1808,6 @@ class OP_XB_BBOX(OP_XB):
 
 
 def update_bf_xyz(ob, context):
-    """!
-    TODO
-    """
     # Remove cache and tmp objects
     ob["ob_to_xyzs_cache"] = None
     geometry.utils.rm_tmp_objects()
@@ -1883,8 +1850,8 @@ class OP_XYZ(BFParamXYZ):
     bpy_other = {
         "update": update_bf_xyz,
         "items": (
-            ("CENTER", "Center", "Point, center point of this object"),
-            ("VERTICES", "Vertices", "Points, one for each vertex of this object"),
+            ("CENTER", "Center", "Point, center point of this object", 100),
+            ("VERTICES", "Vertices", "Points, one for each vertex of this object", 200),
         ),
     }
     bpy_export = "bf_xyz_export"
@@ -1898,7 +1865,7 @@ class OP_XYZ(BFParamXYZ):
         xyzs, msg = geometry.to_fds.ob_to_xyzs(context, ob, scale_length)
         # Single param
         if len(xyzs) == 1:
-            return FDSParam(label="XYZ", values=xyzs[0])
+            return FDSParam(fds_label="XYZ", values=xyzs[0])
         # Multi param, prepare new ID
         n = ob.name
         suffix = self.element.bf_id_suffix
@@ -1922,8 +1889,8 @@ class OP_XYZ(BFParamXYZ):
             raise Exception("Unknown suffix <{suffix}>")
         result = tuple(
             (
-                FDSParam(label="ID", values=(hid,)),
-                FDSParam(label="XYZ", values=xyz, precision=6),
+                FDSParam(fds_label="ID", values=(hid,)),
+                FDSParam(fds_label="XYZ", values=xyz, precision=6),
             )
             for hid, xyz in zip(ids, xyzs)
         )  # multi
@@ -1932,11 +1899,6 @@ class OP_XYZ(BFParamXYZ):
         return result
 
     def from_fds(self, context, value):
-        """!
-        Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: the Blender context.
-        @param value: the value to set.
-        """
         scale_length = context.scene.unit_settings.scale_length
         try:
             bf_xyz = geometry.from_fds.xyzs_to_ob(
@@ -2005,7 +1967,9 @@ class OP_PB(BFParamPB):
     bpy_prop = EnumProperty
     bpy_other = {
         "update": update_bf_pb,
-        "items": (("PLANES", "Planes", "Planes, one for each face of this object"),),
+        "items": (
+            ("PLANES", "Planes", "Planes, one for each face of this object", 100),
+        ),
     }
     bpy_export = "bf_pb_export"
 
@@ -2026,7 +1990,7 @@ class OP_PB(BFParamPB):
         )  # FIXME int to protect from float
         # Single param
         if len(pbs) == 1:
-            return FDSParam(label=labels[0], values=(pbs[0][1],), precision=6)
+            return FDSParam(fds_label=labels[0], values=(pbs[0][1],), precision=6)
         # Multi param, prepare new ID
         n = ob.name
         suffix = self.element.bf_id_suffix
@@ -2043,8 +2007,8 @@ class OP_PB(BFParamPB):
             raise Exception("Unknown suffix <{suffix}>")
         result = tuple(
             (
-                FDSParam(label="ID", values=(hid,)),
-                FDSParam(label=label, values=(pb,), precision=6),
+                FDSParam(fds_label="ID", values=(hid,)),
+                FDSParam(fds_label=label, values=(pb,), precision=6),
             )
             for hid, label, (_, pb) in zip(ids, labels, pbs)
         )  # multi
@@ -2053,11 +2017,6 @@ class OP_PB(BFParamPB):
         return result
 
     def from_fds(self, context, value):
-        """!
-        Set parameter value from value in FDS notation, on error raise BFException.
-        @param context: the Blender context.
-        @param value: the value to set.
-        """
         scale_length = context.scene.unit_settings.scale_length
         try:
             bf_pb = geometry.from_fds.pbs_to_ob(
@@ -2089,8 +2048,7 @@ class OP_PBX(OP_PB):
         return
 
     def to_fds_param(self, context):
-
-        return
+        pass
 
 
 @subscribe
@@ -2128,24 +2086,18 @@ class OP_ID_suffix(BFParam):
     bpy_prop = EnumProperty
     bpy_other = {
         "items": (
-            ("IDI", "Index", "Append index number to multiple ID values"),
-            ("IDX", "x", "Append x coordinate to multiple ID values"),
-            ("IDY", "y", "Append y coordinate to multiple ID values"),
-            ("IDZ", "z", "Append z coordinate to multiple ID values"),
-            ("IDXY", "xy", "Append x,y coordinates to multiple ID values"),
-            ("IDXZ", "xz", "Append x,z coordinates to multiple ID values"),
-            ("IDYZ", "yz", "Append y,z coordinates to multiple ID values"),
-            ("IDXYZ", "xyz", "Append x,y,z coordinates to multiple ID values"),
+            ("IDI", "Index", "Append index number to multiple ID values", 100),
+            ("IDX", "x", "Append x coordinate to multiple ID values", 200),
+            ("IDY", "y", "Append y coordinate to multiple ID values", 300),
+            ("IDZ", "z", "Append z coordinate to multiple ID values", 400),
+            ("IDXY", "xy", "Append x,y coordinates to multiple ID values", 500),
+            ("IDXZ", "xz", "Append x,z coordinates to multiple ID values", 600),
+            ("IDYZ", "yz", "Append y,z coordinates to multiple ID values", 700),
+            ("IDXYZ", "xyz", "Append x,y,z coordinates to multiple ID values", 800),
         )
     }
 
     def draw(self, context, layout):
-        """!
-        Draw self UI on layout.
-        @param context: the Blender context.
-        @param layout: the <a href="https://docs.blender.org/api/current/bpy.types.UILayout.html">blender layout</a>.
-        @return layout.
-        """
         ob = self.element
         if (
             (ob.bf_xb_export and ob.bf_xb in ("VOXELS", "PIXELS"))
@@ -2267,9 +2219,6 @@ class ON_other(BFNamelistOb):
 
     @property
     def fds_label(self):
-        """!
-        TODO
-        """
         return self.element.bf_other_namelist
 
 
@@ -2290,7 +2239,6 @@ class OP_GEOM_check_sanity(BFParam):
     bpy_default = True
 
     def draw(self, context, layout):
-
         ob = self.element
         me = ob.data
         material_slots = ob.material_slots
@@ -2347,7 +2295,7 @@ class OP_GEOM_READ_BINARY(BFParam):
     label = "READ_BINARY"
     description = "Read in binary geometry, if available"
     fds_label = "READ_BINARY"
-    fds_default = False  # FIXME confirm with Marcos
+    fds_default = False
     bpy_type = Object
     bpy_idname = "bf_geom_read_binary"
     bpy_prop = BoolProperty
@@ -2367,46 +2315,32 @@ class OP_GEOM(BFParam):
     bpy_type = Object
 
     def draw(self, context, layout):
-
         pass
 
     def to_fds_param(self, context):
-        # Check is performed while exporting
-        # Get surf_idv, verts and faces
         scale_length = context.scene.unit_settings.scale_length
         check = self.element.bf_geom_check_sanity
-        world = not self.element.bf_move_id  # FIXME test
-        fds_surfids, fds_verts, fds_faces, msg = geometry.to_fds.ob_to_geom(
+        world = not self.element.bf_move_id
+        (
+            fds_surfids,
+            fds_verts,
+            fds_faces,
+            fds_surfs,
+            fds_volus,
+            fds_faces_surfs,
+            msg,
+        ) = geometry.to_fds.ob_to_geom(
             context=context,
             ob=self.element,
             scale_length=scale_length,
             check=check,
             world=True,
         )
-        if not fds_faces:
-            return None, msg
-        # Group by 3 and 4
-        verts = [t for t in zip(*[iter(fds_verts)] * 3)]
-        faces = [t for t in zip(*[iter(fds_faces)] * 4)]
-        # Prepare
-        # This is special: FDSParam formatting capabilities are not used for speed
-        surfids_str = ",".join(("'{}'".format(s) for s in fds_surfids))
-        separator1 = "\n      "
-        separator2 = "\n            "
-        p = 6  # precision config
-        verts_str = separator2.join(
-            (
-                f"{round(v[0],p):+.{p}f}, {round(v[1],p):+.{p}f}, {round(v[2],p):+.{p}f},"
-                for v in verts
-            )
-        )
-        faces_str = separator2.join((f"{f[0]},{f[1]},{f[2]}, {f[3]}," for f in faces))
-        return FDSParam(
-            label=separator1.join(
-                (f"SURF_ID={surfids_str}", f"VERTS={verts_str}", f"FACES={faces_str}")
-            ),
-            msg=msg,
-        )
+        return (
+            FDSParam(fds_label="SURF_ID", values=fds_surfids, msg=msg),
+            FDSParam(fds_label="VERTS", values=fds_verts, precision=6),
+            FDSParam(fds_label="FACES", values=fds_faces_surfs),
+        )  # many
 
 
 @subscribe
@@ -2469,7 +2403,7 @@ class ON_GEOM(BFNamelistOb):
     )
     bf_other = {"appearance": "TEXTURED"}
 
-    def to_fds_namelist(self, context) -> "None or FDSNamelist":
+    def to_fds_namelist(self, context):
         nl = super().to_fds_namelist(context)
         if nl is None:
             return
@@ -2494,14 +2428,14 @@ class ON_GEOM(BFNamelistOb):
         )
         return (
             FDSNamelist(
-                label="MOVE",
+                fds_label="MOVE",
                 fds_params=(
-                    FDSParam(label="ID", values=(name,)),
-                    FDSParam(label="T34", values=t34),
+                    FDSParam(fds_label="ID", values=(name,)),
+                    FDSParam(fds_label="T34", values=t34),
                 ),
             ),
             nl,
-        )
+        )  # many
 
     def draw_operators(self, context, layout):
         ob = context.object
@@ -2578,8 +2512,8 @@ class ON_VENT(BFNamelistOb):
         OP_SURF_ID,
         OP_VENT_OBST_ID,
         OP_XB,
-        OP_PB,
         OP_XYZ,
+        OP_PB,
         OP_PBX,
         OP_PBY,
         OP_PBZ,
@@ -2692,6 +2626,10 @@ class ON_DEVC(BFNamelistOb):
         OP_DEVC_PROP_ID,
         OP_XB,
         OP_XYZ,
+        OP_PB,  # FIXME used?
+        OP_PBX,
+        OP_PBY,
+        OP_PBZ,
         OP_ID_suffix,
         OP_other,
     )
@@ -2800,11 +2738,14 @@ class OP_MESH_IJK(BFParam):
         col = layout.column()
         scale_length = context.scene.unit_settings.scale_length
         xbs = geometry.utils.get_bbox_xbs(
-            context=context, ob=ob, scale_length=scale_length
+            context=context, ob=ob, scale_length=scale_length, world=True
         )
-        has_good_ijk, cs, cell_count, cell_aspect_ratio = fds.mesh_tools.calc_cell_infos(
-            ijk=ob.bf_mesh_ijk, xbs=xbs
-        )
+        (
+            has_good_ijk,
+            cs,
+            cell_count,
+            cell_aspect_ratio,
+        ) = fds.mesh_tools.calc_cell_infos(ijk=ob.bf_mesh_ijk, xbs=xbs)
         col.label(text=f"Cell Size: {cs[0]:.3f}m x {cs[1]:.3f}m x {cs[2]:.3f}m")
         col.label(
             text=f"Cell Qty: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
@@ -2819,12 +2760,16 @@ class OP_MESH_IJK(BFParam):
             context=context,
             ob=ob,
             scale_length=context.scene.unit_settings.scale_length,
+            world=True,
         )
-        has_good_ijk, cs, cell_count, cell_aspect_ratio = fds.mesh_tools.calc_cell_infos(
-            ijk=ob.bf_mesh_ijk, xbs=xbs
-        )
+        (
+            has_good_ijk,
+            cs,
+            cell_count,
+            cell_aspect_ratio,
+        ) = fds.mesh_tools.calc_cell_infos(ijk=ob.bf_mesh_ijk, xbs=xbs)
         msg = f"Cell Size: {cs[0]:.3f} m, {cs[1]:.3f} m, {cs[2]:.3f} m | Qty: {cell_count} | Aspect: {cell_aspect_ratio:.1f} | Poisson: {has_good_ijk and 'Yes' or 'No'}"
-        return FDSParam(label="IJK", values=ob.bf_mesh_ijk, msg=msg)
+        return FDSParam(fds_label="IJK", values=ob.bf_mesh_ijk, msg=msg)
 
 
 @subscribe
@@ -2962,9 +2907,9 @@ class BFObject:
 
     def to_fds(self, context):
         """!
-        Return the FDS str representation.
+        Return the FDS formatted string.
         @param context: the Blender context.
-        @return None or str.
+        @return None or FDS formatted string, eg. "&OBST ID='Test' /".
         """
         if self.bf_is_tmp or not self.type == "MESH":
             return
@@ -2972,12 +2917,12 @@ class BFObject:
 
     def from_fds(self, context, fds_namelist):
         """!
-        Import from FDSNamelist in FDS notation, on error raise BFException.
+        Set self.bf_namelist from FDSNamelist, on error raise BFException.
         @param context: the Blender context.
-        @param fds_namelist: FDSNamelist to import
+        @param fds_namelist: FDSNamelist.
         """
         # Set bf_namelist_cls
-        bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label)
+        bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.fds_label)
         self.bf_namelist_cls = bf_namelist.__name__
         # Prevent default geometry (eg. XB=BBOX)
         self.bf_xb_export, self.bf_xyz_export, self.bf_pb_export = (False, False, False)
@@ -3052,7 +2997,7 @@ class BFMaterial:
     @property
     def bf_namelist(self):
         """!
-        Related bf_namelist, instance of BFNamelist.
+        Return related bf_namelist, instance of BFNamelist.
         """
         try:
             return bf_namelists_by_cls[self.bf_namelist_cls](self)
@@ -3064,17 +3009,17 @@ class BFMaterial:
 
     def to_fds(self, context):
         """!
-        Return the FDS str representation.
+        Return the FDS formatted string.
         @param context: the Blender context.
-        @return None or str.
+        @return None or FDS formatted string, eg. "&OBST ID='Test' /".
         """
         return self.bf_namelist.to_fds(context)
 
     def from_fds(self, context, fds_namelist):
         """!
-        Import from FDSNamelist in FDS notation, on error raise BFException.
+        Set self.bf_namelist from FDSNamelist, on error raise BFException.
         @param context: the Blender context.
-        @param fds_namelist: FDSNamelist to import
+        @param fds_namelist: FDSNamelist.
         """
         # Set bf_namelist_cls
         self.bf_namelist_cls = "MN_SURF"
@@ -3121,16 +3066,16 @@ class BFScene:
     @property
     def bf_namelists(self):
         """!
-        Related bf_namelist, instance of BFNamelist.
+        Return related bf_namelist, instance of BFNamelist.
         """
         return (n(self) for _, n in bf_namelists_by_cls.items() if n.bpy_type == Scene)
 
     def to_fds(self, context, full=False):
         """!
-        Return the FDS str representation.
+        Return the FDS formatted string.
         @param context: the Blender context.
         @param full: if True, return full FDS case.
-        @return None or str.
+        @return None or FDS formatted string, eg. "&OBST ID='Test' /".
         """
         # Header
         v = sys.modules[__package__].bl_info["version"]
@@ -3148,7 +3093,9 @@ class BFScene:
             )
         )
         # My namelists
-        lines.extend(n.to_fds(context) for n in self.bf_namelists)
+        lines.extend(
+            n.to_fds(context) for n in self.bf_namelists if n is not None
+        )  # protect from None
         # Free Text
         if self.bf_config_text:
             lines.append(f"\n! --- From <{self.bf_config_text.name}> free text")
@@ -3163,7 +3110,7 @@ class BFScene:
                 for ma in mas:
                     lines.append(ma.to_fds(context))
             # Objects
-            lines.append(self.collection.to_fds(context))
+            lines.append(self.collection.to_fds(context))  # FIXME protect from None?
             # Tail
             if self.bf_head_export:
                 lines.append("\n&TAIL /")
@@ -3171,34 +3118,34 @@ class BFScene:
 
     def from_fds(self, context, fds_case):
         """!
-        Import from FDSCase in FDS notation, on error raise BFException.
+        Set self.bf_namelists from FDSCase, on error raise BFException.
         @param context: the Blender context.
-        @param fds_case: FDSCase to set
+        @param fds_case: FDSCase.
         """
         self.set_default_appearance(context)  # current scene
         fds_case_un = FDSCase()  # unmanaged namelists
         # Import SURFs first FIXME improve, repetition!
         # FIXME if a material is not available, throw an Exception!
         for fds_namelist in fds_case.fds_namelists:
-            if fds_namelist.label != "SURF":
+            if fds_namelist.fds_label != "SURF":
                 continue
-            hid = f"New {fds_namelist.label}"
+            hid = f"New {fds_namelist.fds_label}"
             ma = bpy.data.materials.new(hid)
             ma.from_fds(context, fds_namelist=fds_namelist)
             ma.use_fake_user = True  # prevent del (eg. used by PART)
             ma.set_default_appearance(context)
         # Then the rest FIXME improve
         for fds_namelist in fds_case.fds_namelists:
-            if fds_namelist.label == "SURF":
+            if fds_namelist.fds_label == "SURF":
                 continue
             # Get namelist class
-            bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.label, None)
+            bf_namelist = bf_namelists_by_fds_label.get(fds_namelist.fds_label, None)
             if not bf_namelist:
                 # Put unmanaged namelists in fds_case_un
                 fds_case_un.fds_namelists.append(fds_namelist)
                 continue
             # Prepare default name
-            hid = f"New {fds_namelist.label}"
+            hid = f"New {fds_namelist.fds_label}"
             if bf_namelist.bpy_type == Object:  # new Object
                 me = bpy.data.meshes.new(hid)
                 ob = bpy.data.objects.new(hid, object_data=me)
@@ -3209,8 +3156,8 @@ class BFScene:
                 ma = bpy.data.materials.new(hid)
                 ma.from_fds(context, fds_namelist=fds_namelist)
                 ma.use_fake_user = (
-                    True
-                )  # prevent deletion if used by something else (eg. PART)
+                    True  # prevent deletion if used by something else (eg. PART)
+                )
                 ma.set_default_appearance(context)
             elif bf_namelist.bpy_type == Scene:  # current Scene
                 bf_namelist(self).from_fds(context, fds_params=fds_namelist.fds_params)
@@ -3278,10 +3225,10 @@ class BFCollection:
 
     def to_fds(self, context):
         """!
-        Return the FDS str representation.
+        Return the FDS formatted string.
         @param context: the Blender context.
         @param full: if True, return full FDS case.
-        @return None or str.
+        @return FDS formatted string, eg. "&OBST ID='Test' /".
         """
         obs, lines = list(self.objects), list()
         obs.sort(key=lambda k: k.name)  # alphabetic by name

@@ -1,8 +1,12 @@
 #!/bin/bash
+# Usage: bash /path/to/update-doxygen.sh
+
+# System variables
+DOXYGEN_PATHFILE="/opt/doxygen/doxygen"
 
 # Generation of new doxygen
 echo "Doxygen generation ..."
-doxygen doxyfile > doxygen.log 2>&1
+DOXYGEN_PATHFILE doxyfile > doxygen.log 2>&1
 
 # Moving to branch gh-pages
 echo "Pulling gh-pages branch ..."

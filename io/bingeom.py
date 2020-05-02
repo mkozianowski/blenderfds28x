@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """!
-BlenderFDS, export surf_id, verts, faces, volus geometry to FDS bingeom  file format.
+BlenderFDS, export geometry to FDS bingeom binary file format.
 """
 
 # The FDS bingeom file is written from Fortran90 like this:
@@ -12,9 +12,12 @@ BlenderFDS, export surf_id, verts, faces, volus geometry to FDS bingeom  file fo
 #      WRITE(731) SURFS(1:N_FACES)
 #      WRITE(731) VOLUS(1:4*N_VOLUS)
 
-import sys  # FIXME used?
 import struct
 import numpy as np
+
+
+def ob_to_bingeom(context, ob, scale_length, check, world, filepath):
+    pass
 
 
 def _read_record(f, req_dtype, req_dlen):
@@ -47,7 +50,7 @@ def read_bingeom(filepath):
     """!
     Read FDS bingeom file 
     @param filepath: filepath to be read from
-    @return n_surf_id as integer, and verts, faces, surfs, volus as np.arrays
+    @return n_surf_id as integer, and fds_verts, fds_faces, fds_surfs, fds_volus as np.arrays in FDS flat format
     """
     with open(filepath, "rb") as f:
         one = _read_record(f, req_dtype="int32", req_dlen=1)[0]
@@ -56,11 +59,11 @@ def read_bingeom(filepath):
         n_verts, n_faces, n_surf_id, n_volus = _read_record(
             f, req_dtype="int32", req_dlen=4
         )
-        verts = _read_record(f, req_dtype="float64", req_dlen=3 * n_verts)
-        faces = _read_record(f, req_dtype="int32", req_dlen=3 * n_faces)
-        surfs = _read_record(f, req_dtype="int32", req_dlen=n_faces)
-        volus = _read_record(f, req_dtype="int32", req_dlen=4 * n_volus)
-    return n_surf_id, verts, faces, surfs, volus
+        fds_verts = _read_record(f, req_dtype="float64", req_dlen=3 * n_verts)
+        fds_faces = _read_record(f, req_dtype="int32", req_dlen=3 * n_faces)
+        fds_surfs = _read_record(f, req_dtype="int32", req_dlen=n_faces)
+        fds_volus = _read_record(f, req_dtype="int32", req_dlen=4 * n_volus)
+    return n_surf_id, fds_verts, fds_faces, fds_surfs, fds_volus
 
 
 def _write_record(f, data):
@@ -78,42 +81,48 @@ def _write_record(f, data):
     f.write(struct.pack("i", tag))
 
 
-def write_bingeom(n_surf_id, verts, faces, surfs, volus, filepath):
+def write_bingeom(n_surf_id, fds_verts, fds_faces, fds_surfs, fds_volus, filepath):
     """!
     Write FDS bingeom file.
     @param n_surf_id: number of referred boundary conditions
-    @param verts: tuple of vertices coordinates
-    @param faces: tuple of faces connectivity
-    @param surfs: tuple of boundary condition index
-    @param volus: tuple of volumes connectivity
-    @param filepath: filepath to be written to
+    @param fds_verts: vertices coordinates in FDS flat format, eg. (x0, y0, z0, x1, y1, ...)
+    @param fds_faces: faces connectivity in FDS flat format, eg. (i0, j0, k0, i1, ...)
+    @param fds_surfs: boundary condition indexes, eg. (i0, i1, ...)
+    @param fds_volus: volumes connectivity in FDS flat format, eg. (i0, j0, k0, w0, i1, ...)
+    @param filepath: destination filepath
     """
+
+    # Write
     with open(filepath, "wb") as f:
         _write_record(f, np.array((1,), dtype="int32"))
         ns = np.array(
-            (len(verts) // 3, len(faces) // 3, n_surf_id, len(volus) // 4),
+            (len(fds_verts) // 3, len(fds_faces) // 3, n_surf_id, len(fds_volus) // 4),
             dtype="int32",
         )
         _write_record(f, ns)
-        _write_record(f, np.array(verts, dtype="float64"))
-        _write_record(f, np.array(faces, dtype="int32"))
-        _write_record(f, np.array(surfs, dtype="int32"))
-        _write_record(f, np.array(volus, dtype="int32"))
+        _write_record(f, np.array(fds_verts, dtype="float64"))
+        _write_record(f, np.array(fds_faces, dtype="int32"))
+        _write_record(f, np.array(fds_surfs, dtype="int32"))
+        _write_record(f, np.array(fds_volus, dtype="int32"))
 
 
 # As command line: read, write and compare the results
 if __name__ == "__main__":
     # Check arguments
+    import sys
+
     if len(sys.argv) != 2:
         print("\nUsage: bingeom.py <filepath>")
         sys.exit(2)
     filepath = sys.argv[1]
 
     print(f"\nReading {filepath}...")
-    n_surf_id, verts, faces, surfs, volus = read_bingeom(filepath)
+    n_surf_id, fds_verts, fds_faces, fds_surfs, fds_volus = read_bingeom(filepath)
 
     print(f"\nWriting {filepath}.out...\n")
-    write_bingeom(n_surf_id, verts, faces, surfs, volus, filepath + ".out")
+    write_bingeom(
+        n_surf_id, fds_verts, fds_faces, fds_surfs, fds_volus, filepath + ".out"
+    )
 
     # Compare the binary files
     import os
