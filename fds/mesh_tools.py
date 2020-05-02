@@ -513,3 +513,26 @@ def test():
 
 if __name__ == "__main__":
     test()
+
+
+#TODO @GISSI -> Verification of calc_triangulation using an STL file as output
+#[nodes, connectivity, properties] = calc_triangulation("elpaso_face_centers_w_landuse.csv")
+#
+#f = open("output.stl", "w")
+#f.write("solid\n")
+#
+#for face in connectivity:
+#   f.write("    facet normal 0 0 1\n")
+#   f.write("        outer loop\n")
+#
+#   for i in range(3):
+#      node = nodes[ face[i] ]
+#      f.write("            vertex "+ str(node[0]) + " " + str(node[1]) + " " + str(node[2]) + "\n")
+#      
+#
+#   f.write("        endloop\n")
+#   f.write("    endfacet\n")
+#
+#f.write("endsolid\n")
+#f.close()
+
