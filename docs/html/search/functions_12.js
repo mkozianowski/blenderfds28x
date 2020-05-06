@@ -1,4 +1,9 @@
 var searchData=
 [
-  ['webmerctolonlat',['webMercToLonLat',['../namespaceblenderfds28x_1_1gis_1_1utm.html#ab433045a55d7518800628f4a13c6ef6a',1,'blenderfds28x::gis::utm']]]
+  ['xbs_5fbbox_5fto_5fmesh_622',['xbs_bbox_to_mesh',['../namespaceblenderfds28x_1_1geometry_1_1from__fds.html#a67f745cff6744338ac47da04888fbd12',1,'blenderfds28x::geometry::from_fds']]],
+  ['xbs_5fedges_5fto_5fmesh_623',['xbs_edges_to_mesh',['../namespaceblenderfds28x_1_1geometry_1_1from__fds.html#a1a0cc27b92aeff5964612750ee32807d',1,'blenderfds28x::geometry::from_fds']]],
+  ['xbs_5ffaces_5fto_5fmesh_624',['xbs_faces_to_mesh',['../namespaceblenderfds28x_1_1geometry_1_1from__fds.html#a9ad0afe653c500ff2fcdc08b67eca7a9',1,'blenderfds28x::geometry::from_fds']]],
+  ['xbs_5fto_5fob_625',['xbs_to_ob',['../namespaceblenderfds28x_1_1geometry_1_1from__fds.html#af2071baf252bdae6258b9036512e2678',1,'blenderfds28x::geometry::from_fds']]],
+  ['xyzs_5fto_5fmesh_626',['xyzs_to_mesh',['../namespaceblenderfds28x_1_1geometry_1_1from__fds.html#ae9ac26404932076b7f6e88f67e6694ef',1,'blenderfds28x::geometry::from_fds']]],
+  ['xyzs_5fto_5fob_627',['xyzs_to_ob',['../namespaceblenderfds28x_1_1geometry_1_1from__fds.html#ad278f8867ba416641da59fd8fc761d93',1,'blenderfds28x::geometry::from_fds']]]
 ];

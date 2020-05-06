@@ -1,0 +1,14 @@
+<map id="blenderfds28x.bl.panels.SCENE_PT_bf_namelist" name="blenderfds28x.bl.panels.SCENE_PT_bf_namelist">
+<area shape="rect" id="node1" title="FDS Panel." alt="" coords="5,332,172,373"/>
+<area shape="rect" id="node2" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__case__config.html" title="FDS Case Config." alt="" coords="233,5,421,47"/>
+<area shape="rect" id="node3" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__config__geoloc.html" title="Origin Geolocation." alt="" coords="228,71,427,112"/>
+<area shape="rect" id="node4" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__config__sizes.html" title="Default Sizes and Thresholds." alt="" coords="232,136,423,177"/>
+<area shape="rect" id="node5" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__config__units.html" title="Units configuration." alt="" coords="233,201,421,243"/>
+<area shape="rect" id="node6" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__namelist___c_a_t_f.html" title="FDS CATF." alt="" coords="223,267,432,308"/>
+<area shape="rect" id="node7" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__namelist___d_u_m_p.html" title="FDS DUMP." alt="" coords="220,332,435,373"/>
+<area shape="rect" id="node8" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__namelist___h_e_a_d.html" title="FDS HEAD." alt="" coords="221,397,433,439"/>
+<area shape="rect" id="node9" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__namelist___m_i_s_c.html" title="FDS MISC." alt="" coords="223,463,431,504"/>
+<area shape="rect" id="node10" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__namelist___r_a_d_i.html" title="FDS RADI." alt="" coords="224,528,431,569"/>
+<area shape="rect" id="node11" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__namelist___r_e_a_c.html" title="FDS REAC." alt="" coords="221,593,433,635"/>
+<area shape="rect" id="node12" href="$classblenderfds28x_1_1bl_1_1panels_1_1_s_c_e_n_e___p_t__bf__namelist___t_i_m_e.html" title="FDS TIME." alt="" coords="224,659,431,700"/>
+</map>
