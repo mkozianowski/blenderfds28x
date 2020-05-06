@@ -280,7 +280,7 @@ def calc_cell_infos(ijk, xbs):
     return has_good_ijk, cs, cell_count, cell_aspect_ratio
 
 
-def split_mesh(axis, ijk, xbs):
+def split_mesh(axis, ijk, xbs): # FIXME
     """!
     Function to split a mesh.
     @param axis: an integer between 0, 1 and 2 to represent the axis on which to perform the split..
