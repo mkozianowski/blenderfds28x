@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """!
-BlenderFDS, export geometry to FDS bingeom binary file format.
+BlenderFDS, import/export geometry to FDS bingeom binary file format.
 """
 
 # The FDS bingeom file is written from Fortran90 like this:
