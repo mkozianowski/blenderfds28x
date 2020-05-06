@@ -585,7 +585,7 @@ class SN_TAIL(BFNamelistSc):
     def to_fds_namelist(self, context):
         pass
 
-    def from_fds(self, context, fds_params):
+    def from_fds(self, context, fds_namelist):
         pass
 
 
@@ -1236,7 +1236,7 @@ class SP_CATF_files(BFParamOther):
     def from_fds(self, context, value):
         if not value:
             self.set_value(context, None)
-        elif isinstance(value, str):  # str
+        elif isinstance(value, str):
             self.set_value(context, value)
         else:  # tuple of str
             for v in value:
@@ -2299,7 +2299,6 @@ class OP_GEOM_READ_BINARY(BFParam):
     bpy_type = Object
     bpy_idname = "bf_geom_read_binary"
     bpy_prop = BoolProperty
-    bpy_default = True
 
     # TODO delete binary geom if ob geometry updated
 
@@ -2436,6 +2435,34 @@ class ON_GEOM(BFNamelistOb):
             ),
             nl,
         )  # many
+
+    def from_fds(self, context, fds_namelist):
+        # Get SURF_ID, VERTS, FACES
+        p_surfids = fds_namelist.get_fds_param_by_label("SURF_ID")
+        p_verts = fds_namelist.get_fds_param_by_label("VERTS")
+        p_faces = fds_namelist.get_fds_param_by_label("FACES")
+        # If they exist, set geometry
+        if all((p_surfids, p_verts, p_faces)):
+            try:
+                geometry.from_fds.geom_to_mesh(
+                    fds_surfids=p_surfids.values,
+                    fds_verts=p_verts.values,
+                    fds_faces=p_faces.values,
+                    context=context,
+                    me=self.element.data,
+                    scale_length=context.scene.unit_settings.scale_length,
+                )
+            except Exception as err:
+                raise BFException(
+                    self, f"Error importing <{fds_namelist}> parameters, {str(err)}"
+                )
+            else:
+                # Already treated so remove them
+                fds_namelist.fds_params.remove(p_surfids)
+                fds_namelist.fds_params.remove(p_verts)
+                fds_namelist.fds_params.remove(p_faces)
+        # Import remaining params
+        super().from_fds(context, fds_namelist)
 
     def draw_operators(self, context, layout):
         ob = context.object
@@ -2927,7 +2954,7 @@ class BFObject:
         # Prevent default geometry (eg. XB=BBOX)
         self.bf_xb_export, self.bf_xyz_export, self.bf_pb_export = (False, False, False)
         # Import
-        self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
+        self.bf_namelist.from_fds(context, fds_namelist=fds_namelist)
 
     def set_default_appearance(self, context):
         """!
@@ -3024,7 +3051,7 @@ class BFMaterial:
         # Set bf_namelist_cls
         self.bf_namelist_cls = "MN_SURF"
         # Import
-        self.bf_namelist.from_fds(context, fds_params=fds_namelist.fds_params)
+        self.bf_namelist.from_fds(context, fds_namelist=fds_namelist)
 
     def set_default_appearance(self, context):  # TODO
         """!
@@ -3160,7 +3187,7 @@ class BFScene:
                 )
                 ma.set_default_appearance(context)
             elif bf_namelist.bpy_type == Scene:  # current Scene
-                bf_namelist(self).from_fds(context, fds_params=fds_namelist.fds_params)
+                bf_namelist(self).from_fds(context, fds_namelist=fds_namelist)
         # Set imported Scene visible
         context.window.scene = self
         # Record unmanaged namelists in free text

@@ -300,7 +300,7 @@ class BFParam:
 
     # FIXME to_fds
 
-    def from_fds(self, context, value):
+    def from_fds(self, context, value):  # FIXME change sig
         """!
         Set self.value from py value, on error raise BFException.
         @param context: the Blender context.
@@ -594,13 +594,13 @@ class BFNamelist(BFParam):
         else:  # single FDSNameslist
             return result.to_fds()
 
-    def from_fds(self, context, fds_params):
+    def from_fds(self, context, fds_namelist):
         """!
         Set self.bf_params values from list of FDSParam, on error raise BFException.
         @param context: the Blender context.
-        @param fds_params: list of FDSParam.
+        @param fds_namelist: instance of type FDSNamelist.
         """
-        for p in fds_params:
+        for p in fds_namelist.fds_params:
             bf_param = self.get_bf_param_by_fds_label(p.fds_label)
             if bf_param is None:
                 bf_param_other = self.bf_param_other
@@ -741,7 +741,8 @@ class FDSParam:
             )
         elif f90_values[0] in ("T", "F"):
             f90_values = f90_values.upper().replace("T", "True").replace("F", "False")
-        # Python evaluation of F90 value
+        # Python evaluation of F90 value, after cleaning from \n \r
+        f90_values = " ".join(f90_values.split())
         try:
             self.values = eval(f90_values)
         except Exception as err:
@@ -852,7 +853,7 @@ class FDSNamelist:
             for p in nl:
                 label = p.fds_label
                 vs = p.formatted_values  # list of str
-                if not vs: # no values
+                if not vs:  # no values
                     if not newline and len(line) + 1 + len(label) <= self.maxlen:
                         # Parameter to the same line
                         newline = False
@@ -860,17 +861,20 @@ class FDSNamelist:
                     else:
                         # Parameter to new line
                         lines.append(line)
-                        line = "      " + label  # new line                                            
+                        line = "      " + label  # new line
                 else:  # values
                     v = ",".join(vs)  # values str
-                    if not newline and len(line) + 1 + len(label) + 1 + len(v) <= self.maxlen:
+                    if (
+                        not newline
+                        and len(line) + 1 + len(label) + 1 + len(v) <= self.maxlen
+                    ):
                         # Parameter to the same line
                         newline = False
                         line += " " + label + "=" + v
                     else:
                         # Parameter to new line
                         lines.append(line)
-                        line = "      " + label + "=" # new line
+                        line = "      " + label + "="  # new line
                         if len(line) + len(v) <= self.maxlen:
                             # Values do not need splitting
                             line += v
@@ -911,7 +915,7 @@ class FDSNamelist:
         _re_param, re.VERBOSE | re.DOTALL | re.IGNORECASE
     )  # no MULTILINE, so that $ is the end of the file
 
-    def from_fds(self, f90_params):
+    def from_fds(self, f90_params):  # FIXME change signature: f90_namelist
         """!
         Import from FDS formatted string of parameters, on error raise BFException.
         @param f90_params: FDS formatted string of parameters, eg. "ID='Test' PROP=2.34, 1.23, 3.44".
