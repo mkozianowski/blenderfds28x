@@ -605,7 +605,7 @@ class SP_TIME_setup_only(BFParam):
     bpy_prop = BoolProperty
     bpy_default = False
 
-    def to_fds_param(self, context):  # FIXME move to T_END
+    def to_fds_param(self, context):
         if self.element.bf_time_setup_only:
             return FDSParam(
                 fds_label="T_END",
@@ -787,7 +787,6 @@ class SP_REAC_FYI(BFParamFYI):
 class SP_REAC_FUEL(BFParamStr):
     """!
     Blender representation of the FUEL string parameter, the identificator of fuel species.
-    FIXME from table
     """
 
     label = "FUEL"
@@ -1180,7 +1179,7 @@ class SN_DUMP(BFNamelistSc):
         SP_DUMP_render_file,
         SP_DUMP_STATUS_FILES,
         SP_DUMP_NFRAMES,
-        # SP_DUMP_set_frequency, # FIXME not ready
+        # SP_DUMP_set_frequency, # TODO not ready
         SP_DUMP_DT_RESTART,
         SP_DUMP_other,
     )
@@ -1281,11 +1280,11 @@ class MP_namelist_cls(BFParam):
     }
     bpy_default = "MN_SURF"
 
-    def to_fds_param(self, context):
-        # Do not export default FIXME move to exported
+    @property
+    def exported(self):  # FIXME test
         if self.element.name in {"INERT", "HVAC", "MIRROR", "OPEN", "PERIODIC"}:
-            return
-        super().to_fds_param(context)
+            return False
+        super().exported
 
 
 @subscribe
@@ -1333,12 +1332,16 @@ class MP_RGB(BFParam):
 
     def to_fds_param(self, context):
         c = self.element.diffuse_color
-        rs = (int(c[0] * 255), int(c[1] * 255), int(c[2] * 255))
-        ts = (c[3],)
-        return (
-            FDSParam(fds_label="RGB", values=rs),
-            FDSParam(fds_label="TRANSPARENCY", values=ts, precision=2),
-        )  # many # FIXME TRANSPARENCY not always
+        p_rgb = FDSParam(
+            fds_label="RGB", values=(int(c[0] * 255), int(c[1] * 255), int(c[2] * 255)),
+        )
+        if c[3] == 1.0:  # do not send TRANSPARENCY if it is 1
+            return p_rgb
+        else:
+            p_transparency = FDSParam(
+                fds_label="TRANSPARENCY", values=(c[3],), precision=2
+            )
+            return (p_rgb, p_transparency)  # many
 
 
 @subscribe
@@ -1987,7 +1990,7 @@ class OP_PB(BFParamPB):
         # Prepare labels
         labels = tuple(
             f"PB{('X','Y','Z')[int(axis)]}" for axis, _ in pbs
-        )  # FIXME int to protect from float
+        )  # int to protect from float sent by cache
         # Single param
         if len(pbs) == 1:
             return FDSParam(fds_label=labels[0], values=(pbs[0][1],), precision=6)
@@ -2346,7 +2349,6 @@ class OP_GEOM(BFParam):
 class OP_GEOM_IS_TERRAIN(BFParam):
     """!
     Blender representation of the IS_TERRAIN parameter to set if it represents a terrain.
-    FIXME.
     """
 
     label = "IS_TERRAIN"
@@ -2362,7 +2364,6 @@ class OP_GEOM_IS_TERRAIN(BFParam):
 class OP_GEOM_EXTEND_TERRAIN(BFParam):
     """!
     Blender representation of the EXTEND_TERRAIN parameter to set if this terrain needs extension to fully cover the domain.
-    FIXME.
     """
 
     label = "EXTEND_TERRAIN"

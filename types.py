@@ -348,20 +348,20 @@ class BFParamStr(BFParam):
 
     bpy_prop = StringProperty
 
-    def check(self, context):
-        value = self.value
-        if "&" in value or "/" in value or "#" in value:
-            raise BFException(self, "<&>, </>, and <#> characters not allowed")
-        # if (  # FIXME
-        #     "'" in value
-        #     or '"' in value
-        #     or "`" in value
-        #     or "“" in value
-        #     or "”" in value
-        #     or "‘" in value
-        #     or "’‌" in value
-        # ):
-        #     raise BFException(self, "Quote characters not allowed")
+    # def check(self, context):  # No check
+    #     value = self.value
+    #     if "&" in value or "/" in value or "#" in value:
+    #         raise BFException(self, "<&>, </>, and <#> characters not allowed")
+    #     # if (
+    #     #     "'" in value
+    #     #     or '"' in value
+    #     #     or "`" in value
+    #     #     or "“" in value
+    #     #     or "”" in value
+    #     #     or "‘" in value
+    #     #     or "’‌" in value
+    #     # ):
+    #     #     raise BFException(self, "Quote characters not allowed")
 
 
 class BFParamFYI(BFParamStr):
@@ -770,7 +770,7 @@ class FDSNamelist:
     """
 
     ## max number of columns of formatted output
-    maxlen = 80  # FIXME to config
+    maxlen = 80  # TODO to config
 
     def __init__(self, fds_label, fds_params=None, msg=None):
         """!
