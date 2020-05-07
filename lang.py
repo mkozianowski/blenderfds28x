@@ -558,7 +558,7 @@ class SP_HEAD_TITLE(BFParamFYI):
 @subscribe
 class SN_HEAD(BFNamelistSc):
     """!
-    Blender representation of the HEAD namelist group, the case header.
+    Blender representation of the HEAD namelist.
     """
 
     label = "HEAD"
@@ -573,7 +573,7 @@ class SN_HEAD(BFNamelistSc):
 @subscribe
 class SN_TAIL(BFNamelistSc):
     """!
-    Blender representation of the TAIL namelist group, the case closing.
+    Blender representation of the TAIL namelist.
     For importing only.
     """
 
@@ -658,7 +658,7 @@ class SP_TIME_T_END(BFParam):
 @subscribe
 class SP_TIME_other(BFParamOther):
     """!
-    TODO
+    Blender representation of other parameters for the TIME namelist.
     """
 
     bpy_type = Scene
@@ -670,7 +670,7 @@ class SP_TIME_other(BFParamOther):
 @subscribe
 class SN_TIME(BFNamelistSc):
     """!
-    Blender representation of the TIME namelist group, the simulation time settings.
+    Blender representation of the TIME namelist.
     """
 
     label = "TIME"
@@ -728,7 +728,7 @@ class SP_MISC_THICKEN_OBSTRUCTIONS(BFParam):
 @subscribe
 class SP_MISC_other(BFParamOther):
     """!
-    TODO
+    Blender representation of other parameters for the MISC namelist.
     """
 
     bpy_type = Scene
@@ -740,7 +740,7 @@ class SP_MISC_other(BFParamOther):
 @subscribe
 class SN_MISC(BFNamelistSc):
     """!
-    Blender representation of the MISC namelist group, the miscellaneous parameters.
+    Blender representation of the MISC namelist.
     """
 
     label = "MISC"
@@ -891,7 +891,7 @@ class SP_REAC_RADIATIVE_FRACTION(BFParam):
 @subscribe
 class SP_REAC_other(BFParamOther):
     """!
-    TODO
+    Blender representation of other parameters for the REAC namelist.
     """
 
     bpy_type = Scene
@@ -903,7 +903,7 @@ class SP_REAC_other(BFParamOther):
 @subscribe
 class SN_REAC(BFNamelistSc):
     """!
-    Blender representation of the REAC (reaction) namelist group.
+    Blender representation of the REAC namelist.
     """
 
     label = "REAC"
@@ -1021,7 +1021,7 @@ class SP_RADI_RADIATION_ITERATIONS(BFParam):
 @subscribe
 class SP_RADI_other(BFParamOther):
     """!
-    TODO
+    Blender representation of other parameters for the RADI namelist.
     """
 
     bpy_type = Scene
@@ -1033,7 +1033,7 @@ class SP_RADI_other(BFParamOther):
 @subscribe
 class SN_RADI(BFNamelistSc):
     """!
-    Blender representation of the RADI namelist group, the radiation parameters.
+    Blender representation of the RADI namelist.
     """
 
     label = "RADI"
@@ -1153,7 +1153,7 @@ class SP_DUMP_DT_RESTART(BFParam):
 @subscribe
 class SP_DUMP_other(BFParamOther):
     """!
-    TODO
+    Blender representation of other parameters for the DUMP namelist.
     """
 
     bpy_type = Scene
@@ -1165,7 +1165,7 @@ class SP_DUMP_other(BFParamOther):
 @subscribe
 class SN_DUMP(BFNamelistSc):
     """!
-    Blender representation of the DUMP namelist group, the output parameters.
+    Blender representation of the DUMP namelist.
     """
 
     label = "DUMP"
@@ -1245,7 +1245,7 @@ class SP_CATF_files(BFParamOther):
 @subscribe
 class SN_CATF(BFNamelistSc):
     """!
-    Blender representation of the CATF namelist group, the concatenated file paths.
+    Blender representation of the CATF namelist.
     """
 
     label = "CATF"
@@ -1517,7 +1517,7 @@ class MP_BACKING(BFParam):
 @subscribe
 class MP_other(BFParamOther):
     """!
-    TODO
+    Blender representation of other parameters for all namelists of Blender Material.
     """
 
     bpy_type = Material
@@ -1529,7 +1529,7 @@ class MP_other(BFParamOther):
 @subscribe
 class MN_SURF(BFNamelistMa):
     """!
-    Blender representation of the SURF namelist group, the generic boundary condition.
+    Blender representation of the SURF namelist, the generic boundary condition.
     """
 
     label = "SURF"
@@ -2150,7 +2150,7 @@ class OP_SURF_ID(BFParam):
 @subscribe
 class OP_other(BFParamOther):
     """!
-    TODO
+    Blender representation of other parameters for all namelists of Blender Object.
     """
 
     bpy_type = Object
@@ -2162,7 +2162,7 @@ class OP_other(BFParamOther):
 @subscribe
 class ON_OBST(BFNamelistOb):
     """!
-    Blender representation of the OBST parameter, the obstructions.
+    Blender representation of the OBST namelist.
     """
 
     label = "OBST"
@@ -2198,7 +2198,7 @@ class OP_other_namelist(BFParam):
 @subscribe
 class ON_other(BFNamelistOb):
     """!
-    TODO
+    Blender representation of any other namelists.
     """
 
     label = "Other"
@@ -2383,7 +2383,7 @@ class OP_GEOM_EXTEND_TERRAIN(BFParam):
 @subscribe
 class ON_GEOM(BFNamelistOb):
     """!
-    Blender representation of the GEOM parameter, the geometry of the obstructions.
+    Blender representation of the GEOM namelist.
     """
 
     label = "GEOM"
@@ -2479,7 +2479,7 @@ class ON_GEOM(BFNamelistOb):
 @subscribe
 class ON_HOLE(BFNamelistOb):
     """!
-    Blender representation of the HOLE parameter, the obstruction cutout.
+    Blender representation of the HOLE namelist.
     """
 
     label = "HOLE"
@@ -2526,7 +2526,7 @@ class OP_VENT_OBST_ID(BFParam):
 @subscribe
 class ON_VENT(BFNamelistOb):
     """!
-    Blender representation of the VENT parameter, the boundary condition patch.
+    Blender representation of the VENT namelist.
     """
 
     label = "VENT"
@@ -2636,7 +2636,7 @@ class OP_DEVC_PROP_ID(BFParamStr):
 @subscribe
 class ON_DEVC(BFNamelistOb):
     """!
-    Blender representation of the DEVC parameter, the device.
+    Blender representation of the DEVC namelist.
     """
 
     label = "DEVC"
@@ -2699,7 +2699,7 @@ class OP_SLCF_CELL_CENTERED(BFParam):
 @subscribe
 class ON_SLCF(BFNamelistOb):
     """!
-    Blender representation of the SLCF parameter to slice file.
+    Blender representation of the SLCF namelist.
     """
 
     label = "SLCF"
@@ -2729,7 +2729,7 @@ class ON_SLCF(BFNamelistOb):
 @subscribe
 class ON_PROF(BFNamelistOb):
     """!
-    Blender representation of the PROF parameter, the wall profile output.
+    Blender representation of the PROF namelist.
     """
 
     label = "PROF"
@@ -2820,7 +2820,7 @@ class OP_MESH_MPI_PROCESS(BFParam):
 @subscribe
 class ON_MESH(BFNamelistOb):
     """!
-    Blender representation of the MESH parameter, the domain of simulation.
+    Blender representation of the MESH namelist.
     """
 
     label = "MESH"
@@ -2843,7 +2843,7 @@ class ON_MESH(BFNamelistOb):
 @subscribe
 class ON_INIT(BFNamelistOb):
     """!
-    Blender representation of the INIT parameter, the initial condition.
+    Blender representation of the INIT namelist.
     """
 
     label = "INIT"
@@ -2860,7 +2860,7 @@ class ON_INIT(BFNamelistOb):
 @subscribe
 class ON_ZONE(BFNamelistOb):
     """!
-    Blender representation of the ZONE parameter, the pressure zone.
+    Blender representation of the ZONE namelist.
     """
 
     label = "ZONE"
@@ -2877,7 +2877,7 @@ class ON_ZONE(BFNamelistOb):
 @subscribe
 class ON_HVAC(BFNamelistOb):
     """!
-    Blender representation of the HVAC parameter, the HVAC system definition.
+    Blender representation of the HVAC namelist.
     """
 
     label = "HVAC"
