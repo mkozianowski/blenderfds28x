@@ -588,7 +588,7 @@ def _add_solidify_mod(context, ob, voxel_size) -> "modifier":
     @return the modifier.
     """
     mo = ob.modifiers.new("solidify_tmp", "SOLIDIFY")
-    mo.thickness = voxel_size * 3  # FIXME test
+    mo.thickness = voxel_size * 3
     mo.offset = 0.0  # centered
     return mo
 

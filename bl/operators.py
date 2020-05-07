@@ -355,7 +355,15 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
             check = ob.bf_geom_check_sanity
             world = True  # not: world = not ob.bf_move_id
             try:
-                fds_surfids, fds_verts, fds_faces, fds_surfs, fds_volus, fds_faces_surfs, msg = geometry.to_fds.ob_to_geom(
+                (
+                    fds_surfids,
+                    fds_verts,
+                    fds_faces,
+                    fds_surfs,
+                    fds_volus,
+                    fds_faces_surfs,
+                    msg,
+                ) = geometry.to_fds.ob_to_geom(
                     context=context,
                     ob=ob,
                     scale_length=scale_length,
@@ -372,7 +380,7 @@ class OBJECT_OT_bf_show_fds_geometry(Operator):
                 geometry.from_fds.geom_to_ob(
                     fds_surfids=fds_surfids,
                     fds_verts=fds_verts,
-                    fds_faces=fds_faces_surfs,  # FIXME
+                    fds_faces=fds_faces_surfs,
                     context=context,
                     ob=ob_tmp,
                     scale_length=scale_length,
@@ -912,7 +920,7 @@ class OBJECT_OT_bf_choose_devc_quantity(Operator):
 
 # MESH Tools
 
-# FIXME FIXME FIXME
+
 @subscribe
 class OBJECT_OT_bf_set_mesh_cell_size(Operator):
     """!
@@ -959,7 +967,7 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
 
     def execute(self, context):
         ob = context.active_object
-        ob.bf_xb, ob.bf_xb_export = "BBOX", True  # FIXME should be impossible to change
+        ob.bf_xb, ob.bf_xb_export = "BBOX", True  # TODO should be impossible to change
         scale_length = context.scene.unit_settings.scale_length
         xbs = geometry.utils.get_bbox_xbs(
             context=context, ob=ob, scale_length=scale_length
@@ -985,20 +993,20 @@ class OBJECT_OT_bf_set_mesh_cell_size(Operator):
         return wm.invoke_props_dialog(self)
 
 
-# FIXME FIXME FIXME align meshes
+# TODO  align meshes
 
 
 @subscribe
 class OBJECT_OT_bf_align_selected_meshes(Operator):
     bl_label = "Align Selected"
     bl_idname = "object.bf_align_selected_meshes"
-    bl_description = "Align selected MESHes to the current Object MESH"  # FIXME improve
+    bl_description = "Align selected MESHes to the current Object MESH"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
     def poll(cls, context):
         ob = context.active_object
-        return ob and ob.bf_namelist == "ON_MESH"  # FIXME
+        return ob and ob.bf_namelist == "ON_MESH"
 
     def invoke(self, context, event):  # Ask for confirmation
         wm = context.window_manager
@@ -1023,7 +1031,7 @@ class OBJECT_OT_bf_align_selected_meshes(Operator):
             return {"CANCELLED"}
         # Align
         #        _bf_props_copy(context, source_element, destination_elements)
-        self.report({"INFO"}, "MESH Objects aligned")  # FIXME improve
+        self.report({"INFO"}, "MESH Objects aligned")
         return {"FINISHED"}
 
 

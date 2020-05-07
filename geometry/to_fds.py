@@ -23,10 +23,17 @@ def _ob_to_geom(context, ob, scale_length, check=True, world=True):
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
     @param world: True to return the object in world coordinates.
-    @return FDS notation as lists and any error message. FIXME
+    @return FDS GEOM notation as lists and message.
     """
     t0 = time()
-    fds_surfids, fds_verts, fds_faces, fds_surfs, fds_volus, fds_faces_surfs = calc_trisurfaces.get_fds_trisurface(
+    (
+        fds_surfids,
+        fds_verts,
+        fds_faces,
+        fds_surfs,
+        fds_volus,
+        fds_faces_surfs,
+    ) = calc_trisurfaces.get_fds_trisurface(
         context=context, ob=ob, scale_length=scale_length, check=check, world=world
     )
     dt = time() - t0
@@ -42,7 +49,7 @@ def ob_to_geom(context, ob, scale_length, check=True, world=True):
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
     @param world: True to return the object in world coordinates.
-    @return FDS mas, verts, faces notation as lists and any error message. FIXME
+    @return FDS GEOM notation as lists and message.
     """
     log.debug(ob.name)
     if ob.get("ob_to_geom_cache") is None:  # recalc

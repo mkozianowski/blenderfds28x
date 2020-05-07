@@ -160,9 +160,9 @@ class ExportFDS(Operator, ExportHelper):
         except IOError:
             self.report({"ERROR"}, f"Filepath not writable:\n<{filepath}>")
             return {"CANCELLED"}
-        # except Exception as err:
-        #     self.report({"ERROR"}, f"Unexpected error:\n<{str(err)}>")
-        #     return {"CANCELLED"}  # FIXME restore
+        except Exception as err:
+            self.report({"ERROR"}, f"Unexpected error:\n<{str(err)}>")
+            return {"CANCELLED"}
         finally:
             w.cursor_modal_restore()
         if sc.bf_dump_render_file:
@@ -177,9 +177,9 @@ class ExportFDS(Operator, ExportHelper):
             except IOError:
                 self.report({"ERROR"}, f"Filepath not writable:\n<{filepath}>")
                 return {"CANCELLED"}
-            # except Exception as err:
-            #     self.report({"ERROR"}, f"Unexpected error:\n<{str(err)}>")
-            #     return {"CANCELLED"}  # FIXME restore
+            except Exception as err:
+                self.report({"ERROR"}, f"Unexpected error:\n<{str(err)}>")
+                return {"CANCELLED"}
             finally:
                 w.cursor_modal_restore()
         self.report({"INFO"}, f"FDS exporting ok")

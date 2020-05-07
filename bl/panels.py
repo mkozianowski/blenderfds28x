@@ -238,7 +238,7 @@ class OBJECT_PT_bf_namelist(Panel):
     @classmethod
     def poll(cls, context):
         ob = context.object
-        return ob and ob.type == "MESH"  # FIXME other types?
+        return ob and ob.type == "MESH"  # TODO other types?
 
     def draw_header(self, context):
         ob = context.object
@@ -331,7 +331,7 @@ class VIEW3D_PT_bf_ob_namelist_tools(Panel):
     @classmethod
     def poll(cls, context):
         ob = context.object
-        return ob and ob.type == "MESH"  # FIXME other types?
+        return ob and ob.type == "MESH"  # TODO other types?
 
     def draw_header(self, context):
         ob = context.object

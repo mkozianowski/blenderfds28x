@@ -41,8 +41,8 @@ def _read_record(f, req_dtype, req_dlen):
     # The end tag should be equal to the start tag
     end_tag = struct.unpack("i", f.read(4))[0]  # end tag, last 4 bytes, int32
     if tag != end_tag:  # check tags
-        raise IOError(f"Different start and end record tags: {start_tag}, {end_tag}")
-    print(f"Read: record tag: {tag} dlen: {len(data)}\ndata: {data}")  # FIXME debug
+        raise IOError(f"Different start and end record tags: {tag}, {end_tag}")
+    # print(f"Read: record tag: {tag} dlen: {len(data)}\ndata: {data}")  # TODO log debug
     return data
 
 
@@ -74,7 +74,7 @@ def _write_record(f, data):
     """
     # Calc start and end record tag
     tag = len(data) * data.dtype.itemsize
-    print(f"Write: record tag: {tag} dlen: {len(data)}\ndata: {data}")  # FIXME debug
+    # print(f"Write: record tag: {tag} dlen: {len(data)}\ndata: {data}")  # TODO log debug
     # Write start tag, data, and end tag
     f.write(struct.pack("i", tag))
     data.tofile(f)

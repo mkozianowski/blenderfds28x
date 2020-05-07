@@ -1281,7 +1281,7 @@ class MP_namelist_cls(BFParam):
     bpy_default = "MN_SURF"
 
     @property
-    def exported(self):  # FIXME test
+    def exported(self):
         if self.element.name in {"INERT", "HVAC", "MIRROR", "OPEN", "PERIODIC"}:
             return False
         super().exported
@@ -2253,7 +2253,7 @@ class OP_GEOM_check_sanity(BFParam):
 
 
 @subscribe
-class OP_GEOM_protect(BFParam):  # FIXME should not be here
+class OP_GEOM_protect(BFParam):  # TODO should not be here, in operator?
     """!
     Blender representation to protect original Object geometry while checking its sanity.
     """
@@ -2286,7 +2286,7 @@ class OP_MOVE_ID(BFParam):
     @property
     def value(self):
         if self.element.bf_move_id:
-            return f"{self.element.name}_move"  # FIXME
+            return f"{self.element.name}_move"  # TODO settle
 
 
 @subscribe
@@ -2497,7 +2497,6 @@ class ON_HOLE(BFNamelistOb):
 class OP_VENT_OBST_ID(BFParam):
     """!
     Blender representation of the OBST_ID parameter to specify OBST on which projecting the condition.
-    FIXME.
     """
 
     label = "OBST_ID"
@@ -2654,7 +2653,7 @@ class ON_DEVC(BFNamelistOb):
         OP_DEVC_PROP_ID,
         OP_XB,
         OP_XYZ,
-        OP_PB,  # FIXME used?
+        OP_PB,  # TODO used?
         OP_PBX,
         OP_PBY,
         OP_PBZ,
@@ -2977,7 +2976,7 @@ class BFObject:
         # WIRE: MESH, HVAC
         # Set
         if appearance == "TEXTURED" and ma_inert:
-            # self.active_material = ma_inert  # FIXME beware it changes the material during from_fds
+            # self.active_material = ma_inert  # TODO beware it changes the material during from_fds
             self.show_wire = False
             self.display_type = "TEXTURED"
             return
@@ -3138,7 +3137,7 @@ class BFScene:
                 for ma in mas:
                     lines.append(ma.to_fds(context))
             # Objects
-            lines.append(self.collection.to_fds(context))  # FIXME protect from None?
+            lines.append(self.collection.to_fds(context))
             # Tail
             if self.bf_head_export:
                 lines.append("\n&TAIL /")
@@ -3152,8 +3151,8 @@ class BFScene:
         """
         self.set_default_appearance(context)  # current scene
         fds_case_un = FDSCase()  # unmanaged namelists
-        # Import SURFs first FIXME improve, repetition!
-        # FIXME if a material is not available, throw an Exception!
+        # Import SURFs first TODO improve, repetition!
+        # TODO if a material is not available, throw an Exception!
         for fds_namelist in fds_case.fds_namelists:
             if fds_namelist.fds_label != "SURF":
                 continue
@@ -3162,7 +3161,7 @@ class BFScene:
             ma.from_fds(context, fds_namelist=fds_namelist)
             ma.use_fake_user = True  # prevent del (eg. used by PART)
             ma.set_default_appearance(context)
-        # Then the rest FIXME improve
+        # Then the rest TODO improve
         for fds_namelist in fds_case.fds_namelists:
             if fds_namelist.fds_label == "SURF":
                 continue

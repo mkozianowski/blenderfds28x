@@ -179,7 +179,7 @@ def align_meshes(rijk, rxbs, mijk, mxbs, poisson=False, protect_rl=False):
     else:
         msgs.append("Close enough, alignment needed")
     if protect_rl:
-        msgs.append("Ref MESH cell size updated, Object size untouched")  # FIXME
+        msgs.append("Ref MESH cell size updated, Object size untouched")
     else:
         msgs.append("Ref MESH size updated, cell size untouched")
     # If mesh sides are close, then snap them
@@ -245,7 +245,6 @@ def calc_ijk(xbs, desired_cs, poisson):
     @param poisson: True for respecting the Poisson constraint.
     @return return the MESH IJK from cell sizes.
     """
-    print(xbs, desired_cs, poisson)  # FIXME
     ijk = (
         round((xbs[1] - xbs[0]) / desired_cs[0]) or 1,
         round((xbs[3] - xbs[2]) / desired_cs[1]) or 1,
@@ -280,7 +279,7 @@ def calc_cell_infos(ijk, xbs):
     return has_good_ijk, cs, cell_count, cell_aspect_ratio
 
 
-def split_mesh(axis, ijk, xbs): # FIXME
+def split_mesh(axis, ijk, xbs):  # TODO clean, complete, and wire
     """!
     Function to split a mesh.
     @param axis: an integer between 0, 1 and 2 to represent the axis on which to perform the split..
@@ -288,42 +287,28 @@ def split_mesh(axis, ijk, xbs): # FIXME
     @param xbs: the xbs of the initial mesh.
     @return return the ijk and xbs values of the two new meshes.
     """
-    
+
     def getXBSValue(ax):
         if ax == axis or ax == axis + 3:
-            return xbs[axis] + (xbs[axis+3]-xbs[axis])/2
+            return xbs[axis] + (xbs[axis + 3] - xbs[axis]) / 2
         return xbs[ax]
-    
+
     def getIJKValue(ax):
         if ax == axis:
-            return ijk[ax]/2
+            return ijk[ax] / 2
         return ijk[ax]
-    
+
     if not axis in [0, 1, 2]:
         raise Exception("Invalid axis")
 
     if ijk[axis] % 2 != 0:
         raise Exception("The number of cells along the selected axis is odd")
 
-    aijk = [getIJKValue(0),
-            getIJKValue(1), 
-            getIJKValue(2)]
-    axbs = [xbs[0], 
-            xbs[1], 
-            xbs[2], 
-            getXBSValue(3), 
-            getXBSValue(4), 
-            getXBSValue(5)]
+    aijk = [getIJKValue(0), getIJKValue(1), getIJKValue(2)]
+    axbs = [xbs[0], xbs[1], xbs[2], getXBSValue(3), getXBSValue(4), getXBSValue(5)]
 
-    bijk = [getIJKValue(0),
-            getIJKValue(1), 
-            getIJKValue(2)]
-    bxbs = [getXBSValue(0), 
-            getXBSValue(1), 
-            getXBSValue(2),
-            xbs[3], 
-            xbs[4], 
-            xbs[5]]
+    bijk = [getIJKValue(0), getIJKValue(1), getIJKValue(2)]
+    bxbs = [getXBSValue(0), getXBSValue(1), getXBSValue(2), xbs[3], xbs[4], xbs[5]]
 
     return aijk, axbs, bijk, bxbs
 

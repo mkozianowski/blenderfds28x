@@ -31,13 +31,13 @@ class BFPreferences(AddonPreferences):
 
     bl_idname = __package__.split(".")[0]
 
-    bf_pref_simplify_ui: BoolProperty(  # FIXME remove bf_
+    bf_pref_simplify_ui: BoolProperty(  # TODO remove bf_
         name="Simplify UI [Blender restart required]",
         description="Simplify BlenderFDS user interface, Blender restart required",
         default=True,
     )
 
-    bf_pref_appearance: BoolProperty(  # FIXME remove bf_
+    bf_pref_appearance: BoolProperty(  # TODO remove bf_
         name="Set Default Appearance",
         description="Automatically set default appearance to Blender Scenes, Objects, Materials,\ndepending on FDS namelist and parameters",
         default=True,
@@ -50,7 +50,7 @@ class BFPreferences(AddonPreferences):
         """
         log.setLevel(self.bf_loglevel)
 
-    bf_loglevel: EnumProperty(  # FIXME remove bf_
+    bf_loglevel: EnumProperty(  # TODO remove bf_
         name="Log Level",
         description="Select the log level",
         items=[
@@ -89,11 +89,11 @@ class BFPreferences(AddonPreferences):
         box = layout.box()
         box.label(text="User Interface")
         box.operator("wm.bf_load_blenderfds_settings")
-        box.prop(self, "bf_pref_simplify_ui")  # FIXME remove bf_
-        box.prop(self, "bf_pref_appearance")  # FIXME remove bf_
+        box.prop(self, "bf_pref_simplify_ui")
+        box.prop(self, "bf_pref_appearance")
         box.prop(paths, "use_load_ui")
         box.prop(paths, "use_relative_paths")
-        box.prop(self, "bf_loglevel")  # FIXME remove bf_
+        box.prop(self, "bf_loglevel")
         box = layout.box()
         box.label(text="Default Sizes and Thresholds")
         box.prop(self, "min_edge_length")

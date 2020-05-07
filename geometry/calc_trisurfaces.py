@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 # Get triangulated surface in FDS format
 
 
-def get_fds_trisurface(context, ob, scale_length, check=True, world=True):  # FIXME
+def get_fds_trisurface(context, ob, scale_length, check=True, world=True):
     """!
     Get triangulated surface from object in FDS format.
     @param context: the Blender context.
@@ -23,7 +23,7 @@ def get_fds_trisurface(context, ob, scale_length, check=True, world=True):  # FI
     @param scale_length: the scale to use.
     @param check: True to check the bmesh sanity.
     @param world: True to return the object in world coordinates.
-    @return fds_surfids, fds_verts, fds_faces, ... as lists  FIXME
+    @return FDS GEOM notation as lists.
     """
     # Get list of referenced surf_id
     fds_surfids = list()

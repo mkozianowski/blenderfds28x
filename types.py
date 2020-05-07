@@ -298,9 +298,9 @@ class BFParam:
             precision=self.bpy_other.get("precision", 3),
         )
 
-    # FIXME to_fds
+    # TODO to_fds
 
-    def from_fds(self, context, value):  # FIXME change sig
+    def from_fds(self, context, value):  # TODO change sig
         """!
         Set self.value from py value, on error raise BFException.
         @param context: the Blender context.
@@ -915,7 +915,7 @@ class FDSNamelist:
         _re_param, re.VERBOSE | re.DOTALL | re.IGNORECASE
     )  # no MULTILINE, so that $ is the end of the file
 
-    def from_fds(self, f90_params):  # FIXME change signature: f90_namelist
+    def from_fds(self, f90_params):  # TODO change signature: f90_namelist
         """!
         Import from FDS formatted string of parameters, on error raise BFException.
         @param f90_params: FDS formatted string of parameters, eg. "ID='Test' PROP=2.34, 1.23, 3.44".
