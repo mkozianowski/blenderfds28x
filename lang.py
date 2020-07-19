@@ -17,7 +17,9 @@
 import re, os.path, time, sys, logging
 from collections import OrderedDict
 
-import bpy
+import bpy, bmesh
+from mathutils import Matrix
+from bpy_extras.object_utils import AddObjectHelper, object_data_add
 from bpy.types import (
     bpy_struct,
     PropertyGroup,
@@ -37,6 +39,7 @@ from bpy.props import (
     PointerProperty,
     EnumProperty,
     CollectionProperty,
+    FloatVectorProperty
 )
 from . import geometry
 from .types import (
@@ -2800,6 +2803,104 @@ class OP_MESH_IJK(BFParam):
 
 
 @subscribe
+class OP_MESH_SPLIT(BFParam):
+    """!
+    Blender representation of the IJK parameter, the cell number in x, y, and z direction.
+    """
+
+    label = "SPLIT"
+    description = "Cell number in x, y, and z direction"
+    fds_label = "SPLIT"
+    bpy_type = Object
+    bpy_idname = "bf_mesh_split"
+    bpy_prop = IntVectorProperty
+    bpy_default = (1, 1, 1)
+    bpy_other = {"size": 3, "min": 1}
+    bpy_export = "bf_mesh_split_export"
+    bpy_export_default = True
+    
+    bpy_scale = (0.5, 0.5, 0.5)
+    bpy_dimensions = (4, 4, 4)
+
+    def draw(self, context, layout):
+        super().draw(context, layout)
+
+
+    def to_fds_param(self, context):
+        ob = self.element
+        if not ob.bf_mesh_split_export:
+            return
+        xbs = geometry.utils.get_bbox_xbs(
+            context=context,
+            ob=ob,
+            scale_length=context.scene.unit_settings.scale_length,
+            world=True,
+        )
+
+        (
+            split_x,
+            split_y,
+            split_z
+        ) = ob.bf_mesh_split
+
+        if split_x % 2 != 0 or split_y % 2 != 0 or split_z % 2 != 0:
+            raise Exception("The split value on the axes must be even")
+
+        cubes = split_mesh(self, context, ob) #TODO: foreach new cube, call  geometry.to_fds.ob_to_xbs(context, ob, scale_length) to generate its xbs
+
+        #split_axis = (split_x, split_y, split_z)
+        #xbs_collection = fds.mesh_tools.split_mesh_on_axis(ob.bf_mesh_ijk, xbs, ob.bf_mesh_split)
+
+       # return (FDSParam(fds_label="XB", values=split_axis, precision=6)) #todo, foreach xbs return fdsparam
+
+#TODO: move to helper class
+def split_mesh(self, context, ob):
+    bm = bmesh.new() #todo, use actual mesh from project instead of creating a new one
+    mesh = ob.data
+    S = Matrix.Scale(1, 4)
+    
+    (
+        split_x,
+        split_y,
+        split_z
+    ) = ob.bf_mesh_split
+
+    scale_x = 1 / (split_x / 2)
+    scale_y = 1 / (split_y / 2)
+    scale_z = 1 / (split_z / 2)
+    bpy_dimensions = (split_x, split_y, split_z)
+    bpy_scale = (scale_x, scale_y, scale_z)
+
+    for i in range(3):
+        S[i][i] = bpy_scale[i] * bpy_dimensions[i]
+    bmesh.ops.create_cube(bm, size=1, matrix=S)
+
+    #bm.edges.ensure_lookup_table()
+    axes = [axis for axis in Matrix().to_3x3()]
+
+    for cuts, axis in zip(bpy_dimensions, axes):
+        def aligned(e):
+            dir = (e.verts[1].co - e.verts[0].co).normalized()
+            return abs(dir.dot(axis)) > 0.5
+        if cuts == 1:
+            continue
+        bmesh.ops.subdivide_edges(bm,
+            edges=[e for e in bm.edges if aligned(e)],
+            use_grid_fill=True,
+            cuts=cuts - 1)    
+    for v in bm.verts:
+        v.select = True
+    bm.select_flush(True)
+    bm.to_mesh(mesh)
+    #mesh.update()
+   # object_data_add(context, mesh, operator=self)
+    bm.free()
+    if context.edit_object:
+        mesh = context.edit_object.data
+        bmesh.from_edit_mesh(mesh)
+        bmesh.update_edit_mesh(mesh)
+
+@subscribe
 class OP_MESH_MPI_PROCESS(BFParam):
     """!
     Blender representation of the MPI_PROCESS parameter, the assigned to given MPI process (Starting from 0.).
@@ -2827,7 +2928,7 @@ class ON_MESH(BFNamelistOb):
     description = "Domain of simulation"
     enum_id = 1014
     fds_label = "MESH"
-    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_MPI_PROCESS, OP_XB_BBOX, OP_other
+    bf_params = OP_ID, OP_FYI, OP_MESH_IJK, OP_MESH_SPLIT, OP_MESH_MPI_PROCESS, OP_XB_BBOX, OP_other
     bf_other = {"appearance": "WIRE"}
 
     def draw_operators(self, context, layout):
