@@ -312,6 +312,39 @@ def split_mesh(axis, ijk, xbs):  # TODO clean, complete, and wire
 
     return aijk, axbs, bijk, bxbs
 
+def split_meshes_by_axis(axis,split,meshes):
+    """!
+    Function to recursively split a list of mesh.
+    @param axis: an integer between 0, 1 and 2 to represent the axis on which to perform the split..
+    @param split: a power of 2 to represent by how many times to split
+    @param meshes: a list of meshes in the format [ijk,xbs]
+    @return return a list with the splitted meshes in the format [ijk,xbs].
+    """
+    if split<=1:
+        return meshes
+    elif split<=2:
+        splitted=[]
+        for mesh in meshes:
+            aijk,axbs,bijk,bxbs = split_mesh(axis,[10,10,10],mesh)
+            splitted.extend([axbs,bxbs])
+        return splitted
+    else:
+        return split_meshes_by_axis(axis,split/2,split_meshes_by_axis(axis,split/2,meshes))
+
+def split_mesh_by_all_axis(splits,mesh):
+    """!
+    Function to split a list of mesh.
+    @param splits: a list of number (power of 2) of splits to execute for each of the 3 axis
+    @param mesh: a mesh in the format of xbs ( ex: [-1,1,-1,1,-1,1] )
+    @return return a list with the splitted meshes in the format [[-1,0,-1,1,-1,1],[0,1,-1,1,-1,1],...]
+
+    examples: split_mesh_by_all_axis([2,1,1], [-1,1,-1,1,-1,1])
+              fds.mesh_tools.split_mesh_by_all_axis(ob.bf_mesh_split, xbs[0])
+    """
+    splitted=split_meshes_by_axis(0,splits[0],[mesh])
+    splitted=split_meshes_by_axis(1,splits[1],splitted)
+    splitted=split_meshes_by_axis(2,splits[2],splitted)
+    return splitted
 
 def test():
     print("Test")

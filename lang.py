@@ -1736,6 +1736,14 @@ class OP_XB(BFParamXB):
         # Compute
         scale_length = context.scene.unit_settings.scale_length
         xbs, msg = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
+
+        if ob.bf_mesh_split_export:
+            ijk = ob.bf_mesh_ijk
+            #for every mesh in xbs
+            for i in range(len(xbs)):
+                #remove the mesh from the front of xbs and add each of its submeshes to the back of xbs
+                xbs.extend(fds.mesh_tools.split_mesh_by_all_axis(ob.bf_mesh_split,xbs.pop(0)))
+
         # Single param
         if len(xbs) == 1:
             return FDSParam(fds_label="XB", values=xbs[0], precision=6)
