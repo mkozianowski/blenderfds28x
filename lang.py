@@ -1737,13 +1737,6 @@ class OP_XB(BFParamXB):
         scale_length = context.scene.unit_settings.scale_length
         xbs, msg = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
 
-        if ob.bf_mesh_split_export:
-            ijk = ob.bf_mesh_ijk
-            #for every mesh in xbs
-            for i in range(len(xbs)):
-                #remove the mesh from the front of xbs and add each of its submeshes to the back of xbs
-                xbs.extend(fds.mesh_tools.split_mesh_by_all_axis(ob.bf_mesh_split,xbs.pop(0)))
-
         # Single param
         if len(xbs) == 1:
             return FDSParam(fds_label="XB", values=xbs[0], precision=6)
@@ -1770,7 +1763,7 @@ class OP_XB(BFParamXB):
             raise Exception("Unknown suffix <{suffix}>")
         result = tuple(
             (
-                FDSParam(fds_label="ID", values=(hid,)),
+                FDSParam(fds_label="ID1", values=(hid,)),
                 FDSParam(fds_label="XB", values=xb, precision=6),
             )
             for hid, xb in zip(ids, xbs)
@@ -1812,6 +1805,28 @@ class OP_XB_BBOX(OP_XB):
         # Compute
         scale_length = context.scene.unit_settings.scale_length
         xbs, _ = geometry.to_fds.ob_to_xbs(context, ob, scale_length)
+
+        #selected_objects = context.selected_objects
+        #if len(selected_objects) > 1 and False:
+        #    scale_length=context.scene.unit_settings.scale_length
+        #    xbs_list = []
+        #    ijk_list = []
+        #    obj_name_list = []
+        #    for obj in selected_objects:
+        #        xb, _ = geometry.to_fds.ob_to_xbs(context, obj, scale_length)
+        #        xbs_list.extend(xb)
+        #        ijk_list.append(obj.bf_mesh_ijk)
+        #        obj_name_list.append(obj.name)
+        #    result = tuple(
+        #        (
+        #            FDSParam(fds_label="ID", values=(hid,)),
+        #            FDSParam(fds_label="IJK", values=ijk),
+        #            FDSParam(fds_label="XB", values=xb, precision=6)
+        #        )
+        #        for hid, ijk, xb in zip(obj_name_list, ijk_list, xbs_list)
+        #    )
+        #    return result
+
         return FDSParam(fds_label="XB", values=xbs[0], precision=6)
 
     def draw(self, context, layout):
@@ -2826,9 +2841,7 @@ class OP_MESH_SPLIT(BFParam):
     bpy_other = {"size": 3, "min": 1}
     bpy_export = "bf_mesh_split_export"
     bpy_export_default = True
-    
-    bpy_scale = (0.5, 0.5, 0.5)
-    bpy_dimensions = (4, 4, 4)
+
 
     def draw(self, context, layout):
         super().draw(context, layout)
@@ -2838,12 +2851,6 @@ class OP_MESH_SPLIT(BFParam):
         ob = self.element
         if not ob.bf_mesh_split_export:
             return
-        xbs = geometry.utils.get_bbox_xbs(
-            context=context,
-            ob=ob,
-            scale_length=context.scene.unit_settings.scale_length,
-            world=True,
-        )
 
         (
             split_x,
@@ -2851,62 +2858,18 @@ class OP_MESH_SPLIT(BFParam):
             split_z
         ) = ob.bf_mesh_split
 
+        if not ob.bf_mesh_split_export:
+            return
+
         if split_x % 2 != 0 or split_y % 2 != 0 or split_z % 2 != 0:
             raise Exception("The split value on the axes must be even")
 
-        cubes = split_mesh(self, context, ob) #TODO: foreach new cube, call  geometry.to_fds.ob_to_xbs(context, ob, scale_length) to generate its xbs
+        #set split ijk values
+        ob.bf_mesh_ijk[0] = ob.bf_mesh_ijk[0] / split_x
+        ob.bf_mesh_ijk[1] = ob.bf_mesh_ijk[1] / split_y
+        ob.bf_mesh_ijk[2] = ob.bf_mesh_ijk[2] / split_z
+        fds.mesh_tools.split_mesh_array_modifier(self, context, ob)
 
-        #split_axis = (split_x, split_y, split_z)
-        #xbs_collection = fds.mesh_tools.split_mesh_on_axis(ob.bf_mesh_ijk, xbs, ob.bf_mesh_split)
-
-       # return (FDSParam(fds_label="XB", values=split_axis, precision=6)) #todo, foreach xbs return fdsparam
-
-#TODO: move to helper class
-def split_mesh(self, context, ob):
-    bm = bmesh.new() #todo, use actual mesh from project instead of creating a new one
-    mesh = ob.data
-    S = Matrix.Scale(1, 4)
-    
-    (
-        split_x,
-        split_y,
-        split_z
-    ) = ob.bf_mesh_split
-
-    scale_x = 1 / (split_x / 2)
-    scale_y = 1 / (split_y / 2)
-    scale_z = 1 / (split_z / 2)
-    bpy_dimensions = (split_x, split_y, split_z)
-    bpy_scale = (scale_x, scale_y, scale_z)
-
-    for i in range(3):
-        S[i][i] = bpy_scale[i] * bpy_dimensions[i]
-    bmesh.ops.create_cube(bm, size=1, matrix=S)
-
-    #bm.edges.ensure_lookup_table()
-    axes = [axis for axis in Matrix().to_3x3()]
-
-    for cuts, axis in zip(bpy_dimensions, axes):
-        def aligned(e):
-            dir = (e.verts[1].co - e.verts[0].co).normalized()
-            return abs(dir.dot(axis)) > 0.5
-        if cuts == 1:
-            continue
-        bmesh.ops.subdivide_edges(bm,
-            edges=[e for e in bm.edges if aligned(e)],
-            use_grid_fill=True,
-            cuts=cuts - 1)    
-    for v in bm.verts:
-        v.select = True
-    bm.select_flush(True)
-    bm.to_mesh(mesh)
-    #mesh.update()
-   # object_data_add(context, mesh, operator=self)
-    bm.free()
-    if context.edit_object:
-        mesh = context.edit_object.data
-        bmesh.from_edit_mesh(mesh)
-        bmesh.update_edit_mesh(mesh)
 
 @subscribe
 class OP_MESH_MPI_PROCESS(BFParam):

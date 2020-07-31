@@ -30,6 +30,8 @@ BlenderFDS, FDS MESH tools.
 #  ·---·---·---·---·
 #  |       |       |
 
+import bpy, bmesh
+from mathutils import Matrix
 
 def _factor(n):
     """!
@@ -345,6 +347,113 @@ def split_mesh_by_all_axis(splits,mesh):
     splitted=split_meshes_by_axis(1,splits[1],splitted)
     splitted=split_meshes_by_axis(2,splits[2],splitted)
     return splitted
+
+def split_mesh_array_modifier(self, context, ob):
+    """!
+    Function to split a mesh and generate cubes in collection.
+    """
+    (
+        split_x,
+        split_y,
+        split_z
+    ) = ob.bf_mesh_split
+
+    bpy.ops.object.select_all(action='DESELECT') # Deselect all objects
+    bpy.context.view_layer.objects.active = ob    # Make the cube the active object 
+    ob.select_set(True) 
+
+    bpy.ops.object.modifier_add(type="ARRAY")
+    bpy.context.object.modifiers["Array"].count = split_x
+    ob.modifiers["Array"].relative_offset_displace[0] = 1
+    ob.modifiers["Array"].relative_offset_displace[1] = 0
+    ob.modifiers["Array"].relative_offset_displace[2] = 0
+
+    bpy.ops.object.modifier_add(type="ARRAY")
+    ob.modifiers["Array.001"].count = split_y
+    ob.modifiers["Array.001"].relative_offset_displace[0] = 0
+    ob.modifiers["Array.001"].relative_offset_displace[1] = 1
+    ob.modifiers["Array.001"].relative_offset_displace[2] = 0
+
+
+    bpy.ops.object.modifier_add(type="ARRAY")
+    ob.modifiers["Array.002"].count = split_z
+    ob.modifiers["Array.002"].relative_offset_displace[0] = 0
+    ob.modifiers["Array.002"].relative_offset_displace[1] = 0
+    ob.modifiers["Array.002"].relative_offset_displace[2] = 1
+
+    bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array")
+    bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array.001")
+    bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array.002")
+
+    
+    scale_x = ob.scale[0] / split_x 
+    scale_y = ob.scale[1] / split_y
+    scale_z = ob.scale[2] / split_z
+
+    bpy.context.object.scale[0] = scale_x
+    bpy.context.object.scale[1] = scale_y
+    bpy.context.object.scale[2] = scale_z
+
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+    bpy.ops.object.origin_set(type='GEOMETRY_ORIGIN', center='MEDIAN')
+
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.separate(type='LOOSE')
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
+
+    #disable split for splitted cubes
+    selected_objects = context.selected_objects
+    for ob in selected_objects:
+        ob.bf_mesh_split_export = False
+
+
+def split_mesh_visual(self, context, ob):
+    bm = bmesh.new()
+    mesh = ob.data
+    S = Matrix.Scale(1, 4)
+    
+    (
+        split_x,
+        split_y,
+        split_z
+    ) = ob.bf_mesh_split
+
+    scale_x = ob.scale[0] / split_x 
+    scale_y = ob.scale[1] / split_y
+    scale_z = ob.scale[2] / split_z
+    bpy_dimensions = (split_x, split_y, split_z)
+    bpy_scale = (scale_x, scale_y, scale_z)
+
+    for i in range(3):
+        S[i][i] = bpy_scale[i] * bpy_dimensions[i]
+    bmesh.ops.create_cube(bm, size=1, matrix=S)
+
+    #bm.edges.ensure_lookup_table()
+    axes = [axis for axis in Matrix().to_3x3()]
+
+    for cuts, axis in zip(bpy_dimensions, axes):
+        def aligned(e):
+            dir = (e.verts[1].co - e.verts[0].co).normalized()
+            return abs(dir.dot(axis)) > 0.5
+        if cuts == 1:
+            continue
+        bmesh.ops.subdivide_edges(bm,
+            edges=[e for e in bm.edges if aligned(e)],
+            use_grid_fill=True,
+            cuts=cuts - 1)    
+    for v in bm.verts:
+        v.select = True
+    bm.select_flush(True)
+    bm.to_mesh(mesh)
+    #mesh.update()
+   # object_data_add(context, mesh, operator=self)
+    bm.free()
+    if context.edit_object:
+        mesh = context.edit_object.data
+        bmesh.from_edit_mesh(mesh)
+        bmesh.update_edit_mesh(mesh)
 
 def test():
     print("Test")
