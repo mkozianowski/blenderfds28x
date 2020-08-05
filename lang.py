@@ -2838,7 +2838,7 @@ class OP_MESH_SPLIT(BFParam):
     bpy_idname = "bf_mesh_split"
     bpy_prop = IntVectorProperty
     bpy_default = (1, 1, 1)
-    bpy_other = {"size": 3, "min": 1}
+    bpy_other = {"size": 3, "min": 0}
     bpy_export = "bf_mesh_split_export"
     bpy_export_default = True
 
@@ -2862,12 +2862,27 @@ class OP_MESH_SPLIT(BFParam):
             return
 
         if split_x % 2 != 0 or split_y % 2 != 0 or split_z % 2 != 0:
-            raise Exception("The split value on the axes must be even")
+            raise BFException(self,"The split value on the axes must be even")
+
+
+        i = ob.bf_mesh_ijk[0]
+        j = ob.bf_mesh_ijk[1]
+        k = ob.bf_mesh_ijk[2]
+        
+        if i % 2 != 0 or j % 2 != 0 or k % 2 != 0:
+            raise BFException(
+                self,
+                "IJK Values cannot be divided. Must be even",
+            )
 
         #set split ijk values
-        ob.bf_mesh_ijk[0] = ob.bf_mesh_ijk[0] / split_x
-        ob.bf_mesh_ijk[1] = ob.bf_mesh_ijk[1] / split_y
-        ob.bf_mesh_ijk[2] = ob.bf_mesh_ijk[2] / split_z
+        if split_x > 0:
+            ob.bf_mesh_ijk[0] = i / split_x
+        if split_y > 0:
+            ob.bf_mesh_ijk[1] = j / split_y
+        if split_z > 0:
+            ob.bf_mesh_ijk[2] = k / split_z
+
         fds.mesh_tools.split_mesh_array_modifier(self, context, ob)
 
 

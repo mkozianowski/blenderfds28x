@@ -362,37 +362,44 @@ def split_mesh_array_modifier(self, context, ob):
     bpy.context.view_layer.objects.active = ob    # Make the cube the active object 
     ob.select_set(True) 
 
-    bpy.ops.object.modifier_add(type="ARRAY")
-    bpy.context.object.modifiers["Array"].count = split_x
-    ob.modifiers["Array"].relative_offset_displace[0] = 1
-    ob.modifiers["Array"].relative_offset_displace[1] = 0
-    ob.modifiers["Array"].relative_offset_displace[2] = 0
+    if split_x > 0:
+        bpy.ops.object.modifier_add(type="ARRAY")
+        bpy.context.object.modifiers["Array"].count = split_x
+        ob.modifiers["Array"].relative_offset_displace[0] = 1
+        ob.modifiers["Array"].relative_offset_displace[1] = 0
+        ob.modifiers["Array"].relative_offset_displace[2] = 0
 
-    bpy.ops.object.modifier_add(type="ARRAY")
-    ob.modifiers["Array.001"].count = split_y
-    ob.modifiers["Array.001"].relative_offset_displace[0] = 0
-    ob.modifiers["Array.001"].relative_offset_displace[1] = 1
-    ob.modifiers["Array.001"].relative_offset_displace[2] = 0
+    if split_y > 0:
+        bpy.ops.object.modifier_add(type="ARRAY")
+        ob.modifiers["Array.001"].count = split_y
+        ob.modifiers["Array.001"].relative_offset_displace[0] = 0
+        ob.modifiers["Array.001"].relative_offset_displace[1] = 1
+        ob.modifiers["Array.001"].relative_offset_displace[2] = 0
+
+    if split_z > 0:
+        bpy.ops.object.modifier_add(type="ARRAY")
+        ob.modifiers["Array.002"].count = split_z
+        ob.modifiers["Array.002"].relative_offset_displace[0] = 0
+        ob.modifiers["Array.002"].relative_offset_displace[1] = 0
+        ob.modifiers["Array.002"].relative_offset_displace[2] = 1
 
 
-    bpy.ops.object.modifier_add(type="ARRAY")
-    ob.modifiers["Array.002"].count = split_z
-    ob.modifiers["Array.002"].relative_offset_displace[0] = 0
-    ob.modifiers["Array.002"].relative_offset_displace[1] = 0
-    ob.modifiers["Array.002"].relative_offset_displace[2] = 1
+    if split_x > 0:
+        bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array")
+    if split_y > 0:
+        bpy.ops.object.modifier_apply   (apply_as='DATA', modifier="Array.001")
+    if split_z > 0:
+        bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array.002")
 
-    bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array")
-    bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array.001")
-    bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array.002")
-
-    
-    scale_x = ob.scale[0] / split_x 
-    scale_y = ob.scale[1] / split_y
-    scale_z = ob.scale[2] / split_z
-
-    bpy.context.object.scale[0] = scale_x
-    bpy.context.object.scale[1] = scale_y
-    bpy.context.object.scale[2] = scale_z
+    if split_x > 0:
+        scale_x = ob.scale[0] / split_x
+        bpy.context.object.scale[0] = scale_x
+    if split_y > 0:
+        scale_y = ob.scale[1] / split_y
+        bpy.context.object.scale[1] = scale_y
+    if split_z > 0:
+        scale_z = ob.scale[2] / split_z
+        bpy.context.object.scale[2] = scale_z
 
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
