@@ -580,6 +580,7 @@ class BFNamelist(BFParam):
             ),
         )
 
+
     def to_fds(self, context):
         """!
         Return the FDS formatted string.

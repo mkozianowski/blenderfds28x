@@ -348,10 +348,53 @@ def split_mesh_by_all_axis(splits,mesh):
     splitted=split_meshes_by_axis(2,splits[2],splitted)
     return splitted
 
-def split_mesh_array_modifier(self, context, ob):
+def split_mesh_array_modifier(self, context):
     """!
     Function to split a mesh and generate cubes in collection.
     """
+    ob = context.object
+
+    if not ob.bf_mesh_split_export:
+        return
+
+    (
+        split_x,
+        split_y,
+        split_z
+    ) = ob.bf_mesh_split
+
+    if not ob.bf_mesh_split_export:
+        return
+
+    i = ob.bf_mesh_ijk[0] 
+    j = ob.bf_mesh_ijk[1] 
+    k = ob.bf_mesh_ijk[2] 
+    
+    if i % split_x != 0:
+        raise Exception(
+            self,
+            "The split of I value must be a multiple of X"
+        )
+    if j % split_y != 0:
+        raise Exception(
+            self,
+            "The split of J value must be a multiple of Y"
+        )
+
+    if k % split_z != 0:
+        raise Exception(
+            self,
+            "The split of K value must be a multiple of Z"
+        )
+
+    #set split ijk values
+    if split_x > 0:
+        ob.bf_mesh_ijk[0] = i / split_x
+    if split_y > 0:
+        ob.bf_mesh_ijk[1] = j / split_y
+    if split_z > 0:
+        ob.bf_mesh_ijk[2] = k / split_z
+
     (
         split_x,
         split_y,
@@ -387,7 +430,7 @@ def split_mesh_array_modifier(self, context, ob):
     if split_x > 0:
         bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array")
     if split_y > 0:
-        bpy.ops.object.modifier_apply   (apply_as='DATA', modifier="Array.001")
+        bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array.001")
     if split_z > 0:
         bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Array.002")
 
@@ -410,10 +453,6 @@ def split_mesh_array_modifier(self, context, ob):
     bpy.ops.object.editmode_toggle()
     bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
 
-    #disable split for splitted cubes
-    selected_objects = context.selected_objects
-    for ob in selected_objects:
-        ob.bf_mesh_split_export = False
 
 
 def split_mesh_visual(self, context, ob):

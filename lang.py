@@ -2841,56 +2841,11 @@ class OP_MESH_SPLIT(BFParam):
     bpy_other = {"size": 3, "min": 1}
     bpy_export = "bf_mesh_split_export"
     bpy_export_default = True
+    bl_options = {"REGISTER", "UNDO"}
 
 
     def draw(self, context, layout):
         super().draw(context, layout)
-
-
-    def to_fds_param(self, context):
-        ob = self.element
-        if not ob.bf_mesh_split_export:
-            return
-
-        (
-            split_x,
-            split_y,
-            split_z
-        ) = ob.bf_mesh_split
-
-        if not ob.bf_mesh_split_export:
-            return
-
-        i = ob.bf_mesh_ijk[0] 
-        j = ob.bf_mesh_ijk[1] 
-        k = ob.bf_mesh_ijk[2] 
-        
-        if i % split_x != 0:
-            raise BFException(
-                self,
-                "The split of I value must be a multiple of X"
-            )
-        if j % split_y != 0:
-            raise BFException(
-                self,
-                "The split of J value must be a multiple of Y"
-            )
-
-        if k % split_z != 0:
-            raise BFException(
-                self,
-                "The split of K value must be a multiple of Z"
-            )
-
-        #set split ijk values
-        if split_x > 0:
-            ob.bf_mesh_ijk[0] = i / split_x
-        if split_y > 0:
-            ob.bf_mesh_ijk[1] = j / split_y
-        if split_z > 0:
-            ob.bf_mesh_ijk[2] = k / split_z
-
-        fds.mesh_tools.split_mesh_array_modifier(self, context, ob)
 
 
 @subscribe
@@ -3212,7 +3167,8 @@ class BFScene:
                 f"! Blender Scene: <{self.name}>",
                 f"! Date: <{now}>",
             )
-        )
+        )     
+        fds.mesh_tools.split_mesh_array_modifier(self, context)
         # My namelists
         lines.extend(
             n.to_fds(context) for n in self.bf_namelists if n is not None
